@@ -72,3 +72,31 @@ pipeline.
 
 **Trigger:** A future use case involving digital holographic
 microscopy or interferometric surface profiling.
+
+---
+
+## 4. Modular Decomposition of Cook-Torrance (D × F × G)
+
+**What:** Extract the three components of the Cook-Torrance BRDF into
+swappable modules:
+
+- **Distributions:** Beckmann, GGX, Blinn
+- **Fresnel models:** Schlick (fast), exact Fresnel (polarised)
+- **Geometry functions:** Smith (Schlick-GGX), Cook (original 1982)
+
+Currently these are inlined as module-level functions in
+`scattering/cooktorrance.py`, which is sufficient for the single
+Cook-Torrance variant we have.  Extracting them would let new models
+(e.g. a GGX-based Cook-Torrance) be built by composing existing pieces
+instead of copying.
+
+**Why excluded:** No use case needs more than one variant of
+Cook-Torrance.  The indirection adds files without benefit until UC4
+(BRDF fitting) or polarised BRDF work begins.
+
+**Trigger:** UC4 (Angle-Resolved Scattering) — BRDF fitting needs
+Beckmann, GGX, and other candidate models.  At that point,
+`distribution_beckmann` and `distribution_ggx` should be imported from
+a shared location rather than duplicated or coupled to
+Cook-Torrance.  Also, UC4's polarised BRDF work will need the exact
+Fresnel equations (`fresnel_exact`).

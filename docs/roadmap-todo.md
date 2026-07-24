@@ -18,6 +18,7 @@
 - [x] **Incidence angle convenience** — `source.incidence_angle` / `incidence_angle_degrees` on LightSource (UC1, UC4)
 - [x] **Coherence / speckle model** — `SpeckleNoise` detector noise model, `Surface.phase_screen()`, pipeline integration (UC1, UC7)
 - [x] **Spherical wavefront** — `source.wavefront = "spherical"` with per-pixel direction from origin (UC1, UC4, UC5, UC6)
+- [x] **Cook-Torrance microfacet BRDF** — full physically based specular model with Beckmann D, Schlick F, Smith G; Lambertian diffuse term for energy conservation (UC1, UC4)
 
 ### Pre-deployment gaps — add before the relevant use case
 
@@ -31,6 +32,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2a — Surface Defect Inspection (UC1)
 
+- [ ] **RayleighScattering / MieScattering** (skeletons in `scattering/particle.py`) — implement when particle-contamination scattering is needed for defect inspection
 - [ ] Directional illumination models (ring light, dark-field, bright-field)
 - [ ] Defect-specific surface generators (dents, pits, burrs, cracks, stains)
 - [ ] Defect detection analysis module (blob finder, scratch segmentation)
@@ -73,6 +75,8 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2e — Angle-Resolved Scattering Measurement (UC4)
 
+- [ ] **BeckmannScattering** — implement full model (skeleton exists in `scattering/beckmann.py`, uses `distribution_beckmann()` from `cooktorrance.py`) — needed as a candidate model in BRDF fitting
+- [ ] **GGXScattering** — implement full model (skeleton exists in `scattering/ggx.py`, uses GGX distribution D = α² / (π((n·h)²(α²-1)+1)²)) — needed as a candidate model in BRDF fitting
 - [ ] Goniometric sweep workflow (auto-vary θ_i, θ_r, collect measurements)
 - [ ] BRDF fitting analysis (fit model parameters to angle-resolved data)
 - [ ] Polarised BRDF (Fresnel coefficients, Mueller matrix propagation)
@@ -96,6 +100,8 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2g — LiDAR Range Finding (UC6)
 
+- [ ] **RayleighScattering** — implement full model (skeleton exists in `scattering/particle.py`) — needed for atmospheric molecular backscatter (∝ 1/λ⁴)
+- [ ] **MieScattering** — implement full model (skeleton exists in `scattering/particle.py`, requires Mie-theory computation for size parameter x = 2πr/λ) — needed for aerosol and droplet scattering
 - [ ] Pulsed laser source (temporal pulse profile, peak power, PRR)
 - [ ] Scanning mechanism (galvanometer, rotating polygon, MEMS mirror)
 - [ ] LiDAR range equation implementation
