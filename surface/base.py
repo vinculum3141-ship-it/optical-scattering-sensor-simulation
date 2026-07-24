@@ -1,3 +1,20 @@
+"""Surface geometry representation and analysis.
+
+This module defines the core data structures for representing surface
+geometry in the simulation framework:
+
+    - :class:`Material` — simple material descriptor (name, refractive index)
+    - :class:`Surface` — a full geometric description derived from a height map
+      (normals, slopes, curvature, roughness)
+    - :class:`GeometryAnalyzer` — static analysis that converts a raw 2D height
+      array into a :class:`Surface` via finite-difference gradients
+    - :class:`SurfaceGenerator` — abstract base for creating height maps with
+      particular geometric features
+
+Surface generators in :mod:`surface.generators` extend both :class:`Surface`
+and :class:`SurfaceGenerator`, acting as both data container and factory.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -93,13 +110,18 @@ class GeometryAnalyzer:
         if height.ndim != 2:
             raise ValueError("height must be a 2D array")
 
+        # Surface normals from gradient of the height field.
+        # For a surface z = h(x, y), the normal direction is:
+        #   n ∝ (-∂h/∂x, -∂h/∂y, 1)
+        # The negative signs ensure the normal points "upward" (+z).
         dzdy, dzdx = np.gradient(height)
-
         normal = np.dstack((-dzdx, -dzdy, np.ones_like(height)))
         norm = np.linalg.norm(normal, axis=2, keepdims=True)
         normals = normal / np.where(norm == 0.0, 1.0, norm)
 
+        # Curvature is the Laplacian (sum of unmixed second partial derivatives).
         curvature = np.gradient(dzdx)[0] + np.gradient(dzdy)[1]
+        # RMS roughness = standard deviation of height about its mean.
         roughness = float(np.sqrt(np.mean((height - np.mean(height)) ** 2)))
 
         return Surface(

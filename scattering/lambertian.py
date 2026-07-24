@@ -1,3 +1,14 @@
+"""Lambertian (perfectly diffuse) scattering model.
+
+Implements Lambert's cosine law: the radiance scattered toward the
+observer is proportional to the cosine of the angle between the surface
+normal and the direction from the surface toward the light source.
+
+This is the simplest physically based scattering model and serves as
+both a useful approximation for matte surfaces and a reference for
+more advanced models (Phong, Oren–Nayar, Cook–Torrance, etc.).
+"""
+
 from __future__ import annotations
 
 import numpy as np
@@ -55,14 +66,17 @@ class LambertianScattering(ScatteringModel):
         view_direction = np.asarray(view_direction, dtype=float)
         view_direction = view_direction / np.linalg.norm(view_direction)
 
-        # Lambert's law uses the direction from the surface toward the
-        # light source.  Since lightfield.direction is the propagation
-        # direction of the light (source → surface), we negate it.
+        # Sign convention:
+        #   lightfield.direction  = unit vector from source → surface
+        #   to_light              = unit vector from surface → source (= -lightfield.direction)
+        #   Lambert's law:  radiance ∝ max(dot(to_light, normal), 0)
         to_light = -incoming
         cosine = np.einsum("...i,...i->...", to_light, normals)
         cosine = np.clip(cosine, 0.0, None)
         radiance = self.albedo * cosine
 
+        # Outgoing direction is the same for every grid point
+        # (far-field / telecentric approximation).
         outgoing_direction = np.repeat(view_direction[None, None, :], incoming.shape[0], axis=0)
         outgoing_direction = np.repeat(outgoing_direction, incoming.shape[1], axis=1)
         return ScatteredField(

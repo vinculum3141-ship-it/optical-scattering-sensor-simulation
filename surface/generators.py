@@ -1,3 +1,25 @@
+"""Concrete surface generators for common test geometries.
+
+Each class inherits from both :class:`~surface.base.Surface` (as a data
+container) and :class:`~surface.base.SurfaceGenerator` (as a factory),
+providing a ready-to-use surface object on construction:
+
+    - :class:`FlatSurface` — zero height everywhere (ideal reference)
+    - :class:`RoughSurface` — Gaussian-correlated noise with configurable
+      correlation length and RMS amplitude
+    - :class:`ScratchedSurface` — a diagonal groove with programmable
+      depth and width
+    - :class:`ParticleSurface` — localised Gaussian bumps at random
+      (seeded) grid locations
+
+All classes use :class:`~surface.base.GeometryAnalyzer` to automatically
+compute normals, slopes, curvature, and roughness from the generated
+height map on construction.
+
+The helper :func:`_gaussian_filter` provides a pure-NumPy separable
+Gaussian blur to avoid a SciPy dependency.
+"""
+
 from __future__ import annotations
 
 from typing import Optional, Tuple

@@ -1,7 +1,7 @@
 # optical-scattering-sensor-simulation
 
 A physics-based simulation framework for optical scattering sensors. The
-repository implements three layers of the simulation pipeline:
+repository implements four layers of the simulation pipeline:
 
 1. **Illumination** — describe a light source and generate a light field
    over a 2D grid.
@@ -9,20 +9,42 @@ repository implements three layers of the simulation pipeline:
    geometric quantities (normals, slopes, curvature, roughness).
 3. **Scattering** — given an incident light field, a surface, and a view
    direction, compute the radiance scattered toward the observer.
+4. **Optics** — propagate a scattered field through an imaging system to
+   produce a sensor-plane image.
 
 ---
 
-## Quick start
+## Getting started
 
 ### Requirements
 
 - Python 3.9+
-- [NumPy](https://numpy.org/)
+- [NumPy](https://numpy.org/) (optional for Robot Framework tests: `robotframework`)
+
+### Where to start
+
+**New to the project?** The fastest way to see what the framework can do:
+
+```bash
+python playground.py --demo
+```
+
+This runs a non-interactive tour through all four layers (illumination,
+surface geometry, scattering, optics) with terminal heatmap visualisations.
+Then dive into the interactive menu:
+
+```bash
+python playground.py
+```
+
+The playground has six options covering each layer individually and an
+end-to-end custom pipeline example.
 
 ### Interactive explorer
 
-Three modes, switch between them inside the menu with `[i]` (illumination),
-`[s]` (surface), or `[c]` (scattering):
+The original explorer script works across three modes; switch between them
+inside the menu with `[i]` (illumination), `[s]` (surface), or `[c]`
+(scattering):
 
 ```bash
 python explore.py                # illumination scenarios
@@ -125,14 +147,25 @@ print(result.radiance.min(), result.radiance.max())
 | `scattering/lambertian.py` | `LambertianScattering` (diffuse, cosine-law) |
 | `scattering/__init__.py` | Package exports |
 
+### Optics layer
+
+| File | Contents |
+|---|---|
+| `optics/base.py` | `OpticalSystem` and `SensorField` containers |
+| `optics/psf.py` | `GaussianPSF` for simple point-spread-function modelling |
+| `optics/propagator.py` | `OpticalPropagator` that applies PSF-based blur to a scattered field |
+| `optics/__init__.py` | Package exports |
+
 ### Scripts and tests
 
 | File | Contents |
 |---|---|
 | `explore.py` | Interactive CLI (illumination / surface / scattering modes) |
+| `playground.py` | Interactive playground with demos, custom pipeline, and code snippets |
 | `tests/test_illumination.py` | Pytest (4 tests) |
 | `tests/test_surface.py` | Pytest (4 tests) |
 | `tests/test_scattering.py` | Pytest (5 tests) |
+| `tests/test_optics.py` | Pytest (1 test) |
 | `tests/IlluminationLibrary.py` | Robot Framework test library for illumination |
 | `tests/illumination.robot` | Robot Framework acceptance tests (16 tests) |
 | `tests/SurfaceLibrary.py` | Robot Framework test library for surface |
@@ -182,19 +215,43 @@ where `to_light` is the direction from the surface toward the light source
 provides a clean baseline for future models (Phong, Oren–Nayar,
 Cook–Torrance, etc.).
 
+## Optics layer
+
+The optics layer is the first stage that connects the physical scattering
+response to a measurement-oriented representation. It does not create light
+or decide what the surface should do; it transforms the scattered field into
+what would appear at the sensor plane.
+
+### What the optics module does
+
+1. Accepts a `ScatteredField` and an `OpticalSystem` description.
+2. Uses a point-spread-function (PSF) model to redistribute the radiance
+   across the sensor plane.
+3. Produces a `SensorField` containing the resulting irradiance and the
+   wavelength and path-length context of the propagation.
+
+### Current implementation
+
+The current optics module uses a simple Gaussian PSF and a basic
+propagator. The propagation step applies a blur kernel over the scattered
+radiance field, which is the simplest way to represent the effect of an
+optical system on a field before it reaches a detector. This gives the
+simulator a working imaging-style pipeline that can later be extended to
+more realistic PSFs, aberrations, and diffraction models.
+
 ---
 
 ## Testing
 
 ```bash
-# Pytest (unit tests) — all three layers
+# Pytest (unit tests) — all four layers + optics
 python -m pytest -q
-# 13 tests
+# 14 tests passed
 
 # Robot Framework (acceptance tests)
 pip install robotframework           # if not already installed
 python -m robot tests/illumination.robot tests/surface.robot tests/scattering.robot
-# 31 tests (16 illumination + 10 surface + 5 scattering)
+# 31 tests passed (16 illumination + 10 surface + 5 scattering)
 ```
 
 ---

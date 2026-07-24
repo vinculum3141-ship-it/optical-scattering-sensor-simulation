@@ -1,3 +1,19 @@
+"""Base scattering model and output data structures.
+
+This module defines the interface and container for surface and volume
+scattering computations:
+
+    - :class:`ScatteredField` — output container holding per-pixel radiance,
+      outgoing direction, and optional polarization
+    - :class:`ScatteringModel` — abstract base class whose :meth:`evaluate`
+      method takes an incident :class:`~illumination.LightField`, a
+      :class:`~surface.Surface`, and a view direction, and returns a
+      :class:`ScatteredField`
+
+Concrete scattering models (e.g. :class:`~scattering.lambertian.LambertianScattering`)
+implement :meth:`ScatteringModel.evaluate` with specific BRDF formulations.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
