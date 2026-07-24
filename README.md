@@ -1,7 +1,38 @@
 # optical-scattering-sensor-simulation
 
-A physics-based simulation framework for optical scattering sensors. The
-repository implements five layers of the simulation pipeline:
+A physics-based simulation framework for optical scattering sensors.
+
+## Quick start
+
+**See the full pipeline in action — one command:**
+
+```bash
+python playground.py --demo
+```
+
+This runs a non-interactive tour through **all six layers** (illumination →
+surface → scattering → optics → detector → analysis) showing terminal
+heatmaps, the detector pipeline step-by-step, the captured digital image,
+and the analysis report with histogram.
+
+Then explore layers individually:
+
+```bash
+python playground.py                         # interactive menu
+python playground.py --detector              # jump straight to detector demo
+python playground.py --analysis              # jump straight to analysis demo
+```
+
+### Requirements
+
+- Python 3.9+
+- [NumPy](https://numpy.org/) (optional for Robot Framework tests: `robotframework`)
+
+---
+
+## Pipeline overview
+
+The repository implements six independent layers:
 
 1. **Illumination** — describe a light source and generate a light field
    over a 2D grid.
@@ -13,35 +44,25 @@ repository implements five layers of the simulation pipeline:
    produce a sensor-plane image.
 5. **Detector** — convert the optical sensor field into a digital image
    with noise, full-well saturation, and ADC quantisation.
+6. **Analysis** — extract quantitative measurements (histogram, statistics)
+   from digital images.
 
 ---
 
-## Getting started
+## Examples
 
-### Requirements
-
-- Python 3.9+
-- [NumPy](https://numpy.org/) (optional for Robot Framework tests: `robotframework`)
-
-### Where to start
-
-**New to the project?** The fastest way to see what the framework can do:
+### Playground (interactive)
 
 ```bash
-python playground.py --demo
+python playground.py --demo       # full pipeline tour
+python playground.py              # interactive menu
+python playground.py --detector   # detector demo only
+python playground.py --analysis   # analysis demo only
+python playground.py --custom     # custom pipeline from scratch
+python playground.py --tinker     # code snippets to copy-paste
 ```
 
-This runs a non-interactive tour through all five layers with terminal
-heatmap visualisations. Then dive into the interactive menu:
-
-```bash
-python playground.py
-```
-
-The playground has seven options covering each layer individually plus
-an end-to-end custom pipeline example and a tinker mode with code snippets.
-
-### Interactive explorer
+### Explorer (original CLI)
 
 The original explorer script works across three modes; switch between them
 inside the menu with `[i]` (illumination), `[s]` (surface), or `[c]`
@@ -70,7 +91,47 @@ python explore.py --scattering --all    # run all scattering scenarios
 Each scenario prints a description of the setup, then renders a 2D terminal
 heatmap of the relevant field (intensity, height, or scattered radiance).
 
-### Use the API directly
+### Demo output preview
+
+```
+============================================================
+  DETECTOR DEMO
+============================================================
+
+  Detector configuration:
+    Exposure time:       1e-05 s
+    Quantum efficiency:  0.9
+    Dark current:        5.0 e⁻/s
+    Read noise:          2.0 e⁻ (σ)
+    Full-well capacity:  80000 e⁻
+    Gain:                1.0 e⁻/ADU
+    Bit depth:           12-bit
+
+  Pipeline steps:
+  Step 1  Irradiance → photons    (E = hc/λ, pixel_area=2.5e-11 m² ...)
+  Step 2  Quantum efficiency       (0.9 e⁻/photon)
+  Step 3  Shot noise (Poisson)     + dark current (5.0 e⁻/s × 1e-05 s)
+  Step 4  Read noise (Gaussian)    σ = 2.0 e⁻
+  Step 5  Custom noise:       (none)
+  Step 6  Full-well clip         ≤ 80000.0 e⁻
+  Step 7  ADC quantisation       gain=1.0 e⁻/ADU, 12-bit
+
+  Output:
+    Pixel shape:  (16, 16)
+    Pixel dtype:  uint16
+    Pixel range:  196 - 503 ADU
+
+  Visualisation:
+  Digital image  (16×16)  min=196  max=503  mean=382  bit-depth=12
+  ────────────────────────────────────────────────
+   ░░░░░░░░░░░░░
+  ▒▒▒▓▓▒▒▓▒▓▒▒▓▒
+  ░▒▓▓▓▓▓▓▓▓▒▒▓▓▒░
+  ░▒▓▓▓▓▓▒▒▒▓█▓▒▓░
+  ...
+```
+
+### Use the API directly (copy-paste ready)
 
 ```python
 from illumination import Laser, GaussianBeamProfile
@@ -126,6 +187,37 @@ detector = CMOSDetector(exposure_time=0.1, bit_depth=12)
 image = detector.capture(sensor_field)
 print(image.pixels.shape)   # (8, 8)
 print(image.pixels.dtype)   # uint16
+
+# Inspect the processing pipeline step-by-step
+print(detector.pipeline_describe())
+
+# Visualise the digital image in the terminal
+print(image.visualize(max_width=48, color=True))
+```
+
+```python
+from analysis import HistogramAnalyzer, ImageAnalyzer
+
+analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
+report = analyzer.analyze(image)
+print(report.measurements["mean_intensity"])   # e.g. 2048.0
+print(report.histogram.shape)                  # e.g. (4096,)
+
+# Full end-to-end pipeline in one shot
+from illumination import Laser, GaussianBeamProfile
+from surface import RoughSurface, Material
+from scattering import LambertianScattering
+from optics import OpticalSystem, GaussianPSF, OpticalPropagator
+
+laser = Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0))
+laser.propagation_direction = [0, 0, -1]
+lf = laser.generate_light_field(shape=(16, 16), spacing=0.5)
+surface = RoughSurface((16, 16), sigma=4.0, amplitude=0.3, material=Material("silicon"))
+scattered = LambertianScattering(albedo=0.7).evaluate(lf, surface, view=[0, 0, 1])
+optics = OpticalSystem(focal_length=0.05, aperture_diameter=0.008, wavelength=532e-9)
+sensor = OpticalPropagator(GaussianPSF(sigma=1.0)).propagate(scattered, optics)
+image = CMOSDetector(exposure_time=1e-5, gain=1.0).capture(sensor)
+print(image.pixels.min(), "-", image.pixels.max(), "ADU")
 ```
 
 ---
@@ -179,6 +271,14 @@ print(image.pixels.dtype)   # uint16
 | `detector/base.py` | `CMOSDetector`, `DigitalImage`, `DetectorNoiseModel` |
 | `detector/__init__.py` | Package exports |
 
+### Analysis layer
+
+| File | Contents |
+|---|---|
+| `analysis/base.py` | `AnalysisReport`, `AnalysisModule`, `ImageAnalyzer` |
+| `analysis/histogram.py` | `HistogramAnalyzer` — histogram and intensity statistics |
+| `analysis/__init__.py` | Package exports |
+
 ### Scripts and tests
 
 | File | Contents |
@@ -190,6 +290,7 @@ print(image.pixels.dtype)   # uint16
 | `tests/test_scattering.py` | Pytest (5 tests) |
 | `tests/test_optics.py` | Pytest (1 test) |
 | `tests/test_detector.py` | Pytest (1 test) |
+| `tests/test_analysis.py` | Pytest (1 test) |
 | `tests/IlluminationLibrary.py` | Robot Framework test library for illumination |
 | `tests/illumination.robot` | Robot Framework acceptance tests (16 tests) |
 | `tests/SurfaceLibrary.py` | Robot Framework test library for surface |
@@ -198,6 +299,8 @@ print(image.pixels.dtype)   # uint16
 | `tests/scattering.robot` | Robot Framework acceptance tests (5 tests) |
 | `tests/DetectorLibrary.py` | Robot Framework test library for detector |
 | `tests/detector.robot` | Robot Framework acceptance tests (6 tests) |
+| `tests/AnalysisLibrary.py` | Robot Framework test library for analysis |
+| `tests/analysis.robot` | Robot Framework acceptance tests (6 tests) |
 
 ---
 
@@ -219,6 +322,8 @@ they can be extended, replaced, or recombined without coupling.
   distribution via PSF-based convolution.
 - **Detector** converts the optical field into a digital image, modelling
   shot noise, dark current, read noise, saturation, and ADC quantisation.
+- **Analysis** provides pluggable modules for extracting quantitative
+  measurements (histograms, statistics) from digital images.
 
 ## Scattering layer
 
@@ -307,17 +412,42 @@ passing instances to the `noise_models` parameter.
 
 ---
 
+## Analysis layer
+
+The analysis layer sits at the end of the pipeline and extracts quantitative
+information from captured digital images. It follows a pluggable-module
+pattern: each :class:`AnalysisModule` computes a specific metric, and
+:class:`ImageAnalyzer` runs a list of modules, merging their results into
+a single :class:`AnalysisReport`.
+
+### Current implementation
+
+| Module | Output |
+|---|---|
+| `HistogramAnalyzer` | Pixel-value histogram, mean/max/min intensity |
+
+```python
+from analysis import HistogramAnalyzer, ImageAnalyzer
+
+analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
+report = analyzer.analyze(image)
+print(report.measurements)     # {"mean_intensity": ..., ...}
+print(report.histogram)        # 1D array of bin counts
+```
+
+---
+
 ## Testing
 
 ```bash
-# Pytest (unit tests) — all five layers
+# Pytest (unit tests) — all six layers
 python -m pytest -q
-# 15 tests passed
+# 16 tests passed
 
 # Robot Framework (acceptance tests)
 pip install robotframework           # if not already installed
-python -m robot tests/illumination.robot tests/surface.robot tests/scattering.robot tests/detector.robot
-# 37 tests passed (16 illumination + 10 surface + 5 scattering + 6 detector)
+python -m robot tests/
+# 43 tests passed (16 illumination + 10 surface + 5 scattering + 6 detector + 6 analysis)
 ```
 
 ---

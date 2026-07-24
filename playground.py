@@ -275,30 +275,48 @@ def demo_detector():
 
     # Capture with CMOS detector
     detector = CMOSDetector(
-        exposure_time=0.1,
+        exposure_time=1e-5,
         quantum_efficiency=0.9,
         dark_current=5.0,
         read_noise_sigma=2.0,
         full_well_capacity=80000.0,
-        gain=2.0,
+        gain=1.0,
         bit_depth=12,
     )
+
+    print(f"\n  Detector configuration:")
+    print(f"    Exposure time:       {detector.exposure_time} s")
+    print(f"    Quantum efficiency:  {detector.quantum_efficiency}")
+    print(f"    Dark current:        {detector.dark_current} e⁻/s")
+    print(f"    Read noise:          {detector.read_noise_sigma} e⁻ (σ)")
+    print(f"    Full-well capacity:  {detector.full_well_capacity:.0f} e⁻")
+    print(f"    Gain:                {detector.gain} e⁻/ADU")
+    print(f"    Bit depth:           {detector.bit_depth}-bit")
+    print()
+
+    print(f"  Pipeline steps:")
+    print(detector.pipeline_describe())
+    print()
+
     image = detector.capture(sensor)
 
-    print(f"\n  Detector: CMOS")
-    print(f"    Exposure:    {detector.exposure_time} s")
-    print(f"    QE:          {detector.quantum_efficiency}")
-    print(f"    Bit depth:   {detector.bit_depth}-bit")
-    print(f"    Gain:        {detector.gain} e⁻/ADU")
-    print(f"    FWC:         {detector.full_well_capacity} e⁻")
-    print(f"    Dark curr:   {detector.dark_current} e⁻/s")
-    print(f"    Read noise:  {detector.read_noise_sigma} e⁻")
-    print(f"\n    Pixel shape:  {image.pixels.shape}")
+    print(f"  Output:")
+    print(f"    Pixel shape:  {image.pixels.shape}")
     print(f"    Pixel dtype:  {image.pixels.dtype}")
     print(f"    Pixel range:  {image.pixels.min()} - {image.pixels.max()} ADU")
     print(f"    Metadata:     {image.metadata}")
     print()
-    print(heatmap(image.pixels.astype(float)))
+    print(f"  Visualisation:")
+    print(image.visualize(max_width=72, color=True))
+
+    print()
+    n_unique = len(np.unique(image.pixels))
+    print(f"  Unique pixel values: {n_unique}")
+    if n_unique <= 12:
+        bins, counts = np.unique(image.pixels, return_counts=True)
+        print(f"  Histogram (value → count):")
+        for v, c in zip(bins, counts):
+            print(f"    {v:5d}  {'█' * int(c * 40 / counts.max())}")
     print()
 
 
@@ -319,17 +337,37 @@ def demo_analysis():
     optics = OpticalSystem(focal_length=0.05, aperture_diameter=0.008, wavelength=532e-9)
     propagator = OpticalPropagator(psf_model=GaussianPSF(sigma=1.0))
     sensor = propagator.propagate(scattered, optics)
-    detector = CMOSDetector(exposure_time=0.1, bit_depth=12)
+    detector = CMOSDetector(exposure_time=1e-5, bit_depth=12, gain=1.0)
     image = detector.capture(sensor)
 
     analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
     report = analyzer.analyze(image)
 
-    print(f"\n  Image: {image.pixels.shape}, bit-depth {image.metadata['bit_depth']}")
-    print(f"  Histogram bins: {len(report.histogram)}")
-    print(f"  Measurements:")
-    for key, val in report.measurements.items():
-        print(f"    {key}: {val:.4g}")
+    print(f"\n  Modules: {[type(m).__name__ for m in analyzer.modules]}")
+    print(f"  Image:   {image.pixels.shape}, {image.metadata['bit_depth']}-bit")
+
+    print(f"\n  Measurements:")
+    print(f"    {'Quantity':<20} {'Value':>10}")
+    print(f"    {'─'*20} {'─'*10}")
+    for key, val in sorted(report.measurements.items()):
+        label = key.replace("_", " ").title()
+        print(f"    {label:<20} {val:>10.4g}")
+
+    hist = report.histogram
+    if hist is not None:
+        values = np.unique(image.pixels)
+        n_bins = len(hist)
+        print(f"\n  Histogram ({n_bins} unique values, showing top 10):")
+        print(f"    {'Value':>6} | {'Count':>6} | Bar")
+        print(f"    {'─'*6}-+-{'─'*6}-+-{'─'*20}")
+        top_n = min(10, n_bins)
+        order = np.argsort(hist)[::-1]
+        max_count = hist[order[0]]
+        for idx in order[:top_n]:
+            bar_len = int(hist[idx] * 20 / max_count)
+            print(f"    {values[idx]:>6} | {int(hist[idx]):>6} | {'█' * bar_len}")
+        if n_bins > top_n:
+            print(f"    ... ({n_bins - top_n} more bins)")
     print()
 
 
@@ -376,11 +414,11 @@ def demo_custom_pipeline():
     print(heatmap(sensor.irradiance))
 
     # 6. Capture with CMOS detector
-    detector = CMOSDetector(exposure_time=0.05, quantum_efficiency=0.85, bit_depth=12)
+    detector = CMOSDetector(exposure_time=1e-5, quantum_efficiency=0.85, bit_depth=12, gain=1.0)
     image = detector.capture(sensor)
     print(f"\n  5. CMOS capture (12-bit)")
     print(f"     Digital image: {image.pixels.shape}, range {image.pixels.min()} - {image.pixels.max()} ADU")
-    print(heatmap(image.pixels.astype(float)))
+    print(image.visualize(max_width=48, color=True))
 
     # 7. Analyse the digital image
     analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
