@@ -135,7 +135,7 @@ values.
 
 ## Built-in Noise Models
 
-The framework ships with five concrete noise models:
+The framework ships with seven concrete noise models:
 
 | Noise Model | Class | Type | Parameters |
 |---|---|---|---|
@@ -144,6 +144,8 @@ The framework ships with five concrete noise models:
 | Hot pixels | `HotPixelNoise` | Poisson dark current | density, hot_current, exposure_time |
 | Column defects | `ColumnDefectNoise` | Column gain scaling | column_index, scale_factor |
 | Dead / stuck pixels | `DeadPixelNoise` | Fixed replacement | density, stuck_value |
+| Speckle | `SpeckleNoise` | Multiplicative speckle | coherence_length |
+| Blooming | `BloomingNoise` | Charge overflow spill | bloom_factor, iterations, full_well_capacity |
 
 ```python
 from detector import (
@@ -153,6 +155,8 @@ from detector import (
     FixedPatternNoise,
     HotPixelNoise,
     PhotoResponseNonUniformity,
+    SpeckleNoise,
+    BloomingNoise,
 )
 
 detector = CMOSDetector(

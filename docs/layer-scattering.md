@@ -14,13 +14,18 @@ computes the radiance scattered toward the observer. It produces a
 
 ## Available Scattering Models
 
-The framework currently provides three scattering models:
+The framework currently provides eight scattering models:
 
 | Model | Type | Parameters | Use Case |
 |---|---|---|---|
 | `LambertianScattering` | Diffuse | albedo | Matte surfaces, baseline reference |
 | `PhongScattering` | Diffuse + specular | diffuse_albedo, specular_albedo, shininess | Glossy surfaces, plastics, painted finishes |
 | `OrenNayarScattering` | Rough diffuse | albedo, roughness | Clay, paper, rough plastics, non-Lambertian matte |
+| `CookTorranceScattering` | Specular microfacet | roughness, fresnel_reflectance, albedo | Physically based specular (metals, plastics, glass) |
+| `BeckmannScattering` | Specular microfacet (skeleton) | roughness, albedo | UC4 — angle-resolved BRDF fitting candidate |
+| `GGXScattering` | Specular microfacet (skeleton) | roughness, fresnel_reflectance, albedo | UC4 — modern PBR reference model |
+| `RayleighScattering` | Particle volume (skeleton) | particle_density, depolarisation | UC6 — molecular / contaminant scattering |
+| `MieScattering` | Particle volume (skeleton) | particle_radius, refractive_index | UC1/UC6 — aerosol / droplet scattering |
 
 ## Lambertian Scattering Model
 
@@ -157,6 +162,33 @@ from scattering import OrenNayarScattering
 model = OrenNayarScattering(albedo=0.8, roughness=0.5)
 result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
 ```
+
+## Cook-Torrance Scattering Model
+
+The Cook-Torrance model is a physically based microfacet BRDF combining a Beckmann normal distribution, Schlick Fresnel approximation, and Smith geometry attenuation. A Lambertian diffuse term provides energy conservation. The specular/diffuse ratio is governed by the Fresnel term.
+
+```python
+from scattering import CookTorranceScattering
+
+model = CookTorranceScattering(roughness=0.1, fresnel_reflectance=0.04, albedo=0.5)
+result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
+```
+
+## Beckmann Scattering Model
+
+**Skeleton** — Beckmann is a microfacet BRDF using the Beckmann normal distribution function. Required before UC4 (Angle-Resolved Scattering) as one of the candidate models for BRDF fitting. See `scattering/beckmann.py` for implementation guidance.
+
+## GGX Scattering Model
+
+**Skeleton** — GGX (Trowbridge–Reitz) is the modern PBR microfacet standard with a longer tail than Beckmann, producing more realistic highlights for rough surfaces and metals. See `scattering/ggx.py` for implementation guidance.
+
+## Rayleigh Scattering Model
+
+**Skeleton** — Rayleigh scattering operates on particles much smaller than the wavelength (d ≪ λ). It is strongly wavelength-dependent (∝ 1/λ⁴). Used for molecular scattering in the atmosphere and small contaminants. See `scattering/particle.py` for implementation guidance.
+
+## Mie Scattering Model
+
+**Skeleton** — Mie scattering operates on particles comparable to the wavelength (d ≈ λ). It is weakly wavelength-dependent. Used for aerosol scattering, droplets, and engineered particles. See `scattering/particle.py` for implementation guidance.
 
 ## Implementation Notes
 
