@@ -55,6 +55,11 @@ from detector import (
     CMOSDetector,
     DigitalImage,
 )
+from analysis import (
+    HistogramAnalyzer,
+    ImageAnalyzer,
+    AnalysisReport,
+)
 
 # ---------------------------------------------------------------------------
 # Utility: compact terminal heatmap (same style as LightField.visualize)
@@ -297,6 +302,37 @@ def demo_detector():
     print()
 
 
+def demo_analysis():
+    """Run the detector pipeline and analyse the resulting digital image."""
+    print("=" * 60)
+    print("  ANALYSIS DEMO")
+    print("=" * 60)
+
+    shape = (16, 16)
+
+    laser = Laser(wavelength=532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0))
+    laser.propagation_direction = np.array([0.0, 0.0, -1.0])
+    lf = laser.generate_light_field(shape=shape, spacing=0.5)
+    surface = RoughSurface(shape, sigma=4.0, amplitude=0.3, material=Material("silicon"))
+    model = LambertianScattering(albedo=0.7)
+    scattered = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
+    optics = OpticalSystem(focal_length=0.05, aperture_diameter=0.008, wavelength=532e-9)
+    propagator = OpticalPropagator(psf_model=GaussianPSF(sigma=1.0))
+    sensor = propagator.propagate(scattered, optics)
+    detector = CMOSDetector(exposure_time=0.1, bit_depth=12)
+    image = detector.capture(sensor)
+
+    analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
+    report = analyzer.analyze(image)
+
+    print(f"\n  Image: {image.pixels.shape}, bit-depth {image.metadata['bit_depth']}")
+    print(f"  Histogram bins: {len(report.histogram)}")
+    print(f"  Measurements:")
+    for key, val in report.measurements.items():
+        print(f"    {key}: {val:.4g}")
+    print()
+
+
 def demo_custom_pipeline():
     """Build a custom source-surface-scattering-optics pipeline from scratch."""
     print("=" * 60)
@@ -345,6 +381,14 @@ def demo_custom_pipeline():
     print(f"\n  5. CMOS capture (12-bit)")
     print(f"     Digital image: {image.pixels.shape}, range {image.pixels.min()} - {image.pixels.max()} ADU")
     print(heatmap(image.pixels.astype(float)))
+
+    # 7. Analyse the digital image
+    analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
+    report = analyzer.analyze(image)
+    print(f"\n  6. Image analysis")
+    print(f"     Histogram bins: {len(report.histogram)}")
+    for key, val in report.measurements.items():
+        print(f"     {key}: {val:.4g}")
     print()
 
 
@@ -386,6 +430,13 @@ def demo_tinker():
     detector = CMOSDetector(exposure_time=0.1, bit_depth=12)
     image = detector.capture(sensor)
     print("Digital image:", image.pixels.shape, image.pixels.dtype)
+
+  Analyse the result:
+
+    from analysis import HistogramAnalyzer, ImageAnalyzer
+    analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
+    report = analyzer.analyze(image)
+    print(report.measurements)
 """)
     print("  (Copy-paste the commands above into a Python shell.)")
 
@@ -401,6 +452,7 @@ def interactive_menu():
         ("Scattering demo", demo_scattering),
         ("Optics demo", demo_optics),
         ("Detector demo", demo_detector),
+        ("Analysis demo", demo_analysis),
         ("Custom pipeline (end-to-end)", demo_custom_pipeline),
         ("Tinker mode (code snippets)", demo_tinker),
     ]
@@ -453,6 +505,7 @@ def main():
         demo_scattering()
         demo_optics()
         demo_detector()
+        demo_analysis()
         demo_custom_pipeline()
         demo_tinker()
         return 0
