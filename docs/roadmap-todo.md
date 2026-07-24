@@ -67,6 +67,7 @@ packaging, and developer experience.
 - [x] **Coherence / speckle model** — `SpeckleNoise` detector noise model, `Surface.phase_screen()`, pipeline integration (UC1, UC7)
 - [x] **Spherical wavefront** — `source.wavefront = "spherical"` with per-pixel direction from origin (UC1, UC4, UC5, UC6)
 - [x] **Cook-Torrance microfacet BRDF** — full physically based specular model with Beckmann D, Schlick F, Smith G; Lambertian diffuse term for energy conservation (UC1, UC4)
+- [x] **BloomingNoise** — charge spill from saturated pixels to cardinal neighbours with configurable bloom factor and iterations (UC1, UC3)
 
 ### Pre-deployment gaps — add before the relevant use case
 
