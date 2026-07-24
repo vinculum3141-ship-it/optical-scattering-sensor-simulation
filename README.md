@@ -1,6 +1,14 @@
 # optical-scattering-sensor-simulation
 
-A physics-based simulation framework for optical scattering sensors. The repository currently focuses on the illumination side of the system: describing a light source in a physically meaningful way and turning that description into a light field that can later be used by downstream scattering, optics, and detector modules.
+A physics-based simulation framework for optical scattering sensors. The
+repository implements two layers of the simulation pipeline:
+
+1. **Illumination** — describe a light source and generate a light field
+   over a 2D grid.
+2. **Surface geometry** — model a surface via a height map and derive
+   geometric quantities (normals, slopes, curvature, roughness).
+
+---
 
 ## Quick start
 
@@ -9,21 +17,29 @@ A physics-based simulation framework for optical scattering sensors. The reposit
 - Python 3.9+
 - [NumPy](https://numpy.org/)
 
-### Try the interactive explorer
+### Interactive explorer
 
-The fastest way to get a feel for the code is to run the explorer script:
-
-```bash
-python explore.py
-```
-
-This starts an interactive menu with six predefined scenarios (laser, LED, sunlight, broadband lamp, etc.). You can also run a single scenario non-interactively:
+Run `explore.py` with no arguments to get an interactive menu:
 
 ```bash
-python explore.py --run 1
-python explore.py --list      # list all available scenarios
-python explore.py --all       # run all scenarios
+python explore.py          # illumination scenarios
+python explore.py --surface   # surface-geometry scenarios
 ```
+
+Inside the menu, press `[m]` to switch between illumination and surface
+mode, or `[q]` to quit.
+
+Non-interactive commands (same flags for both modes):
+
+```bash
+python explore.py --list          # list all scenarios
+python explore.py --run 1         # run scenario 1
+python explore.py --all           # run every scenario
+python explore.py --surface --run 3   # run surface scenario 3
+```
+
+Each scenario prints a description of the source or surface, then renders
+a 2D terminal heatmap of the intensity or height field.
 
 ### Use the API directly
 
@@ -35,83 +51,100 @@ laser = Laser(
     power=5e-3,
     beam_profile=GaussianBeamProfile(w0=1.0),
 )
-
 field = laser.generate_light_field(shape=(64, 64), spacing=1.0)
-print(field.intensity.shape)
-print(field.direction.shape)
+print(field.intensity.shape)   # (64, 64)
 ```
 
-This creates a laser source, assigns a Gaussian beam profile, and generates a light field over a 2D grid.
+```python
+from surface import RoughSurface, Material
 
-## Project goal
+surf = RoughSurface(
+    shape=(64, 64), sigma=6.0, amplitude=0.5,
+    material=Material(name="silicon"),
+)
+print(surf.height.shape)   # (64, 64)
+print(surf.roughness)      # e.g. 0.049
+```
 
-The long-term goal is to simulate how a sensor responds to scattered light under different source, geometry, and material conditions. The current implementation establishes the first building block of that pipeline: a reusable representation of optical illumination.
+---
 
-## What is implemented
+## Package structure
 
-The project now includes an illumination package with a small, modular API for describing light sources.
-
-### Core concepts
-
-- **Light source**: a physical description of an emitter, including wavelength, power, direction, polarization, coherence, beam shape, and divergence.
-- **Light field**: a structured output describing the illumination over a spatial grid, including intensity, direction, wavelength, and polarization state.
-- **Spectral model**: a representation of the wavelength content of the source.
-- **Beam profile**: a model for how intensity is distributed across space.
-
-### Source types
-
-| Class | Spectrum | Default beam shape | Typical divergence |
-|---|---|---|---|
-| `illumination.Laser` | Monochromatic | Uniform (top-hat) | 1 mrad |
-| `illumination.LED` | Gaussian | Gaussian | 0.5 rad |
-| `illumination.Sunlight` | Black-body | Uniform | 0.53 rad |
-| `illumination.BroadbandLamp` | Flat (broadband) | Uniform | 0.5 rad |
-
-### Package structure
+### Illumination layer
 
 | File | Contents |
 |---|---|
 | `illumination/source.py` | Base `LightSource` dataclass |
-| `illumination/laser.py` | Laser source |
-| `illumination/led.py` | LED source |
-| `illumination/sunlight.py` | Sunlight source |
-| `illumination/broadband.py` | Broadband lamp |
-| `illumination/profiles.py` | `UniformBeamProfile`, `TopHatBeamProfile`, `GaussianBeamProfile` |
-| `illumination/spectrum.py` | `MonochromaticSpectrum`, `GaussianSpectrum`, `BlackbodySpectrum`, `BroadbandSpectrum` |
+| `illumination/laser.py` | `Laser` — monochromatic, 1 mrad divergence |
+| `illumination/led.py` | `LED` — Gaussian spectrum, 0.5 rad divergence |
+| `illumination/sunlight.py` | `Sunlight` — black-body at 5778 K |
+| `illumination/broadband.py` | `BroadbandLamp` — flat spectrum over a range |
+| `illumination/profiles.py` | Beam profiles: `UniformBeamProfile`, `TopHatBeamProfile`, `GaussianBeamProfile` |
+| `illumination/spectrum.py` | Spectral models: `MonochromaticSpectrum`, `GaussianSpectrum`, `BlackbodySpectrum`, `BroadbandSpectrum` |
 | `illumination/polarization.py` | `PolarizationState` |
-| `illumination/lightfield.py` | `LightField` data structure |
+| `illumination/lightfield.py` | `LightField` — output container with terminal heatmap (`visualize()`) |
 | `illumination/__init__.py` | Package exports |
-| `explore.py` | Interactive exploration script |
-| `tests/test_illumination.py` | Pytest unit tests |
-| `tests/illumination.robot` | Robot Framework acceptance tests |
-| `tests/IlluminationLibrary.py` | Robot Framework test library |
 
-## Design philosophy
+### Surface geometry layer
 
-The illumination layer is intentionally kept independent of the scene. Its job is to describe the incoming electromagnetic field, not to decide how that field interacts with a surface. That separation makes the code easier to extend later when scattering, reflection, propagation, and detector behavior are added.
+| File | Contents |
+|---|---|
+| `surface/base.py` | `Surface` dataclass, `Material`, `GeometryAnalyzer`, `SurfaceGenerator` base |
+| `surface/generators.py` | `FlatSurface`, `RoughSurface`, `ScratchedSurface`, `ParticleSurface` |
+| `surface/__init__.py` | Package exports |
+
+### Scripts and tests
+
+| File | Contents |
+|---|---|
+| `explore.py` | Interactive CLI explorer (illumination + surface modes) |
+| `tests/test_illumination.py` | Pytest unit tests for illumination (4 tests) |
+| `tests/test_surface.py` | Pytest unit tests for surface (4 tests) |
+| `tests/IlluminationLibrary.py` | Robot Framework test library for illumination |
+| `tests/illumination.robot` | Robot Framework acceptance tests for illumination (16 tests) |
+| `tests/SurfaceLibrary.py` | Robot Framework test library for surface |
+| `tests/surface.robot` | Robot Framework acceptance tests for surface (10 tests) |
+
+---
+
+## Project goal
+
+Simulate how a sensor responds to scattered light under different source,
+geometry, and material conditions. Each layer is kept independent so that
+they can be extended, replaced, or recombined without coupling.
+
+- The **illumination layer** describes the incoming electromagnetic field.
+  It does not know about surfaces or scattering.
+- The **surface layer** describes the object being illuminated via a 2D
+  height map and derived geometric quantities (normals, slopes, curvature,
+  roughness). It does not know about light.
+
+The next step will connect these layers so that a light field can be
+scattered by a surface and sensed by a detector.
+
+---
 
 ## Testing
 
-### Pytest (unit tests)
-
 ```bash
+# Pytest (unit tests) — all layers
 python -m pytest -q
+# 8 tests
+
+# Robot Framework (acceptance tests)
+pip install robotframework           # if not already installed
+python -m robot tests/illumination.robot tests/surface.robot
+# 26 tests (16 illumination + 10 surface)
 ```
 
-4 tests covering default values, light field generation, direction normalisation, and subclass spectral models.
+---
 
-### Robot Framework (acceptance tests)
+## Design notes
 
-```bash
-# install Robot Framework if needed
-pip install robotframework
-
-# run the tests
-robot tests/illumination.robot
-```
-
-16 tests covering source creation, spectrum types, polarization states, light field generation, beam profile evaluation, and field properties.
-
-## Next steps
-
-The next logical step is to connect this illumination model to a surface interaction module so that the generated light field can be used to simulate scattering, reflection, and sensor response.
+- All physical quantities use SI units (metres, Watts, radians).
+- The `LightField.visualize()` method draws a Unicode block-character
+  heatmap in the terminal — no plotting library required.
+- Surface generators are deterministic by default where possible
+  (fixed RNG seed in `ParticleSurface`).
+- The `_gaussian_filter` helper in `surface/generators.py` is a
+  pure-NumPy separable convolution that avoids a SciPy dependency.
