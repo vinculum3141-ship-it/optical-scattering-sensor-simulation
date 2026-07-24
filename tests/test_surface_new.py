@@ -3,6 +3,7 @@ import numpy as np
 from surface import (
     AnisotropicRoughSurface,
     FlatSurface,
+    ImportedSurface,
     Material,
     SinusoidalSurface,
     Surface,
@@ -36,6 +37,21 @@ def test_anisotropic_rough_surface_has_nonzero_roughness():
     assert isinstance(surface, Surface)
     assert surface.height.shape == (32, 32)
     assert surface.roughness > 0.0
+
+
+def test_imported_surface_from_array():
+    heights = np.array([[0.0, 0.5, 0.0], [0.5, 1.0, 0.5], [0.0, 0.5, 0.0]])
+    surf = ImportedSurface(heights)
+    assert surf.height.shape == (3, 3)
+    assert np.allclose(surf.height, heights)
+    assert surf.roughness > 0.0
+    assert surf.normals.shape == (3, 3, 3)
+
+
+def test_imported_surface_rejects_non_2d():
+    import pytest
+    with pytest.raises(ValueError, match="Height map must be 2D"):
+        ImportedSurface(np.array([1.0, 2.0, 3.0]))
 
 
 def test_anisotropic_rough_surface_material():

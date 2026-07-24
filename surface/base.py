@@ -22,6 +22,8 @@ from typing import Optional, Tuple
 
 import numpy as np
 
+from utils import heatmap
+
 
 @dataclass
 class Material:
@@ -73,6 +75,80 @@ class Surface:
     slope_y: np.ndarray
     roughness: float
     material: Material
+
+    def visualize(self, max_width: int = 72, color: bool = True) -> str:
+        """Render the surface geometry as terminal heatmaps.
+
+        Shows three views side by side:
+
+            **Height**  — elevations (uses :func:`~utils.visualize.heatmap`)
+            **Slope**   — gradient magnitude ``√(∂z/∂x² + ∂z/∂y²)``
+            **Curvature** — Laplacian; valleys (blue) ← flat (white) → ridges (red)
+
+        Parameters
+        ----------
+        max_width : int
+            Maximum character width per panel.
+        color : bool
+            If True, use ANSI colour codes.
+
+        Returns
+        -------
+        str
+            Multi-line string ready to ``print()``.
+        """
+        h, w = self.height.shape
+
+        # Slope magnitude
+        slope_mag = np.sqrt(self.slope_x**2 + self.slope_y**2)
+
+        # Curvature — normalised to ±max|κ| with white at zero
+        cmax = max(abs(self.curvature.min()), abs(self.curvature.max()))
+        if cmax > 0:
+            c_norm = self.curvature / cmax  # [-1, 1]
+        else:
+            c_norm = np.zeros_like(self.curvature)
+        # Map to shades: valleys (blue) = left half, ridges (red) = right half
+        _C = [" ", "\u2591", "\u2592", "\u2593", "\u2588"]
+        c_shade = (np.abs(c_norm) * (len(_C) - 1)).astype(np.intp).clip(0, len(_C) - 1)
+        c_lines = []
+        if not color:
+            c_lines = ["".join(_C[idx] for idx in row) for row in c_shade]
+        else:
+            for row_idx in range(h):
+                buf = []
+                for col_idx in range(w):
+                    ch = _C[c_shade[row_idx, col_idx]]
+                    val = c_norm[row_idx, col_idx]
+                    if val < -0.05:
+                        colour = 34  # blue — valley
+                    elif val > 0.05:
+                        colour = 31  # red — ridge
+                    else:
+                        colour = 37  # white — flat
+                    buf.append(f"\033[1;{colour}m{ch}\033[0m")
+                c_lines.append("".join(buf))
+
+        # Height panel
+        h_panel = heatmap(self.height, max_width=max_width, color=color)
+        # Slope panel
+        s_panel = heatmap(slope_mag, max_width=max_width, color=color)
+        # Curvature panel
+        c_panel_lines = "\n".join(c_lines)
+
+        sep = "\u2500" * max_width
+        info = (
+            f"Surface  ({h}\u00d7{w})  "
+            f"material={self.material.name}  "
+            f"Rq={self.roughness:.4g}  "
+            f"height=[{self.height.min():.4g}, {self.height.max():.4g}]"
+        )
+        return (
+            f"{info}\n{sep}\n"
+            f"Height\n{h_panel}\n\n"
+            f"Slope\n{s_panel}\n\n"
+            f"Curvature (blue=valley  white=flat  red=ridge)\n{c_panel_lines}"
+        )
 
     def phase_screen(self, wavelength: float) -> np.ndarray:
         """Phase delay map [radians] from surface heights.

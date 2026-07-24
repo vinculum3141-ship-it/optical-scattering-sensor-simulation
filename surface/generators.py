@@ -11,6 +11,8 @@ providing a ready-to-use surface object on construction:
       depth and width
     - :class:`ParticleSurface` — localised Gaussian bumps at random
       (seeded) grid locations
+    - :class:`ImportedSurface` — load a height map from an external file
+      or NumPy array
 
 All classes use :class:`~surface.base.GeometryAnalyzer` to automatically
 compute normals, slopes, curvature, and roughness from the generated
@@ -22,7 +24,8 @@ Gaussian blur to avoid a SciPy dependency.
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from pathlib import Path
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -317,3 +320,144 @@ class ParticleSurface(Surface):
             radius_sq = (xx - cx) ** 2 + (yy - cy) ** 2
             height += self.amplitude * np.exp(-radius_sq / (2 * self.sigma**2))
         return height
+
+
+def _load_height_map(source: Union[str, Path, np.ndarray]) -> np.ndarray:
+    """Load a 2D height array from *source*.
+
+    Supported formats
+    -----------------
+    * ``.npy``  — NumPy binary (``np.load``).  Must contain a 2D array.
+    * ``.csv``  — comma-separated values (``np.loadtxt`` with delimiter ``,``).
+    * ``.txt``  — whitespace-delimited text (``np.loadtxt``).
+    * ``np.ndarray`` — used directly if already a NumPy array.
+
+    Parameters
+    ----------
+    source : str, Path, or np.ndarray
+        File path or existing array.
+
+    Returns
+    -------
+    np.ndarray
+        2D float64 height map.
+    """
+    if isinstance(source, np.ndarray):
+        arr = source
+    else:
+        path = Path(source)
+        if not path.exists():
+            raise FileNotFoundError(f"Height map file not found: {path}")
+        suffix = path.suffix.lower()
+        if suffix == ".npy":
+            arr = np.load(str(path))
+        elif suffix == ".csv":
+            arr = np.loadtxt(str(path), delimiter=",")
+        elif suffix == ".txt":
+            arr = np.loadtxt(str(path))
+        else:
+            raise ValueError(
+                f"Unsupported file format: {suffix}.  "
+                f"Use .npy, .csv, or .txt."
+            )
+    arr = np.asarray(arr, dtype=float)
+    if arr.ndim != 2:
+        raise ValueError(
+            f"Height map must be 2D, got shape {arr.shape}.  "
+            f"Ensure your file contains a 2D grid of height values."
+        )
+    return arr
+
+
+class ImportedSurface(Surface):
+    """Load an external height map from a file or a NumPy array.
+
+    Use this generator to bring in real measurement data (AFM, profilometry)
+    or height maps created outside the framework.  The geometry (normals,
+    slopes, curvature, roughness) is derived automatically.
+
+    Parameters
+    ----------
+    source : str, Path, or np.ndarray
+        One of:
+
+        * Path to a ``.npy`` file (NumPy binary)
+        * Path to a ``.csv`` file (comma-separated, no header)
+        * Path to a ``.txt`` file (whitespace-delimited)
+        * A 2D :class:`np.ndarray` directly
+
+    spacing : float, optional
+        Physical grid spacing in metres.  Used only if the surface
+        needs to be re-sampled or visualised with correct aspect ratio.
+        Default 1.0 (arbitrary units).
+    material : Material or None
+        Material to attach to the surface.
+
+    Input requirements
+    ------------------
+    1. The file or array must contain a **rectangular 2D grid** of
+       height values (rows = Y, columns = X).
+    2. All values must be numeric (``int`` or ``float``).
+    3. No header rows or index columns — pure data only.
+    4. For CSV files, use comma delimiters and no quoting.
+    5. Height units are arbitrary but should be **consistent with
+       the illumination wavelengths** used in the simulation
+       (typically micrometres or nanometres for optical work).
+
+    Example file content (CSV, 3×3 grid)::
+
+        0.0, 0.1, 0.0
+        0.1, 0.5, 0.1
+        0.0, 0.1, 0.0
+
+    Examples
+    --------
+    >>> # From a NumPy array
+    >>> heights = np.random.randn(64, 64) * 0.3
+    >>> surf = ImportedSurface(heights, material=Material("silicon"))
+    >>> surf.shape
+    (64, 64)
+    >>> surf.roughness > 0
+    True
+
+    >>> # From a .npy file
+    >>> surf = ImportedSurface("measurement.npy")
+
+    >>> # From a CSV file
+    >>> surf = ImportedSurface("profile.csv", spacing=1e-6)
+    """
+
+    def __init__(
+        self,
+        source: Union[str, Path, np.ndarray],
+        spacing: float = 1.0,
+        material: Optional[Material] = None,
+    ):
+        self.source = source
+        self.spacing = spacing
+        height = _load_height_map(source)
+        self.shape = height.shape
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.height = surface.height
+        self.normals = surface.normals
+        self.curvature = surface.curvature
+        self.slope_x = surface.slope_x
+        self.slope_y = surface.slope_y
+        self.roughness = surface.roughness
+        self.material = surface.material
+
+    def generate(self, shape: Tuple[int, int]) -> np.ndarray:
+        """Return the loaded height map (``shape`` is ignored).
+
+        Parameters
+        ----------
+        shape : tuple of int
+            Ignored — the shape is fixed by the imported data.
+            Accepted for interface compatibility.
+
+        Returns
+        -------
+        np.ndarray
+            2D height array.
+        """
+        return self.height

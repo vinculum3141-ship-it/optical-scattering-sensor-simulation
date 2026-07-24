@@ -2,6 +2,7 @@ from .base import Surface, SurfaceGenerator, GeometryAnalyzer, Material
 from .generators import (
     AnisotropicRoughSurface,
     FlatSurface,
+    ImportedSurface,
     ParticleSurface,
     RoughSurface,
     ScratchedSurface,
@@ -12,6 +13,7 @@ __all__ = [
     "AnisotropicRoughSurface",
     "FlatSurface",
     "GeometryAnalyzer",
+    "ImportedSurface",
     "Material",
     "ParticleSurface",
     "RoughSurface",

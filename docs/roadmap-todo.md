@@ -107,6 +107,20 @@ The following should be implemented **just before** (not ahead of) the use case 
 - [ ] Robot Framework tests for LiDAR workflow
 - [ ] Integration test: LiDAR range measurement end-to-end
 
+## Before Phase 2 — final architecture review pass
+
+Run this **after completing all module reviews** (illumination, surface,
+scattering, optics, detector, analysis) and **before starting any use
+case implementation**.
+
+- [ ] Update `README.md` — refresh file reference table, test counts,
+      document new classes (`ImportedSurface`, `SpeckleNoise`,
+      `wavefront`, `incidence_angle`, etc.)
+- [ ] Review and update all package `__init__.py` exports for consistency
+- [ ] Verify every `__all__` list matches actual public API
+- [ ] Run full test suite and update any stale line/class references
+      in docstrings
+
 ## Phase 3 — Consolidation
 
 - [ ] End-to-end demo scripts for each use case
