@@ -6,6 +6,54 @@
 
 ---
 
+## Phase 0 — Framework Finalisation
+
+Turn the codebase into a proper installable scientific Python framework
+before any use-case work begins.  These tasks are about identity,
+packaging, and developer experience.
+
+- [ ] **Choose a project name** — something distinct that signals
+  "optical metrology simulation" (e.g. ``opmet``, ``optomet``,
+  ``scattercam``, ``photonforge``).  Update the GitHub repository
+  name, package directory, and all internal references.
+- [ ] **Production-grade ``pyproject.toml``** — fill in author,
+  description, keywords, classifiers, Python version bounds, and
+  optional dependency groups:
+  ```toml
+  [project]
+  name = "optical-metrology"
+  description = "Virtual optical metrology platform — end-to-end simulation of illumination, scattering, optics, detection, and image analysis"
+  requires-python = ">=3.9"
+  dependencies = ["numpy"]
+  [project.optional-dependencies]
+  analysis = ["scipy"]        # for zoom, ndimage
+  dev = ["pytest", "robotframework"]
+  docs = ["mkdocs", "mkdocstrings"]
+  ```
+- [ ] **``pip install`` workflow** — verify ``pip install -e .`` and
+  ``pip install -e ".[dev]"`` work from a clean venv.  Add a
+  ``src/`` layout if the package grows beyond ~10 modules.
+- [ ] **Continuous integration** — GitHub Actions (or equivalent)
+  that runs ``pytest`` on every PR and push.  Include a basic badge
+  in the README.
+- [ ] **Example Jupyter notebooks** — one per major use-case family:
+  - ``examples/basic_pipeline.ipynb`` — light → surface → scatter → optics → detector → image
+  - ``examples/defect_inspection.ipynb`` — scratched surface with inspection (UC1)
+  - ``examples/angle_resolved.ipynb`` — BRDF angular scatter plot (UC4)
+  - ``examples/mtf_analysis.ipynb`` — slanted-edge MTF from simulated image (UC3)
+  Each notebook should be self-contained and reproducible (pin versions
+  or use ``requirements.txt``).
+- [ ] **Documentation site** — deploy via GitHub Pages (``mkdocs`` or
+  ``sphinx``) with:
+  - README → index
+  - ``docs/use-cases.md`` → "Use Cases"
+  - ``docs/roadmap-todo.md`` → "Roadmap"
+  - Auto-generated API docs from docstrings (``mkdocstrings`` or
+    ``sphinx-autodoc``)
+- [ ] **License** — add an ``LICENSE`` file (MIT or BSD-3-Clause).
+- [ ] **Contributing guide** — ``CONTRIBUTING.md`` with setup steps,
+  test commands, coding conventions, and PR workflow.
+
 ## Phase 1 — Foundational Infrastructure
 
 - [~] **Angular / divergent source model** — non-collimated direction maps (UC1, UC4, UC5, UC6). Partially closed: spherical wavefront implemented; still needed: converging beam, configurable waist position, Gaussian beam propagation
