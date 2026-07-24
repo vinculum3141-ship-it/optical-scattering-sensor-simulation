@@ -97,14 +97,7 @@ class FlatSurface(Surface):
     def __init__(self, shape: Tuple[int, int], material: Optional[Material] = None):
         self.shape = shape
         surface = GeometryAnalyzer.analyze(np.zeros(shape, dtype=float), material=material)
-        # Unpack the analysed result into the dataclass fields inherited from Surface.
-        self.height = surface.height
-        self.normals = surface.normals
-        self.curvature = surface.curvature
-        self.slope_x = surface.slope_x
-        self.slope_y = surface.slope_y
-        self.roughness = surface.roughness
-        self.material = surface.material
+        self.__dict__.update(surface.__dict__)
 
     def generate(self, shape: Tuple[int, int]) -> np.ndarray:
         """Return a zero-filled height map."""
@@ -137,13 +130,7 @@ class RoughSurface(Surface):
         self.shape = shape
         height = self.generate(shape)
         surface = GeometryAnalyzer.analyze(height, material=material)
-        self.height = surface.height
-        self.normals = surface.normals
-        self.curvature = surface.curvature
-        self.slope_x = surface.slope_x
-        self.slope_y = surface.slope_y
-        self.roughness = surface.roughness
-        self.material = surface.material
+        self.__dict__.update(surface.__dict__)
 
     def generate(self, shape: Tuple[int, int]) -> np.ndarray:
         """Generate a rough height map from filtered Gaussian noise."""
@@ -178,13 +165,7 @@ class ScratchedSurface(Surface):
         self.shape = shape
         height = self.generate(shape)
         surface = GeometryAnalyzer.analyze(height, material=material)
-        self.height = surface.height
-        self.normals = surface.normals
-        self.curvature = surface.curvature
-        self.slope_x = surface.slope_x
-        self.slope_y = surface.slope_y
-        self.roughness = surface.roughness
-        self.material = surface.material
+        self.__dict__.update(surface.__dict__)
 
     def generate(self, shape: Tuple[int, int]) -> np.ndarray:
         """Generate a height map with a diagonal scratch."""
@@ -300,13 +281,7 @@ class ParticleSurface(Surface):
         self.shape = shape
         height = self.generate(shape)
         surface = GeometryAnalyzer.analyze(height, material=material)
-        self.height = surface.height
-        self.normals = surface.normals
-        self.curvature = surface.curvature
-        self.slope_x = surface.slope_x
-        self.slope_y = surface.slope_y
-        self.roughness = surface.roughness
-        self.material = surface.material
+        self.__dict__.update(surface.__dict__)
 
     def generate(self, shape: Tuple[int, int]) -> np.ndarray:
         """Generate a height map with Gaussian particle bumps."""
@@ -438,13 +413,7 @@ class ImportedSurface(Surface):
         height = _load_height_map(source)
         self.shape = height.shape
         surface = GeometryAnalyzer.analyze(height, material=material)
-        self.height = surface.height
-        self.normals = surface.normals
-        self.curvature = surface.curvature
-        self.slope_x = surface.slope_x
-        self.slope_y = surface.slope_y
-        self.roughness = surface.roughness
-        self.material = surface.material
+        self.__dict__.update(surface.__dict__)
 
     def generate(self, shape: Tuple[int, int]) -> np.ndarray:
         """Return the loaded height map (``shape`` is ignored).
