@@ -51,7 +51,7 @@ The repository implements six independent layers:
 
 ## Examples
 
-### Playground (interactive)
+### Playground (interactive — no extra dependencies)
 
 ```bash
 python playground.py --demo       # full pipeline tour
@@ -61,6 +61,27 @@ python playground.py --analysis   # analysis demo only
 python playground.py --custom     # custom pipeline from scratch
 python playground.py --tinker     # code snippets to copy-paste
 ```
+
+### Matplotlib plots (standalone script)
+
+```bash
+pip install matplotlib            # first install
+python plot_pipeline.py
+```
+
+Saves `pipeline_full.png` (2×3 grid of all six layers) plus individual
+layer plots to the current directory. No Jupyter needed.
+
+### Jupyter notebook (interactive with inline plots)
+
+```bash
+pip install matplotlib jupyter    # first install
+jupyter notebook pipeline.ipynb   # or use VS Code / PyCharm
+```
+
+Each layer is a separate cell with inline matplotlib plots. Tweak
+parameters (wavelength, surface roughness, exposure time, …) and
+re-run to explore the effect.
 
 ### Explorer (original CLI)
 
@@ -285,6 +306,8 @@ print(image.pixels.min(), "-", image.pixels.max(), "ADU")
 |---|---|
 | `explore.py` | Interactive CLI (illumination / surface / scattering modes) |
 | `playground.py` | Interactive playground with demos, custom pipeline, and code snippets |
+| `plot_pipeline.py` | Standalone script — runs pipeline, saves matplotlib PNGs |
+| `pipeline.ipynb` | Jupyter notebook — interactive inline plots per layer |
 | `tests/test_illumination.py` | Pytest (4 tests) |
 | `tests/test_surface.py` | Pytest (4 tests) |
 | `tests/test_scattering.py` | Pytest (5 tests) |
