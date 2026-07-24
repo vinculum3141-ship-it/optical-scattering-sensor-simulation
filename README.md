@@ -1,7 +1,7 @@
 # optical-scattering-sensor-simulation
 
 A physics-based simulation framework for optical scattering sensors. The
-repository implements four layers of the simulation pipeline:
+repository implements five layers of the simulation pipeline:
 
 1. **Illumination** — describe a light source and generate a light field
    over a 2D grid.
@@ -11,6 +11,8 @@ repository implements four layers of the simulation pipeline:
    direction, compute the radiance scattered toward the observer.
 4. **Optics** — propagate a scattered field through an imaging system to
    produce a sensor-plane image.
+5. **Detector** — convert the optical sensor field into a digital image
+   with noise, full-well saturation, and ADC quantisation.
 
 ---
 
@@ -29,16 +31,15 @@ repository implements four layers of the simulation pipeline:
 python playground.py --demo
 ```
 
-This runs a non-interactive tour through all four layers (illumination,
-surface geometry, scattering, optics) with terminal heatmap visualisations.
-Then dive into the interactive menu:
+This runs a non-interactive tour through all five layers with terminal
+heatmap visualisations. Then dive into the interactive menu:
 
 ```bash
 python playground.py
 ```
 
-The playground has six options covering each layer individually and an
-end-to-end custom pipeline example.
+The playground has seven options covering each layer individually plus
+an end-to-end custom pipeline example and a tinker mode with code snippets.
 
 ### Interactive explorer
 
@@ -112,6 +113,21 @@ print(result.radiance.shape)   # (32, 32)
 print(result.radiance.min(), result.radiance.max())
 ```
 
+```python
+from detector import CMOSDetector
+from optics import SensorField
+import numpy as np
+
+sensor_field = SensorField(
+    irradiance=np.ones((8, 8)) * 1e3,
+    wavelength=532e-9,
+)
+detector = CMOSDetector(exposure_time=0.1, bit_depth=12)
+image = detector.capture(sensor_field)
+print(image.pixels.shape)   # (8, 8)
+print(image.pixels.dtype)   # uint16
+```
+
 ---
 
 ## Package structure
@@ -156,6 +172,13 @@ print(result.radiance.min(), result.radiance.max())
 | `optics/propagator.py` | `OpticalPropagator` that applies PSF-based blur to a scattered field |
 | `optics/__init__.py` | Package exports |
 
+### Detector layer
+
+| File | Contents |
+|---|---|
+| `detector/base.py` | `CMOSDetector`, `DigitalImage`, `DetectorNoiseModel` |
+| `detector/__init__.py` | Package exports |
+
 ### Scripts and tests
 
 | File | Contents |
@@ -166,12 +189,15 @@ print(result.radiance.min(), result.radiance.max())
 | `tests/test_surface.py` | Pytest (4 tests) |
 | `tests/test_scattering.py` | Pytest (5 tests) |
 | `tests/test_optics.py` | Pytest (1 test) |
+| `tests/test_detector.py` | Pytest (1 test) |
 | `tests/IlluminationLibrary.py` | Robot Framework test library for illumination |
 | `tests/illumination.robot` | Robot Framework acceptance tests (16 tests) |
 | `tests/SurfaceLibrary.py` | Robot Framework test library for surface |
 | `tests/surface.robot` | Robot Framework acceptance tests (10 tests) |
 | `tests/ScatteringLibrary.py` | Robot Framework test library for scattering |
 | `tests/scattering.robot` | Robot Framework acceptance tests (5 tests) |
+| `tests/DetectorLibrary.py` | Robot Framework test library for detector |
+| `tests/detector.robot` | Robot Framework acceptance tests (6 tests) |
 
 ---
 
@@ -189,6 +215,10 @@ they can be extended, replaced, or recombined without coupling.
 - **Scattering** connects the two: given an incident light field, a
   surface, and an observation direction, it computes the scattered
   radiance.
+- **Optics** transforms scattered radiance into a sensor-plane irradiance
+  distribution via PSF-based convolution.
+- **Detector** converts the optical field into a digital image, modelling
+  shot noise, dark current, read noise, saturation, and ADC quantisation.
 
 ## Scattering layer
 
@@ -239,26 +269,65 @@ optical system on a field before it reaches a detector. This gives the
 simulator a working imaging-style pipeline that can later be extended to
 more realistic PSFs, aberrations, and diffraction models.
 
+## Detector layer
+
+The detector layer is the final stage: it converts the optical sensor field
+into a digital image that would be read out from a real sensor.
+
+### Pipeline steps
+
+1. **Photon conversion** — irradiance (W/m²) → incident photons via
+   :math:`E = hc/λ`.
+2. **Quantum efficiency** — scale by QE to get photoelectrons.
+3. **Shot noise** — Poisson-distributed photon arrival statistics.
+4. **Dark current** — thermally generated electrons (Poisson).
+5. **Read noise** — Gaussian noise from the readout electronics.
+6. **Full-well clip** — saturation at the maximum electron capacity.
+7. **ADC quantisation** — convert electrons to digital counts (ADU) at
+   the specified bit depth.
+
+### Current implementation: `CMOSDetector`
+
+```python
+from detector import CMOSDetector, DetectorNoiseModel
+
+detector = CMOSDetector(
+    exposure_time=0.1,       # seconds
+    quantum_efficiency=0.9,  # electrons per photon
+    dark_current=5.0,        # electrons per second
+    read_noise_sigma=2.0,    # electrons (standard deviation)
+    full_well_capacity=80000.0,
+    gain=2.0,                # electrons per ADU
+    bit_depth=12,
+)
+```
+
+Custom noise stages can be added by subclassing `DetectorNoiseModel` and
+passing instances to the `noise_models` parameter.
+
 ---
 
 ## Testing
 
 ```bash
-# Pytest (unit tests) — all four layers + optics
+# Pytest (unit tests) — all five layers
 python -m pytest -q
-# 14 tests passed
+# 15 tests passed
 
 # Robot Framework (acceptance tests)
 pip install robotframework           # if not already installed
-python -m robot tests/illumination.robot tests/surface.robot tests/scattering.robot
-# 31 tests passed (16 illumination + 10 surface + 5 scattering)
+python -m robot tests/illumination.robot tests/surface.robot tests/scattering.robot tests/detector.robot
+# 37 tests passed (16 illumination + 10 surface + 5 scattering + 6 detector)
 ```
 
 ---
 
 ## Design notes
 
-- All physical quantities use SI units (metres, Watts, radians).
+- All physical quantities use SI units (metres, Watts, radians, seconds).
+- The `CMOSDetector` uses stochastic noise models (Poisson shot noise,
+  Poisson dark current, Gaussian read noise) so outputs vary between runs.
+  Tests use statistical bounds rather than exact values.
 - The `LightField.visualize()` method draws a Unicode block-character
   heatmap in the terminal — no plotting library required.
 - Surface generators are deterministic by default where possible (fixed
