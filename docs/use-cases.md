@@ -2,6 +2,15 @@
 
 > **Target audience:** Product managers, R&D leads, simulation engineers,
 > and anyone planning the future direction of the framework.
+>
+> **Industry alignment note:** Additions in this iteration — incidence
+> angle convenience, coherence/speckle model, and spherical wavefront —
+> are all directly relevant to **semiconductor manufacturing inspection**.
+> Incidence angle control is fundamental to dark-field defect detection
+> and angle-resolved scatterometry (CD metrology). Coherence modelling
+> addresses speckle noise in laser-based DUV inspection tools (e.g.
+> KLA, Applied Materials). Spherical wavefronts enable divergent
+> point-source models for proximity inspection and structured light.
 
 ## Overview
 
@@ -55,9 +64,17 @@ Configure illumination (ring light / dark-field / bright-field)
 | Pass/fail decision logic | Threshold-based or ML-based classification output | UC7 |
 | Surface scanning / stage motion | Tiled acquisition, multi-FOV stitching | UC6, UC7 |
 
+### Additions in this iteration
+
+| Addition | Benefit for UC1 |
+|---|---|
+| **Incidence angle property** (`source.incidence_angle_degrees`) | Enables quick switching between bright-field (0°) and dark-field/grazing (>45°) illumination — key for highlighting scratches and particles |
+| **Speckle noise** (`SpeckleNoise` + `coherence_length`) | Adds realistic speckle when using a laser source; defect visibility changes under coherent vs. incoherent illumination — critical for semiconductor AOI |
+| **Spherical wavefront** (`source.wavefront = "spherical"`) | Models a point source at finite distance — direction varies per pixel. Enables divergent dark-field illumination from a near-field emitter. Partially addresses the "divergent source" gap |
+
 ### Effort estimate
 
-- **Shared prerequisites**: Angular sources (medium) — needed by UC4, UC5
+- **Shared prerequisites**: Angular sources (medium) — needed by UC4, UC5. Spherical wavefront partially closes this gap.
 - **Use-case-specific**: Defect generators (low), defect analysis (medium),
   pass/fail logic (low)
 
@@ -191,11 +208,18 @@ Configure source + surface + detector
 | Scattering models | Lambertian, Phong, Oren-Nayar |
 | Surface with normals | Full surface geometry pipeline |
 
+### Additions in this iteration
+
+| Addition | Benefit for UC4 |
+|---|---|
+| **Incidence angle property** (`source.incidence_angle_degrees`) | Directly enables the goniometric sweep: ``for θ in range(0, 90, 5): source.incidence_angle_degrees = θ`` — replaces manual propagation_direction vector construction |
+| **Spherical wavefront** (`source.wavefront = "spherical"`) | Enables finite-distance source for goniometric sweeps; direction varies across grid for realistic near-field scattering |
+
 ### Gaps and Required Extensions
 
 | Gap | Extension needed | Shared with |
 |---|---|---|
-| **Divergent / finite-distance source** | Direction varies across grid (point source, converging/diverging beam) | UC1, UC5, UC6 |
+| **Divergent / finite-distance source** (partially closed) | Spherical wavefront addresses fixed point-source geometry; still needed: converging/diverging beam control, configurable waist | UC1, UC5, UC6 |
 | Goniometric sweep workflow | Loop over angles, collect measurements into structured output | — |
 | BRDF fitting analysis | Fit model parameters (albedo, roughness, shininess) to angle data | — |
 | Polarized BRDF | Fresnel coefficients, Mueller matrix propagation | — |
@@ -246,7 +270,7 @@ Configure projector + camera system (baseline, angles)
 | Gap | Extension needed | Shared with |
 |---|---|---|
 | **Structured illumination source** | Project fringe/pattern as illumination, not analytic profile | UC1 (patterned light) |
-| **Divergent projection** | Projector model with fan-out geometry | UC4, UC6 |
+| **Divergent projection** (partially closed) | Spherical wavefront gives point-source fan-out; still needed: projector aperture model, Keystone distortion | UC4, UC6 |
 | Phase extraction analysis | Phase-shifting algorithm (N-step), Fourier transform profilometry | — |
 | Phase unwrapping | Spatial (flood-fill) or temporal (multi-frequency) unwrapping | — |
 | Height reconstruction | Triangulation from phase → height, system calibration model | — |
@@ -341,6 +365,12 @@ Define nominal pattern (fiducial marks, track layout, chip outline)
 | Imaging pipeline | Optics + detector |
 | Analysis measurements | Dict-based output |
 
+### Additions in this iteration
+
+| Addition | Benefit for UC7 |
+|---|---|
+| **Speckle noise** (`SpeckleNoise`) | Semiconductor wafer inspection uses coherent DUV lasers — speckle is a primary noise source that limits overlay and CD measurement precision. The `SpeckleNoise` model captures this effect, enabling realistic simulations of alignment accuracy under shot-to-shot speckle variation |
+
 ### Gaps and Required Extensions
 
 | Gap | Extension needed | Shared with |
@@ -367,14 +397,17 @@ The following capabilities are needed by multiple use cases and should
 be prioritised first:
 
 | Capability | Needed by | Estimated effort |
-|---|---|---|
-| **Angular / divergent sources** (non-collimated direction maps) | UC1, UC4, UC5, UC6 | Medium |
+|---|---|---|---|
+| **Angular / divergent sources** (non-collimated direction maps) | UC1, UC4, UC5, UC6 | Medium (partially closed) |
 | **Coordinate transforms** (surface rotation, tilt, arbitrary pose) | UC1, UC4, UC5, UC7 | Medium |
 | **Multi-channel / spectral light field** (wavelength stacks) | UC2 | Medium |
 | **Spectral material model** (wavelength-dependent reflectance) | UC2, UC4 | Low |
 | **Flat-field / stepped-intensity source** | UC3, UC6, UC7 | Low |
 | **Template matching / pattern analysis** | UC1, UC7 | Medium |
 | **Surface comparison / registration** | UC5, UC7 | Medium |
+| **Incidence angle convenience** (set source angle in degrees) | UC1, UC4 | Implemented |
+| **Coherence / speckle model** (partial coherence, speckle noise) | UC1, UC7 | Implemented |
+| **Spherical wavefront** (point source, per-pixel direction) | UC1, UC4, UC5, UC6 | Implemented |
 
 ---
 
@@ -395,7 +428,18 @@ Spectral materials ─┬─ UC2 (multi-spectral ID)
                      └─ UC4 (angle-resolved BRDF)
 
 Template matching ─┬─ UC1 (defect detection)
-                    └─ UC7 (wafer alignment)
+                     └─ UC7 (wafer alignment)
+
+Incidence angle ─┬─ UC1 (dark-field/grazing illumination)
+                  └─ UC4 (goniometric sweep)
+
+Coherence / speckle ─┬─ UC1 (laser-based AOI realism)
+                       └─ UC7 (DUV inspection noise floor)
+
+Spherical wavefront ─┬─ UC1 (divergent dark-field)
+                      ├─ UC4 (finite-distance source)
+                      ├─ UC5 (projector fan-out)
+                      └─ UC6 (beam divergence)
 ```
 
 ---
@@ -407,6 +451,11 @@ Template matching ─┬─ UC1 (defect detection)
 2. Coordinate transforms for surfaces
 3. Flat-field / stepped-intensity source
 4. Spectral material model
+
+**Completed (this iteration):**
+- **Incidence angle convenience** — `source.incidence_angle` / `incidence_angle_degrees` property on `LightSource`
+- **Coherence / speckle model** — `SpeckleNoise` detector noise model, `Surface.phase_screen()` method, pipeline integration
+- **Spherical wavefront** — `source.wavefront = "spherical"` with per-pixel direction from origin (partially closes the divergent source gap)
 
 ### Phase 2 — Use-case delivery (pick order by priority)
 The use cases are largely independent once Phase 1 is complete.

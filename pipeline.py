@@ -181,7 +181,7 @@ class SimulationPipeline:
 
         # --- Stage 5: Detector ---
         if self.detector is not None and sensor is not None:
-            image = self.detector.capture(sensor)
+            image = self.detector.capture(sensor, surface=surface)
 
         # --- Stage 6: Analysis ---
         if self.analysers and image is not None:

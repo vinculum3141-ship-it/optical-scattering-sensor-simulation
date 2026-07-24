@@ -17,6 +17,7 @@ from .noise_models import (
     FixedPatternNoise,
     HotPixelNoise,
     PhotoResponseNonUniformity,
+    SpeckleNoise,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     "FixedPatternNoise",
     "HotPixelNoise",
     "PhotoResponseNonUniformity",
+    "SpeckleNoise",
 ]

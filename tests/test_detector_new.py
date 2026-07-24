@@ -7,8 +7,11 @@ from detector import (
     FixedPatternNoise,
     HotPixelNoise,
     PhotoResponseNonUniformity,
+    SpeckleNoise,
 )
 from optics import SensorField
+
+from surface.base import Surface, Material
 
 
 def _sensor_field(shape=(8, 8), irradiance=1e3, wavelength=532e-9):
@@ -94,6 +97,86 @@ def test_multiple_noise_models_chain():
     sf = _sensor_field()
     image = detector.capture(sf)
     assert image.pixels.shape == (8, 8)
+
+
+def _rough_surface(shape=(8, 8), amplitude=1e-6):
+    height = np.random.randn(*shape) * amplitude
+    return Surface(
+        height=height,
+        normals=np.zeros((*shape, 3), dtype=float),
+        curvature=np.zeros(shape, dtype=float),
+        slope_x=np.zeros(shape, dtype=float),
+        slope_y=np.zeros(shape, dtype=float),
+        roughness=float(np.std(height)),
+        material=Material("test"),
+    )
+
+
+def test_speckle_noise_smooth_surface_no_effect():
+    height = np.ones((8, 8)) * 1.0  # flat, σ_h = 0
+    surface = Surface(
+        height=height,
+        normals=np.zeros((8, 8, 3), dtype=float),
+        curvature=np.zeros((8, 8), dtype=float),
+        slope_x=np.zeros((8, 8), dtype=float),
+        slope_y=np.zeros((8, 8), dtype=float),
+        roughness=0.0,
+        material=Material("test"),
+    )
+    noise = SpeckleNoise(coherence_length=1e-3)
+    noise.prepare(height, wavelength=532e-9)
+    electrons = np.ones((8, 8)) * 100.0
+    result = noise.apply(electrons)
+    assert np.allclose(result, electrons, rtol=1e-10)
+
+
+def test_speckle_noise_coherent_increases_variance():
+    """Rough surface + long coherence → visible speckle → higher variance."""
+    rng_state = np.random.get_state()
+    np.random.seed(42)
+    surface = _rough_surface(shape=(32, 32), amplitude=2e-6)
+    noise = SpeckleNoise(coherence_length=1.0)  # L_c >> σ_h
+    noise.prepare(surface.height, wavelength=532e-9)
+    electrons = np.ones((32, 32)) * 1000.0
+    result = noise.apply(electrons)
+    np.random.set_state(rng_state)
+    var_ratio = float(np.var(result) / np.mean(result)**2)
+    assert var_ratio > 0.05, f"Expected visible speckle variance, got {var_ratio:.4f}"
+
+
+def test_speckle_noise_incoherent_no_effect():
+    """Rough surface + tiny coherence length → no speckle."""
+    rng_state = np.random.get_state()
+    np.random.seed(42)
+    surface = _rough_surface(shape=(16, 16), amplitude=2e-6)
+    noise = SpeckleNoise(coherence_length=1e-12)  # L_c << σ_h
+    noise.prepare(surface.height, wavelength=532e-9)
+    electrons = np.ones((16, 16)) * 1000.0
+    result = noise.apply(electrons)
+    np.random.set_state(rng_state)
+    assert np.allclose(result, electrons, atol=1.0)
+
+
+def test_capture_with_surface_and_speckle():
+    detector = CMOSDetector(
+        exposure_time=1.0,
+        quantum_efficiency=0.5,
+        noise_models=[SpeckleNoise(coherence_length=1.0)],
+    )
+    sf = _sensor_field(irradiance=1e3)
+    surface = _rough_surface(shape=(8, 8), amplitude=1e-6)
+    image = detector.capture(sf, surface=surface)
+    assert image.pixels.shape == (8, 8)
+    assert image.pixels.dtype == np.uint16
+
+
+def test_capture_with_surface_no_speckle_model_unchanged():
+    detector = CMOSDetector(exposure_time=1.0)
+    sf = _sensor_field(irradiance=1e3)
+    surface = _rough_surface(shape=(8, 8), amplitude=1e-6)
+    image_no_surface = detector.capture(sf)
+    image_with_surface = detector.capture(sf, surface=surface)
+    assert image_with_surface.pixels.shape == (8, 8)
 
 
 def test_noise_model_raises_on_shape_mismatch():

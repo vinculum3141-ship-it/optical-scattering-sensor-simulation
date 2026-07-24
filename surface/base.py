@@ -74,6 +74,27 @@ class Surface:
     roughness: float
     material: Material
 
+    def phase_screen(self, wavelength: float) -> np.ndarray:
+        """Phase delay map [radians] from surface heights.
+
+        For a reflection, the round-trip optical path difference is
+        :math:`2h`, giving a phase delay :math:`\\phi = 4\\pi h / \\lambda`.
+        This is used to model speckle and interference effects when
+        combined with a source's coherence length.
+
+        Parameters
+        ----------
+        wavelength : float
+            Illumination wavelength in metres.
+
+        Returns
+        -------
+        np.ndarray
+            2D array of phase delays in radians, same shape as
+            :attr:`height`.
+        """
+        return 4.0 * np.pi * self.height / wavelength
+
 
 class GeometryAnalyzer:
     """Compute geometric quantities from a height map.

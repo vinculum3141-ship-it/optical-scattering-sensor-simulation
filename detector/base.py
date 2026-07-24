@@ -180,7 +180,7 @@ class CMOSDetector:
         self.pixel_area = pixel_area
         self.noise_models = noise_models or []
 
-    def capture(self, sensor_field) -> DigitalImage:
+    def capture(self, sensor_field, surface=None) -> DigitalImage:
         """Expose the sensor and return a digital image.
 
         Parameters
@@ -188,6 +188,10 @@ class CMOSDetector:
         sensor_field : SensorField
             Irradiance distribution from :class:`~optics.OpticalPropagator`
             (or any object with ``.irradiance`` and ``.wavelength``).
+        surface : Surface or None
+            Optional surface geometry.  If provided, any
+            :class:`SpeckleNoise` models in the noise chain are
+            prepared with the surface height map and wavelength.
 
         Returns
         -------
@@ -213,6 +217,13 @@ class CMOSDetector:
         # Step 4: read noise (Gaussian)
         read_noise = np.random.normal(0.0, self.read_noise_sigma, size=electrons.shape)
         electrons = electrons + read_noise
+
+        # Step 4.5: prepare speckle noise models with surface data
+        if surface is not None:
+            from .noise_models import SpeckleNoise
+            for noise_model in self.noise_models:
+                if isinstance(noise_model, SpeckleNoise):
+                    noise_model.prepare(surface.height, sensor_field.wavelength)
 
         # Step 5: custom noise models
         for noise_model in self.noise_models:

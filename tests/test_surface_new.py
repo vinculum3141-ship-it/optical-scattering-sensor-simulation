@@ -2,6 +2,7 @@ import numpy as np
 
 from surface import (
     AnisotropicRoughSurface,
+    FlatSurface,
     Material,
     SinusoidalSurface,
     Surface,
@@ -44,3 +45,25 @@ def test_anisotropic_rough_surface_material():
         material=material,
     )
     assert surface.material.name == "aluminium"
+
+
+def test_flat_surface_phase_screen_zero():
+    surface = FlatSurface(shape=(16, 16))
+    phase = surface.phase_screen(wavelength=532e-9)
+    assert phase.shape == (16, 16)
+    assert np.all(phase == 0.0)
+
+
+def test_phase_screen_formula():
+    surface = SinusoidalSurface(shape=(32, 32), period=16.0, amplitude=0.5)
+    phase = surface.phase_screen(wavelength=532e-9)
+    expected = 4.0 * np.pi * surface.height / 532e-9
+    assert np.allclose(phase, expected)
+
+
+def test_phase_screen_scales_with_inverse_wavelength():
+    surface = SinusoidalSurface(shape=(16, 16), period=8.0, amplitude=0.3)
+    phase_red = surface.phase_screen(wavelength=650e-9)
+    phase_blue = surface.phase_screen(wavelength=450e-9)
+    ratio = phase_blue / phase_red
+    assert np.allclose(ratio, 650.0 / 450.0, rtol=1e-10)

@@ -7,6 +7,8 @@ and photo-response non-uniformity.
 
 from __future__ import annotations
 
+from typing import Optional
+
 import numpy as np
 
 from .base import DetectorNoiseModel
@@ -124,6 +126,64 @@ class ColumnDefectNoise(DetectorNoiseModel):
     def apply(self, electrons):
         electrons[:, self.column_index] *= self.scale_factor
         return electrons
+
+
+class SpeckleNoise(DetectorNoiseModel):
+    """Multiplicative speckle noise from surface roughness and finite coherence.
+
+    When coherent light reflects from a rough surface, the random phase
+    delays produce a granular interference pattern (speckle).  The
+    contrast of the speckle pattern depends on the ratio of the surface
+    roughness :math:`\\sigma_h` to the source coherence length
+    :math:`L_c`:
+
+        .. math::
+
+            C = \\frac{1}{\\sqrt{1 + (2 \\sigma_h / L_c)^2}}
+
+    For fully coherent light (:math:`L_c \\gg \\sigma_h`), the speckle is
+    fully developed (:math:`C \\approx 1`).  For incoherent light
+    (:math:`L_c \\ll \\sigma_h`), no speckle appears (:math:`C \\approx 0`).
+
+    Parameters
+    ----------
+    coherence_length : float
+        Temporal coherence length of the source in metres.
+        Set via :meth:`prepare` at capture time.
+    """
+
+    def __init__(self, coherence_length: float = 1e-3):
+        self.coherence_length = coherence_length
+        self._height_map: Optional[np.ndarray] = None
+        self._wavelength: Optional[float] = None
+
+    def prepare(self, height_map: np.ndarray, wavelength: float):
+        """Supply the surface height map and wavelength before calling :meth:`apply`.
+
+        Parameters
+        ----------
+        height_map : np.ndarray
+            2D array of surface heights in metres.
+        wavelength : float
+            Illumination wavelength in metres.
+        """
+        self._height_map = np.asarray(height_map, dtype=float)
+        self._wavelength = float(wavelength)
+
+    def apply(self, electrons: np.ndarray) -> np.ndarray:
+        if self._height_map is None or self._wavelength is None:
+            return electrons
+
+        roughness = float(np.std(self._height_map))
+        if roughness < self._wavelength / 4.0 or self.coherence_length <= 0.0:
+            return electrons
+
+        contrast = 1.0 / np.sqrt(1.0 + (2.0 * roughness / self.coherence_length)**2)
+
+        speckle = np.random.exponential(scale=1.0, size=electrons.shape)
+        speckle = speckle / np.mean(speckle)
+
+        return electrons * ((1.0 - contrast) + contrast * speckle)
 
 
 class DeadPixelNoise(DetectorNoiseModel):
