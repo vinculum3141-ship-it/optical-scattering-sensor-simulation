@@ -29,6 +29,92 @@ The following should be implemented **just before** (not ahead of) the use case 
 - [ ] **Spectral quantum efficiency** `QE(λ)` (needed by UC3 Sensor Char first, then UC2 Multi-Spectral) — change `CMOSDetector.quantum_efficiency` from a single float to a callable `QE(wavelength)` or interpolated curve. Enables wavelength-dependent photoresponse for multi-spectral simulation.
 - [ ] **Thin-film interference model** (needed by UC1 Defect Inspection) — model for reflectance/transmittance of single or multi-layer coatings as a function of wavelength, incidence angle, and film thickness. Relevant for semiconductor coatings inspection and anti-reflection layer characterisation.
 - [ ] **Gaussian beam divergence / waist propagation** (needed by UC6 LiDAR) — functional wiring of the stored `divergence` parameter to compute beam waist at range, spot size at target surface, and intensity falloff with distance. Partially closes the remaining divergent-source gap.
+- [ ] **Optical throughput / radiometric scaling** (needed by UC3 Sensor Char first) — the propagator currently converts scattered radiance (W·m⁻²·sr⁻¹) to sensor irradiance (W/m²) by PSF convolution alone, without accounting for the optical system's throughput.  Absent this, absolute irradiance values are incorrect for SNR, PTC, or any physically calibrated measurement.
+
+  **What to change:**
+  `OpticalPropagator.propagate()` must scale the convolved irradiance by the system's collection efficiency.  For a simple paraxial model the throughput is:
+
+      τ = π · (D/(2f))² = π · NA²
+
+  (the solid angle subtended by the exit pupil from the image plane, assuming no vignetting or transmission loss).
+
+  Implementation sketch:
+  ```python
+  def propagate(self, scattered_field, optical_system):
+      radiance = np.asarray(scattered_field.radiance, dtype=float)
+      psf = self._get_psf(optical_system)
+      convolved = self._convolve(radiance, psf)
+      na = optical_system.numerical_aperture
+      irradiance = convolved * (np.pi * na ** 2)
+      return SensorField(irradiance=irradiance, ...)
+  ```
+
+  The same factor should be applied regardless of PSF model.  Later extensions (vignetting, obscuration, coating transmission) can be added as multiplicative correction maps.
+
+  **Side effect:** fixes `AiryPSF` being decoupled from `OpticalSystem` — the `_get_psf()` helper should pass `optical_system.wavelength` and `optical_system.numerical_aperture` to the PSF kernel so both PSFs are consistent with the system they belong to.
+
+- [ ] **Optical magnification / field mapping** (needed by UC7 Wafer Alignment first, then UC5 Structured Light) — `OpticalSystem.magnification` is stored but never used by the propagator.  The scattered field and sensor field currently share identical pixel dimensions, which is incorrect for any system with non-unity magnification.
+
+  **What to change:**
+  `OpticalPropagator.propagate()` must resample the scattered radiance to account for magnification before convolution.  For a system with magnification M:
+
+      sensor_pixel_spacing = object_pixel_spacing / M
+
+  The radiance map should be scaled (resampled) so that features in object space map to the correct size in sensor space.  Simple implementation uses `scipy.ndmap.zoom` or `np.interp` along each axis; a future FFT-based propagator can incorporate magnification directly in the Fourier scaling.
+
+  Implementation sketch:
+  ```python
+  from scipy.ndimage import zoom
+
+  M = optical_system.magnification
+  if abs(M - 1.0) > 1e-6:
+      scaled = zoom(radiance, M, order=1)  # bilinear interpolation
+  else:
+      scaled = radiance
+  # then apply PSF convolution on scaled
+  ```
+
+  **Edge cases:** M < 1 (demagnification, minifying), M > 1 (magnifying), non-integer scaling factors.  The zoom factor must preserve total energy (irradiance × area should be conserved).
+
+- [ ] **Zernike wavefront → PSF model** (needed by UC1 Defect Inspection with aberrated objectives, then UC7 Wafer Alignment for telecentric lens characterisation) — currently `OpticalSystem.aberrations` is an empty dict placeholder with no associated model.  The physically correct approach models wavefront error via Zernike polynomials and computes the PSF from the generalised pupil function.
+
+  **Design:**
+  ```
+  Zernike coefficients (z4, z7, z11, ...)
+          ↓
+  Wavefront error map W(ρ, θ) over the pupil
+          ↓
+  Generalised pupil function P(ρ, θ) = A(ρ, θ) · exp(i · 2π/λ · W(ρ, θ))
+          ↓
+  FFT of P → Coherent PSF (amplitude)
+          ↓
+  |FFT(P)|² → Incoherent PSF (intensity)
+          ↓
+  Convolution with scattered radiance
+  ```
+
+  **What to add:**
+  1. `ZernikePolynomials` — evaluate individual Zernike modes (Noll indexing) on a pupil grid.  Self-contained implementation using `math`/`numpy` only (no PyZDEP dependency needed).
+  2. `Wavefront` — container for Zernike coefficients, method `map(pupil_grid) → np.ndarray` returning wavefront error in metres.
+  3. `ZernikePSF` — PSF model implementing the same `kernel(size, optical_system)` interface as `GaussianPSF` and `AiryPSF`.  Internally:
+      - Build pupil coordinate grid (size × size, normalised to unit radius)
+      - Evaluate wavefront error from coefficients
+      - Build `P = exp(i·2π/λ·W)` within the pupil (zero outside)
+      - FFT → intensity → normalise to unit sum
+  4. Update `OpticalSystem.__post_init__` to accept a `Wavefront` object; the propagator passes it through when generating the PSF.
+
+  **Parameters of `ZernikePSF`:**
+  ```python
+  class ZernikePSF:
+      def __init__(self, wavefront: Wavefront, wavelength: float, numerical_aperture: float):
+          ...
+      def kernel(self, size: int = 31) -> np.ndarray:
+          ...
+  ```
+
+  **Edge cases:** pupil radius must fit within the kernel; zero coefficients → diffraction-limited (Airy) PSF; undersampled pupil (too few pixels across the pupil diameter) will alias the PSF.
+
+  **Trigger:** implement when a use case requires simulating a specific optical defect (e.g. spherical aberration in a high-NA microscope objective for UC1, or field curvature in a wafer inspection tool for UC7).
 
 ## Phase 2a — Surface Defect Inspection (UC1)
 
