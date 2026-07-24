@@ -51,6 +51,10 @@ from optics import (
     OpticalSystem,
     SensorField,
 )
+from detector import (
+    CMOSDetector,
+    DigitalImage,
+)
 
 # ---------------------------------------------------------------------------
 # Utility: compact terminal heatmap (same style as LightField.visualize)
@@ -243,6 +247,56 @@ def demo_optics():
     print()
 
 
+def demo_detector():
+    """Run the full pipeline including the CMOS detector model."""
+    print("=" * 60)
+    print("  DETECTOR DEMO")
+    print("=" * 60)
+
+    shape = (16, 16)
+
+    # Generate a scattered field (laser on rough surface)
+    laser = Laser(wavelength=532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0))
+    laser.propagation_direction = np.array([0.0, 0.0, -1.0])
+    lf = laser.generate_light_field(shape=shape, spacing=0.5)
+    surface = RoughSurface(shape, sigma=4.0, amplitude=0.3, material=Material("silicon"))
+    model = LambertianScattering(albedo=0.7)
+    scattered = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
+
+    # Propagate through optics
+    optics = OpticalSystem(focal_length=0.05, aperture_diameter=0.008, wavelength=532e-9)
+    propagator = OpticalPropagator(psf_model=GaussianPSF(sigma=1.0))
+    sensor = propagator.propagate(scattered, optics)
+
+    # Capture with CMOS detector
+    detector = CMOSDetector(
+        exposure_time=0.1,
+        quantum_efficiency=0.9,
+        dark_current=5.0,
+        read_noise_sigma=2.0,
+        full_well_capacity=80000.0,
+        gain=2.0,
+        bit_depth=12,
+    )
+    image = detector.capture(sensor)
+
+    print(f"\n  Detector: CMOS")
+    print(f"    Exposure:    {detector.exposure_time} s")
+    print(f"    QE:          {detector.quantum_efficiency}")
+    print(f"    Bit depth:   {detector.bit_depth}-bit")
+    print(f"    Gain:        {detector.gain} e⁻/ADU")
+    print(f"    FWC:         {detector.full_well_capacity} e⁻")
+    print(f"    Dark curr:   {detector.dark_current} e⁻/s")
+    print(f"    Read noise:  {detector.read_noise_sigma} e⁻")
+    print(f"\n    Pixel shape:  {image.pixels.shape}")
+    print(f"    Pixel dtype:  {image.pixels.dtype}")
+    print(f"    Pixel range:  {image.pixels.min()} - {image.pixels.max()} ADU")
+    print(f"    Metadata:     {image.metadata}")
+    print()
+    print(heatmap(image.pixels.astype(float)))
+    print()
+
+
 def demo_custom_pipeline():
     """Build a custom source-surface-scattering-optics pipeline from scratch."""
     print("=" * 60)
@@ -284,6 +338,13 @@ def demo_custom_pipeline():
     print(f"     NA = {optics.numerical_aperture:.4f}")
     print(f"     Sensor irradiance: {sensor.irradiance.min():.4g} - {sensor.irradiance.max():.4g}")
     print(heatmap(sensor.irradiance))
+
+    # 6. Capture with CMOS detector
+    detector = CMOSDetector(exposure_time=0.05, quantum_efficiency=0.85, bit_depth=12)
+    image = detector.capture(sensor)
+    print(f"\n  5. CMOS capture (12-bit)")
+    print(f"     Digital image: {image.pixels.shape}, range {image.pixels.min()} - {image.pixels.max()} ADU")
+    print(heatmap(image.pixels.astype(float)))
     print()
 
 
@@ -318,6 +379,13 @@ def demo_tinker():
     optics = OpticalSystem()
     prop = OpticalPropagator(GaussianPSF(sigma=1.0))
     sensor = prop.propagate(result, optics)
+
+  Capture with a CMOS detector:
+
+    from detector import CMOSDetector
+    detector = CMOSDetector(exposure_time=0.1, bit_depth=12)
+    image = detector.capture(sensor)
+    print("Digital image:", image.pixels.shape, image.pixels.dtype)
 """)
     print("  (Copy-paste the commands above into a Python shell.)")
 
@@ -332,6 +400,7 @@ def interactive_menu():
         ("Surface geometry demo", demo_surfaces),
         ("Scattering demo", demo_scattering),
         ("Optics demo", demo_optics),
+        ("Detector demo", demo_detector),
         ("Custom pipeline (end-to-end)", demo_custom_pipeline),
         ("Tinker mode (code snippets)", demo_tinker),
     ]
@@ -383,6 +452,7 @@ def main():
         demo_surfaces()
         demo_scattering()
         demo_optics()
+        demo_detector()
         demo_custom_pipeline()
         demo_tinker()
         return 0
