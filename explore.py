@@ -6,12 +6,16 @@ Usage
 -----
     python explore.py                        # interactive illumination mode
     python explore.py --surface              # interactive surface-geometry mode
+    python explore.py --scattering           # interactive scattering mode
     python explore.py --list                 # list illumination scenarios
     python explore.py --list --surface       # list surface scenarios
+    python explore.py --list --scattering    # list scattering scenarios
     python explore.py --run 1                # run illumination scenario 1
     python explore.py --surface --run 2      # run surface scenario 2
+    python explore.py --scattering --run 1   # run scattering scenario 1
     python explore.py --all                  # run all illumination scenarios
     python explore.py --surface --all        # run all surface scenarios
+    python explore.py --scattering --all     # run all scattering scenarios
 """
 
 import argparse
@@ -37,6 +41,10 @@ from surface import (
     ScratchedSurface,
     ParticleSurface,
     Material,
+)
+
+from scattering import (
+    LambertianScattering,
 )
 
 # ---------------------------------------------------------------------------
@@ -114,6 +122,59 @@ SURFACE_SCENARIOS = [
         "desc": "8 Gaussian bumps (amplitude=0.8, sigma=2)",
         "gen": ParticleSurface,
         "kwargs": {"particle_count": 8, "amplitude": 0.8, "sigma": 2.0, "material": Material(name="gold")},
+    },
+]
+
+# ---------------------------------------------------------------------------
+# Scattering scenarios  (combine a light source, a surface, and a model)
+# ---------------------------------------------------------------------------
+
+def _downward_source(cls, **kwargs):
+    src = cls(**kwargs)
+    src.propagation_direction = np.array([0.0, 0.0, -1.0])
+    return src
+
+
+SCATTERING_SCENARIOS = [
+    {
+        "name": "Laser on flat surface",
+        "desc": "532 nm laser (Gaussian beam, w0=2)  Lambertian (albedo=0.8)  flat glass",
+        "src": _downward_source(Laser, wavelength=532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),
+        "surface_gen": FlatSurface,
+        "surface_kwargs": {"material": Material(name="glass")},
+        "model": LambertianScattering(albedo=0.8),
+    },
+    {
+        "name": "Laser on rough surface",
+        "desc": "532 nm laser (Gaussian beam, w0=2)  Lambertian (albedo=0.8)  rough silicon",
+        "src": _downward_source(Laser, wavelength=532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),
+        "surface_gen": RoughSurface,
+        "surface_kwargs": {"sigma": 6.0, "amplitude": 0.5, "material": Material(name="silicon")},
+        "model": LambertianScattering(albedo=0.8),
+    },
+    {
+        "name": "Laser on scratched surface",
+        "desc": "532 nm laser (Gaussian beam, w0=2)  Lambertian (albedo=0.8)  scratched aluminium",
+        "src": _downward_source(Laser, wavelength=532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),
+        "surface_gen": ScratchedSurface,
+        "surface_kwargs": {"scratch_depth": 0.3, "scratch_width": 3, "material": Material(name="aluminium")},
+        "model": LambertianScattering(albedo=0.8),
+    },
+    {
+        "name": "Laser on particle surface",
+        "desc": "532 nm laser (Gaussian beam, w0=2)  Lambertian (albedo=0.8)  gold particles",
+        "src": _downward_source(Laser, wavelength=532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),
+        "surface_gen": ParticleSurface,
+        "surface_kwargs": {"particle_count": 8, "amplitude": 0.8, "sigma": 2.0, "material": Material(name="gold")},
+        "model": LambertianScattering(albedo=0.8),
+    },
+    {
+        "name": "LED on rough surface",
+        "desc": "Green LED  Lambertian (albedo=0.5)  rough silicon",
+        "src": _downward_source(LED, peak_wavelength=530e-9, width=25e-9, power=10e-3),
+        "surface_gen": RoughSurface,
+        "surface_kwargs": {"sigma": 6.0, "amplitude": 0.5, "material": Material(name="silicon")},
+        "model": LambertianScattering(albedo=0.5),
     },
 ]
 
@@ -298,7 +359,6 @@ def run_surface_scenario(idx, shape=(32, 32)):
     print(_heatmap(surf.height, max_width=80, color=True))
     print()
 
-    # Show a cross-section through the centre row for additional insight
     mid = shape[0] // 2
     row = surf.height[mid, :]
     print(f"  Horizontal slice (row {mid}):")
@@ -317,14 +377,101 @@ def print_surface_scenarios():
 
 
 # ---------------------------------------------------------------------------
+# Scattering runner
+# ---------------------------------------------------------------------------
+
+
+def describe_scattering_setup(src, surf, model):
+    """Return a multi-line string summarising the scattering setup."""
+    lines = [
+        f"  Light source:       {type(src).__name__} ({fmt(src.wavelength, 'm')}, {fmt(src.power, 'W')})",
+        f"  Light direction:    {np.array2string(src.propagation_direction, precision=3)}",
+        f"  Surface:            {type(surf).__name__} ({surf.material.name}, RMS={surf.roughness:.4g})",
+        f"  Scattering model:   {type(model).__name__} (albedo={model.albedo})",
+    ]
+    return "\n".join(lines)
+
+
+def run_scattering_scenario(idx, shape=(32, 32), spacing=0.5):
+    """Generate and display a scattering evaluation for scenario *idx* (1-based)."""
+    if idx < 1 or idx > len(SCATTERING_SCENARIOS):
+        print(f"Invalid scenario {idx}. Choose 1\u2013{len(SCATTERING_SCENARIOS)}.")
+        return
+    sc = SCATTERING_SCENARIOS[idx - 1]
+    src = sc["src"]
+    surf = sc["surface_gen"](shape, **sc["surface_kwargs"])
+    model = sc["model"]
+
+    header = f"  Scenario {idx}: {sc['name']}"
+    print(f"\n{'=' * len(header)}")
+    print(header)
+    print(f"{'=' * len(header)}")
+    print()
+    print(describe_scattering_setup(src, surf, model))
+    print()
+
+    lightfield = src.generate_light_field(shape=shape, spacing=spacing)
+    view_dir = np.array([0.0, 0.0, 1.0])
+    result = model.evaluate(lightfield, surf, view_direction=view_dir)
+
+    print(f"  Scattered field ({shape[0]}\u00d7{shape[1]} grid, view={np.array2string(view_dir, precision=1)}):")
+    print(f"    Radiance shape:   {result.radiance.shape}")
+    print(f"    Radiance range:   {result.radiance.min():.4g} \u2013 {result.radiance.max():.4g}")
+    print(f"    Outgoing dir:     {result.outgoing_direction.shape}")
+    print(f"    Polarization:     {result.polarization}")
+    print()
+    print("  Scattered radiance heatmap:")
+    print(_heatmap(result.radiance, max_width=80, color=True))
+    print()
+
+
+def print_scattering_scenarios():
+    """Print the predefined scattering scenarios."""
+    print(f"\n{'=' * 60}")
+    print(f"  Scattering scenarios ({len(SCATTERING_SCENARIOS)} total)")
+    print(f"{'=' * 60}")
+    for i, sc in enumerate(SCATTERING_SCENARIOS, 1):
+        print(f"\n  [{i}] {sc['name']}")
+        print(f"       {sc['desc']}")
+
+
+# ---------------------------------------------------------------------------
 # Interactive menu
 # ---------------------------------------------------------------------------
 
 
-def interactive_menu(surface_mode: bool = False):
-    """Present an interactive menu for exploring scenarios."""
-    scenarios = SURFACE_SCENARIOS if surface_mode else ILLUM_SCENARIOS
-    mode_label = "SURFACE" if surface_mode else "ILLUMINATION"
+def interactive_menu(mode="illumination"):
+    """Present an interactive menu for exploring scenarios.
+
+    Parameters
+    ----------
+    mode : str
+        One of ``"illumination"``, ``"surface"``, or ``"scattering"``.
+    """
+    if mode == "surface":
+        scenarios = SURFACE_SCENARIOS
+        run_fn = lambda i: run_surface_scenario(i, shape=(16, 16))
+        printer = print_surface_scenarios
+    elif mode == "scattering":
+        scenarios = SCATTERING_SCENARIOS
+        run_fn = lambda i: run_scattering_scenario(i, shape=(16, 16), spacing=0.5)
+        printer = print_scattering_scenarios
+    else:
+        scenarios = ILLUM_SCENARIOS
+        run_fn = lambda i: run_illum_scenario(i, shape=(16, 16), spacing=0.5)
+        printer = print_illum_scenarios
+
+    mode_label = mode.upper()
+    mode_choices = {
+        "illumination": "illumination (l)",
+        "surface": "surface (s)",
+        "scattering": "scattering (c)",
+    }
+    next_modes = {
+        "illumination": "surface",
+        "surface": "scattering",
+        "scattering": "illumination",
+    }
 
     while True:
         print(f"\n{'─' * 60}")
@@ -334,24 +481,28 @@ def interactive_menu(surface_mode: bool = False):
         for i, sc in enumerate(scenarios, 1):
             print(f"    [{i}] {sc['name']}")
         print(f"    [l] List all {mode_label.lower()} scenarios with details")
-        print(f"    [m] Switch mode ({'surface' if surface_mode else 'illumination'})")
+        print(f"    [i] Switch to illumination mode")
+        print(f"    [s] Switch to surface mode")
+        print(f"    [c] Switch to scattering mode")
         print(f"    [q] Quit")
         print(f"{'─' * 60}")
         choice = input(
-            "  Choose scenario (1\u2013{}, l, m, q): ".format(len(scenarios))
+            "  Choose (1\u2013{}, l, i, s, c, q): ".format(len(scenarios))
         ).strip().lower()
 
         if choice == "q":
             print("\n  Goodbye!")
             break
         if choice == "l":
-            if surface_mode:
-                print_surface_scenarios()
-            else:
-                print_illum_scenarios()
+            printer()
             continue
-        if choice == "m":
-            return interactive_menu(not surface_mode)
+        if choice in ("i", "s", "c"):
+            if choice == "c":
+                return interactive_menu("scattering")
+            elif choice == "s":
+                return interactive_menu("surface")
+            else:
+                return interactive_menu("illumination")
 
         try:
             idx = int(choice)
@@ -359,10 +510,7 @@ def interactive_menu(surface_mode: bool = False):
             print(f"  Invalid input '{choice}'.")
             continue
 
-        if surface_mode:
-            run_surface_scenario(idx, shape=(16, 16))
-        else:
-            run_illum_scenario(idx, shape=(16, 16), spacing=0.5)
+        run_fn(idx)
 
         input("\n  Press Enter to continue...")
 
@@ -382,12 +530,13 @@ def main():
             Examples:
               python explore.py                         # illumination menu
               python explore.py --surface               # surface menu
+              python explore.py --scattering             # scattering menu
               python explore.py --run 1                 # illumination scenario 1
               python explore.py --surface --run 2       # surface scenario 2
-              python explore.py --all                   # all illumination
-              python explore.py --surface --all         # all surface scenarios
+              python explore.py --scattering --run 1    # scattering scenario 1
         """),
     )
+    parser.add_argument("--scattering", action="store_true", help="operate on scattering scenarios")
     parser.add_argument("--surface", action="store_true", help="operate on surface scenarios")
     parser.add_argument("--list", action="store_true", help="list all scenarios")
     parser.add_argument("--run", type=int, metavar="N", help="run scenario N (1-based)")
@@ -398,14 +547,21 @@ def main():
 
     args = parser.parse_args()
 
-    if args.surface:
+    if args.scattering:
+        scenarios = SCATTERING_SCENARIOS
+        runner = lambda idx: run_scattering_scenario(idx, shape=tuple(args.shape), spacing=args.spacing)
+        printer = print_scattering_scenarios
+        menu_mode = "scattering"
+    elif args.surface:
         scenarios = SURFACE_SCENARIOS
         runner = lambda idx: run_surface_scenario(idx, shape=tuple(args.shape))
         printer = print_surface_scenarios
+        menu_mode = "surface"
     else:
         scenarios = ILLUM_SCENARIOS
         runner = lambda idx: run_illum_scenario(idx, shape=tuple(args.shape), spacing=args.spacing)
         printer = print_illum_scenarios
+        menu_mode = "illumination"
 
     if args.list:
         printer()
@@ -420,7 +576,7 @@ def main():
             runner(i)
         return 0
 
-    return interactive_menu(surface_mode=args.surface)
+    return interactive_menu(mode=menu_mode)
 
 
 if __name__ == "__main__":
