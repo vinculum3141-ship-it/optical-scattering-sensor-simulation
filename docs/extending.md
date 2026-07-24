@@ -310,6 +310,35 @@ report = ImageAnalyzer(modules=[HistogramAnalyzer()]).analyze(image)
 print(report.measurements)
 ```
 
+## Using the Pipeline Orchestrator
+
+For a cleaner workflow, the `SimulationPipeline` class in
+`pipeline.py` wires all layers together in a single call.  Every
+component is optional — skip any stage by setting it to `None`.
+
+```python
+from pipeline import SimulationPipeline
+from illumination import Laser, GaussianBeamProfile
+from surface import RoughSurface, Material
+from scattering import PhongScattering
+from optics import OpticalSystem, AiryPSF, OpticalPropagator
+from detector import CMOSDetector, HotPixelNoise
+from analysis import HistogramAnalyzer, ContrastAnalyzer
+
+pipeline = SimulationPipeline(
+    source=Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),
+    surface=RoughSurface,
+    scattering=PhongScattering(diffuse_albedo=0.6, specular_albedo=0.4),
+    optics=OpticalSystem(focal_length=0.05, aperture_diameter=0.008),
+    propagator=OpticalPropagator(AiryPSF(na=0.25)),
+    detector=CMOSDetector(exposure_time=1e-5, noise_models=[HotPixelNoise()]),
+    analysers=[HistogramAnalyzer(), ContrastAnalyzer()],
+    surface_material=Material("silicon"),
+)
+result = pipeline.run(shape=(64, 64), spacing=0.5)
+print(result.report.measurements)
+```
+
 ## Extension Summary
 
 | What to extend | Interface | Method to implement |

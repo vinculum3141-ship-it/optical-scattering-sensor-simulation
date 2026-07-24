@@ -9,7 +9,13 @@ if _project_root not in sys.path:
 
 import numpy as np
 
-from detector import CMOSDetector, DigitalImage
+from detector import (
+    CMOSDetector,
+    ColumnDefectNoise,
+    DigitalImage,
+    FixedPatternNoise,
+    HotPixelNoise,
+)
 from optics import SensorField
 
 
@@ -91,3 +97,27 @@ class DetectorLibrary:
         actual = type(self._detector).__name__
         if actual != expected_type:
             raise AssertionError(f"Expected {expected_type}, got {actual}")
+
+    def add_fixed_pattern_noise(self, magnitude):
+        noise = FixedPatternNoise(pattern=float(magnitude))
+        self._detector.noise_models.append(noise)
+        return noise
+
+    def add_column_defect(self, column, scale):
+        noise = ColumnDefectNoise(column_index=int(column), scale_factor=float(scale))
+        self._detector.noise_models.append(noise)
+        return noise
+
+    def add_hot_pixel_noise(self, density, hot_current, exposure_time):
+        noise = HotPixelNoise(
+            density=float(density),
+            hot_current=float(hot_current),
+            exposure_time=float(exposure_time),
+        )
+        self._detector.noise_models.append(noise)
+        return noise
+
+    def column_should_be_zero(self, column):
+        col = int(column)
+        if not np.all(self._image.pixels[:, col] == 0):
+            raise AssertionError(f"Column {col} is not all zeros")

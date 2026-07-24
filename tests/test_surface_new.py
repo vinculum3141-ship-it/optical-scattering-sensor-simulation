@@ -1,0 +1,46 @@
+import numpy as np
+
+from surface import (
+    AnisotropicRoughSurface,
+    Material,
+    SinusoidalSurface,
+    Surface,
+)
+
+
+def test_sinusoidal_surface_has_periodic_structure():
+    surface = SinusoidalSurface(shape=(32, 32), period=16.0, amplitude=0.5)
+    assert isinstance(surface, Surface)
+    assert surface.height.shape == (32, 32)
+    assert abs(surface.height.max()) > 0.0
+    assert abs(surface.height.min()) > 0.0
+    assert abs(surface.height.max() - surface.height.min()) > 0.0
+
+
+def test_sinusoidal_surface_roughness_zero_mean():
+    surface = SinusoidalSurface(shape=(32, 32), period=16.0, amplitude=0.5)
+    assert abs(float(np.mean(surface.height))) < 1e-10
+
+
+def test_sinusoidal_surface_amplitude_matches():
+    surface = SinusoidalSurface(shape=(16, 16), period=8.0, amplitude=0.3)
+    assert abs(surface.height.max()) <= 0.3 + 1e-10
+    assert abs(surface.height.min()) <= 0.3 + 1e-10
+
+
+def test_anisotropic_rough_surface_has_nonzero_roughness():
+    surface = AnisotropicRoughSurface(
+        shape=(32, 32), sigma_x=8.0, sigma_y=2.0, amplitude=0.5,
+    )
+    assert isinstance(surface, Surface)
+    assert surface.height.shape == (32, 32)
+    assert surface.roughness > 0.0
+
+
+def test_anisotropic_rough_surface_material():
+    material = Material("aluminium")
+    surface = AnisotropicRoughSurface(
+        shape=(16, 16), sigma_x=4.0, sigma_y=1.0, amplitude=0.3,
+        material=material,
+    )
+    assert surface.material.name == "aluminium"

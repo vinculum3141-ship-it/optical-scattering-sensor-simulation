@@ -9,7 +9,13 @@ if _project_root not in sys.path:
 
 import numpy as np
 
-from analysis import HistogramAnalyzer, ImageAnalyzer, AnalysisReport
+from analysis import (
+    AnalysisReport,
+    ContrastAnalyzer,
+    HistogramAnalyzer,
+    ImageAnalyzer,
+    SaturationAnalyzer,
+)
 from detector import DigitalImage
 
 
@@ -74,3 +80,34 @@ class AnalysisLibrary:
         actual = type(self._analyzer).__name__
         if actual != expected_type:
             raise AssertionError(f"Expected {expected_type}, got {actual}")
+
+    def create_contrast_analyzer(self):
+        self._analyzer = ContrastAnalyzer()
+        return self._analyzer
+
+    def create_saturation_analyzer(self, threshold):
+        self._analyzer = SaturationAnalyzer(threshold=float(threshold))
+        return self._analyzer
+
+    def create_combined_analyzer(self):
+        self._analyzer = ImageAnalyzer(modules=[ContrastAnalyzer(), SaturationAnalyzer()])
+        return self._analyzer
+
+    def analyze_uniform_image(self, height, width, value, bit_depth):
+        shape = (int(height), int(width))
+        pixels = np.ones(shape, dtype=np.uint16) * int(value)
+        image = DigitalImage(pixels=pixels, metadata={"bit_depth": int(bit_depth)})
+        self._report = self._analyzer.analyze(image)
+        return self._report
+
+    def analyze_image_with_saturation(self, height, width, saturation_fraction, bit_depth):
+        shape = (int(height), int(width))
+        total = shape[0] * shape[1]
+        n_sat = int(total * float(saturation_fraction))
+        pixels = np.random.randint(0, 100, size=shape, dtype=np.uint16)
+        sat_level = 2**int(bit_depth) - 1
+        sat_indices = np.random.choice(total, n_sat, replace=False)
+        pixels.flat[sat_indices] = sat_level
+        image = DigitalImage(pixels=pixels, metadata={"bit_depth": int(bit_depth)})
+        self._report = self._analyzer.analyze(image)
+        return self._report

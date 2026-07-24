@@ -10,9 +10,11 @@ if _project_root not in sys.path:
 import numpy as np
 
 from surface import (
+    AnisotropicRoughSurface,
     FlatSurface,
     RoughSurface,
     ScratchedSurface,
+    SinusoidalSurface,
     ParticleSurface,
     Material,
     Surface,
@@ -110,3 +112,17 @@ class SurfaceLibrary:
     def height_range_should_be_non_zero(self):
         if np.ptp(self._surface.height) == 0.0:
             raise AssertionError("Height range is zero (expected variation)")
+
+    def create_sinusoidal_surface(self, height_str, width_str, period, amplitude, material_name="default"):
+        shape = (int(height_str), int(width_str))
+        mat = Material(name=material_name) if material_name != "default" else None
+        self._surface = SinusoidalSurface(shape, period=float(period), amplitude=float(amplitude), material=mat)
+        return self._surface
+
+    def create_anisotropic_rough_surface(self, height_str, width_str, sigma_x, sigma_y, amplitude, material_name="default"):
+        shape = (int(height_str), int(width_str))
+        mat = Material(name=material_name) if material_name != "default" else None
+        self._surface = AnisotropicRoughSurface(
+            shape, sigma_x=float(sigma_x), sigma_y=float(sigma_y), amplitude=float(amplitude), material=mat,
+        )
+        return self._surface

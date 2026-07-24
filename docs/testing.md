@@ -6,9 +6,10 @@
 
 The framework employs a two-tier testing strategy:
 
-- **Unit tests (pytest)** — 16 tests across all six layers, covering
-  core functionality and edge cases. Fast, run on every change.
-- **Acceptance tests (Robot Framework)** — 43 tests across all six
+- **Unit tests (pytest)** — 55 tests across all six layers, covering
+  core functionality, edge cases, and all new models. Fast, run on
+  every change.
+- **Acceptance tests (Robot Framework)** — 64 tests across all six
   layers, covering realistic usage scenarios. Documents expected
   behaviour in natural-language form.
 

@@ -12,5 +12,13 @@ extracting quantitative measurements from captured :class:`~detector.DigitalImag
 
 from .base import AnalysisModule, AnalysisReport, ImageAnalyzer
 from .histogram import HistogramAnalyzer
+from .contrast import ContrastAnalyzer, SaturationAnalyzer
 
-__all__ = ["AnalysisModule", "AnalysisReport", "HistogramAnalyzer", "ImageAnalyzer"]
+__all__ = [
+    "AnalysisModule",
+    "AnalysisReport",
+    "ContrastAnalyzer",
+    "HistogramAnalyzer",
+    "ImageAnalyzer",
+    "SaturationAnalyzer",
+]

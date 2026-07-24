@@ -123,6 +123,41 @@ Each step is optional — you can create a `LightField` by hand (its
 dataclass constructor), skip optics, or feed an arbitrary irradiance
 array directly to the detector.
 
+## Pipeline Orchestrator
+
+`pipeline.py` at the repository root provides a `SimulationPipeline`
+class that wires the six layers together in a single call:
+
+```python
+from pipeline import SimulationPipeline
+
+pipeline = SimulationPipeline(
+    source=laser,
+    surface=RoughSurface,
+    scattering=LambertianScattering(albedo=0.7),
+    optics=OpticalSystem(),
+    propagator=OpticalPropagator(GaussianPSF(sigma=1.0)),
+    detector=CMOSDetector(),
+    analysers=[HistogramAnalyzer()],
+    surface_material=Material("silicon"),
+)
+result = pipeline.run(shape=(64, 64), spacing=0.5)
+# result.light_field, result.surface, result.scattered_field,
+# result.sensor_field, result.digital_image, result.report
+```
+
+Every component is optional — set any to `None` to skip that stage.
+The surface parameter accepts either a Surface instance or a callable
+generator (which is called with `(shape, material)`).
+
+## Shared Utilities
+
+`utils/` provides shared helpers that were previously duplicated:
+
+- `utils.visualize.heatmap()` — terminal block-character heatmap
+  (replaces 4 separate implementations in LightField, DigitalImage,
+  explore.py, and playground.py).
+
 ## Package Organisation Conventions
 
 Every package follows the same layout:

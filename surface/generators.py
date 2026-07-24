@@ -197,6 +197,78 @@ class ScratchedSurface(Surface):
         return height
 
 
+class SinusoidalSurface(Surface):
+    """A surface with a sinusoidal wave pattern along the x-axis.
+
+    Useful for modelling diffraction gratings, periodic textures,
+    or wavy substrates.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Grid dimensions ``(height, width)``.
+    period : float
+        Wavelength of the sinusoid in pixels.
+    amplitude : float
+        Peak-to-peak amplitude of the sinusoid.
+    phase : float
+        Phase offset in radians (default 0).
+    material : Material or None
+        Material to attach to the surface.
+    """
+
+    def __init__(self, shape, period=16.0, amplitude=0.5, phase=0.0, material=None):
+        self.period = period
+        self.amplitude = amplitude
+        self.phase = phase
+        self.shape = shape
+        height = self.generate(shape)
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.__dict__.update(surface.__dict__)
+
+    def generate(self, shape):
+        h, w = shape
+        x = np.arange(w, dtype=float) - (w - 1) / 2.0
+        return self.amplitude * np.sin(2.0 * np.pi * x / self.period + self.phase)[None, :] * np.ones((h, 1))
+
+
+class AnisotropicRoughSurface(Surface):
+    """A randomly textured surface with different correlation lengths
+    in the x and y directions.
+
+    Useful for modelling surfaces with directional roughness
+    (e.g. ground glass, machined metal, brushed surfaces).
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Grid dimensions ``(height, width)``.
+    sigma_x : float
+        Correlation length in the x-direction (pixels).
+    sigma_y : float
+        Correlation length in the y-direction (pixels).
+    amplitude : float
+        RMS amplitude scaling factor for the height map.
+    material : Material or None
+        Material to attach to the surface.
+    """
+
+    def __init__(self, shape, sigma_x=8.0, sigma_y=2.0, amplitude=0.5, material=None):
+        self.sigma_x = sigma_x
+        self.sigma_y = sigma_y
+        self.amplitude = amplitude
+        self.shape = shape
+        height = self.generate(shape)
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.__dict__.update(surface.__dict__)
+
+    def generate(self, shape):
+        height = np.random.randn(*shape)
+        height = _gaussian_filter(height, sigma=self.sigma_x)
+        height = _gaussian_filter(height.T, sigma=self.sigma_y).T
+        return self.amplitude * height
+
+
 class ParticleSurface(Surface):
     """A surface with localized Gaussian bumps simulating particles.
 
