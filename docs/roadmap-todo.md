@@ -183,6 +183,70 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Limitation: requires a region of uniform surface roughness and illumination.  The analyser should accept an optional ROI mask.
 
+- [ ] **Focus / sharpness metric** (needed by UC1 Defect Inspection for through-focus scanning, then UC5 Structured Light for projector focus) — compute a scalar focus score from the image without requiring a reference.
+
+  **What to add:**
+  ```python
+  class FocusAnalyzer(AnalysisModule):
+      def __init__(self, method="laplacian_variance"):
+          ...
+  ```
+  Implement three common methods, selectable via the ``method`` parameter:
+  - ``laplacian_variance`` — variance of the Laplacian response (default).  High value = sharp.
+  - ``tenengrad`` — mean squared gradient magnitude from a Sobel filter.
+  - ``brenner`` — sum of squared differences between pixels two apart in x.
+
+  Report ``focus_score`` and ``method`` in measurements.  Normalise the score to [0, 1] by dividing by the maximum possible value for the given bit depth (optional — return raw score by default).
+
+  Edge cases: single-intensity image → score = 0; very small images where derivative kernels don't fit → fall back to pixel-difference method.
+
+- [ ] **Signal-to-noise ratio estimator** (needed by UC3 Sensor Char) — compute SNR from a single image or a pair of flat-field images.
+
+  **What to add:**
+  ```python
+  class SNRAnalyzer(AnalysisModule):
+      def __init__(self, method="single_image", signal_region=None, noise_region=None):
+          ...
+  ```
+  Two methods:
+  1. ``single_image`` — estimate signal as the mean of a bright region (or the whole image), noise as the standard deviation of a dark region or the full image after high-pass filtering.
+  2. ``flat_field_pair`` — two identically exposed flat-field images; signal = mean of (im1 + im2) / 2, noise = std of (im1 − im2) / √2 (removes fixed-pattern noise from the estimate).
+
+  Report ``snr_db`` (20 log₁₀(μ/σ)), ``signal_mean``, ``noise_std``.  Accept optional ``signal_region`` and ``noise_region`` as (row, col, height, width) tuples for ROI-based estimation.
+
+- [ ] **MTF (modulation transfer function) analyser** (needed by UC3 Sensor Char first, then UC4 Angle-Resolved Scattering) — compute the system MTF from an image of a known test target (slanted edge, Siemens star, or sinusoidal grating).
+
+  **What to add:**
+  ```python
+  class MTFAnalyzer(AnalysisModule):
+      def __init__(self, target_type="slanted_edge", lp_per_mm=None):
+          ...
+  ```
+  Methods:
+  1. ``slanted_edge`` — locate a slanted knife-edge, extract the edge spread function (ESF), differentiate to get the line spread function (LSF), FFT to get the MTF.  Implementation follows the ISO 12233 standard.
+  2. ``sinusoidal`` — if the image contains a known-frequency sinusoidal pattern, compute MTF as the ratio of measured modulation to input modulation at that frequency.
+
+  Report ``mtf_curve`` (frequency vs. MTF value as two 1D arrays), ``mtf50`` (frequency where MTF = 0.5), ``mtf50p`` (frequency where MTF = 0.5 / pixel pitch in lp/mm).  The frequency axis should be in both cycles/pixel and lp/mm (requires ``pixel_size`` from image metadata or a constructor parameter).
+
+  Edge cases: slanted edge not found → raise a clear error; the edge must be at a small angle (2–10°) for proper oversampling; requires a sufficiently large ROI around the edge.
+
+- [ ] **Error map / ground-truth comparison** (needed by UC5 Structured Light first for height reconstruction validation, then UC7 Wafer Alignment for overlay accuracy) — compute per-pixel difference between a simulated (measured) image and a known ground-truth image.
+
+  **What to add:**
+  ```python
+  class ErrorMapAnalyzer(AnalysisModule):
+      def __init__(self, reference_image):
+          ...
+  ```
+  The reference is a ``DigitalImage`` (or raw array) supplied at construction.  The analyser computes:
+  - ``error_map`` — per-pixel absolute difference (for visualisation, returned as a 2D array in measurements).
+  - ``rmse`` — root-mean-square error.
+  - ``mae`` — mean absolute error.
+  - ``max_error`` — maximum absolute pixel difference.
+  - ``psnr`` — peak signal-to-noise ratio (dB): 20 log₁₀(max_val / rmse).
+
+  Edge cases: shape mismatch → raise ``ValueError``; both images identical → rmse = 0, psnr = ∞ (clamp to a large finite value like 120 dB).
+
 ## Phase 2a — Surface Defect Inspection (UC1)
 
 - [ ] **RayleighScattering / MieScattering** (skeletons in `scattering/particle.py`) — implement when particle-contamination scattering is needed for defect inspection
