@@ -186,6 +186,53 @@ class SpeckleNoise(DetectorNoiseModel):
         return electrons * ((1.0 - contrast) + contrast * speckle)
 
 
+class BloomingNoise(DetectorNoiseModel):
+    """Charge blooming from saturated pixels into neighbours.
+
+    When a pixel exceeds full-well capacity, excess charge spills into
+    adjacent pixels.  This model distributes a fraction of the overflow
+    to the four cardinal neighbours for a configurable number of
+    iterations, producing the characteristic vertical/horizontal streaks
+    seen in saturated CCD and CMOS images.
+
+    The model runs *before* the final full-well clip in
+    :class:`~detector.base.CMOSDetector`, so secondary blooming from
+    neighbour overflow is handled naturally.
+
+    Parameters
+    ----------
+    bloom_factor : float
+        Fraction of excess charge that spills to *each* neighbouring
+        pixel per iteration (default 0.05).  Typical values 0.01–0.1.
+        Higher values produce faster, wider blooming.
+    iterations : int
+        Number of recursive bloom passes (default 2).  More iterations
+        propagate blooming further from the original saturated pixel.
+    full_well_capacity : float
+        Maximum electron capacity per pixel before saturation.
+        Should match ``CMOSDetector.full_well_capacity``.
+    """
+
+    def __init__(self, bloom_factor: float = 0.05, iterations: int = 2, full_well_capacity: float = 80000.0):
+        self.bloom_factor = bloom_factor
+        self.iterations = iterations
+        self.full_well_capacity = full_well_capacity
+
+    def apply(self, electrons: np.ndarray) -> np.ndarray:
+        result = electrons.copy().astype(float)
+        for _ in range(self.iterations):
+            overflow = np.maximum(result - self.full_well_capacity, 0.0)
+            if not np.any(overflow > 0):
+                break
+            result = np.minimum(result, self.full_well_capacity)
+            spill = overflow * self.bloom_factor
+            result[:-1, :] += spill[1:, :]
+            result[1:, :]  += spill[:-1, :]
+            result[:, :-1] += spill[:, 1:]
+            result[:, 1:]  += spill[:, :-1]
+        return np.minimum(result, self.full_well_capacity)
+
+
 class DeadPixelNoise(DetectorNoiseModel):
     """Replaces random pixels with a fixed value (dead/stuck pixels).
 

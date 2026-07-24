@@ -1,6 +1,7 @@
 import numpy as np
 
 from detector import (
+    BloomingNoise,
     CMOSDetector,
     ColumnDefectNoise,
     DeadPixelNoise,
@@ -191,3 +192,39 @@ def test_noise_model_raises_on_shape_mismatch():
         assert False, "Expected ValueError"
     except ValueError:
         pass
+
+
+# ── Blooming tests ────────────────────────────────────────────────────
+
+def test_blooming_no_spill_below_full_well():
+    bloom = BloomingNoise(bloom_factor=0.1, full_well_capacity=100.0)
+    electrons = np.full((4, 4), 80.0)
+    result = bloom.apply(electrons)
+    assert np.allclose(result, 80.0)
+
+
+def test_blooming_spills_to_neighbours():
+    bloom = BloomingNoise(bloom_factor=0.1, iterations=1, full_well_capacity=100.0)
+    electrons = np.zeros((4, 4), dtype=float)
+    electrons[1, 1] = 200.0
+    result = bloom.apply(electrons)
+    assert result[1, 1] == 100.0
+    assert result[0, 1] > 0.0
+    assert result[2, 1] > 0.0
+    assert result[1, 0] > 0.0
+    assert result[1, 2] > 0.0
+    assert result[0, 0] == 0.0
+
+
+def test_blooming_integrated_with_detector():
+    detector = CMOSDetector(
+        exposure_time=1.0,
+        quantum_efficiency=1.0,
+        gain=1.0,
+        full_well_capacity=5000.0,
+        noise_models=[BloomingNoise(bloom_factor=0.1, iterations=2, full_well_capacity=5000.0)],
+    )
+    sf = _sensor_field(irradiance=1e5, wavelength=532e-9)
+    image = detector.capture(sf)
+    assert image.pixels.shape == (8, 8)
+    assert np.any(image.pixels > 0)
