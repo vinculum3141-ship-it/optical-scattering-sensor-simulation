@@ -122,6 +122,67 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   **Trigger:** implement when a use case requires simulating a specific optical defect (e.g. spherical aberration in a high-NA microscope objective for UC1, or field curvature in a wafer inspection tool for UC7).
 
+- [ ] **Intensity profile / line cross-section** (needed by UC1 Defect Inspection first, then UC5 Structured Light) — extract a 1D intensity profile along a line through the image.  Useful for measuring scratch depth visibility (UC1), fringe modulation (UC5), and edge sharpness (UC7).
+
+  **What to add:**
+  ```python
+  class IntensityProfileAnalyzer(AnalysisModule):
+      def __init__(self, start=(0, 0), end=None, linewidth=1):
+          ...
+  ```
+  Sample the image pixels along the line defined by ``start`` → ``end`` using bilinear interpolation.  Return the profile array plus derived metrics (peak width, edge slope, contrast along the line).
+
+  Implementation: use `skimage.measure.profile_line` if available, or implement with `np.linspace` + `ndimage.map_coordinates` for zero dependencies.  `linewidth > 1` averages orthogonal to the profile direction for noise reduction.
+
+- [ ] **FFT / power spectrum analyser** (needed by UC5 Structured Light first, then UC4 Angle-Resolved Scattering) — compute the 2D power spectrum of an image via FFT and extract radial and angular profiles.
+
+  **What to add:**
+  ```python
+  class FFTAnalyzer(AnalysisModule):
+      def analyze(self, image) -> AnalysisReport:
+          ...
+  ```
+  Steps: `np.fft.fft2` → `np.fft.fftshift` → power `|F|²`.  Report:
+  - `peak_spatial_frequency` — location of the brightest non-DC peak in cycles/pixel
+  - `radial_profile` — mean power vs. radial frequency (1D array)
+  - `dc_fraction` — fraction of total power in the DC component
+  - `power_spectrum_slope` — slope of log-log radial profile (useful for roughness characterisation)
+
+  Edge case: DC removal before FFT for better dynamic range; windowing (Hann) to reduce spectral leakage; correct frequency axis labelling.
+
+- [ ] **Edge detection analyser** (needed by UC7 Wafer Alignment first, then UC1 Defect Inspection) — locate and characterise step edges in the image.
+
+  **What to add:**
+  ```python
+  class EdgeDetectionAnalyzer(AnalysisModule):
+      def __init__(self, method="sobel", low_threshold=0.1, high_threshold=0.3):
+          ...
+  ```
+  Implement a basic Sobel magnitude (zero dependencies) as the default method, with an optional Canny-style hysteresis threshold.  Report:
+  - `edge_count` — number of detected edge pixels
+  - `edge_density` — fraction of pixels classified as edges
+  - `mean_edge_strength` — mean gradient magnitude at edge pixels
+  - Optionally: centroid of edge pixels (for fiducial finding in UC7)
+
+  Edge cases: normalise gradient magnitudes to [0, 1] so thresholds are independent of bit depth; handle single-intensity images (no edges → all zeros).
+
+- [ ] **Surface roughness estimation from speckle** (needed by UC1 Defect Inspection) — estimate surface roughness from the contrast of a speckle pattern in a coherently illuminated image.
+
+  **What to add:**
+  ```python
+  class SpeckleRoughnessEstimator(AnalysisModule):
+      def __init__(self, coherence_length, wavelength):
+          ...
+  ```
+  Uses the inverse of the speckle contrast model in `SpeckleNoise`:
+  ```
+  contrast = std(pixels) / mean(pixels)
+  roughness_estimate = (coherence_length / 2) * sqrt(1/contrast² - 1)
+  ```
+  Report `speckle_contrast`, `estimated_roughness_rms`, and a validity flag (estimate is unreliable when contrast ≈ 0 or contrast ≈ 1).
+
+  Limitation: requires a region of uniform surface roughness and illumination.  The analyser should accept an optional ROI mask.
+
 ## Phase 2a — Surface Defect Inspection (UC1)
 
 - [ ] **RayleighScattering / MieScattering** (skeletons in `scattering/particle.py`) — implement when particle-contamination scattering is needed for defect inspection
