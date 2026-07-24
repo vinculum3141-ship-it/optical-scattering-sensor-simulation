@@ -385,11 +385,12 @@ Run this **after completing all module reviews** (illumination, surface,
 scattering, optics, detector, analysis) and **before starting any use
 case implementation**.
 
-- [ ] Update `README.md` — refresh file reference table, test counts,
+- [x] Update `README.md` — refresh file reference table, test counts,
       document new classes (`ImportedSurface`, `SpeckleNoise`,
-      `wavefront`, `incidence_angle`, etc.)
-- [ ] Review and update all package `__init__.py` exports for consistency
-- [ ] Verify every `__all__` list matches actual public API
+      `wavefront`, `incidence_angle`, Cook-Torrance, BloomingNoise,
+      analysis three-group classification, etc.) — **done in session**
+- [x] Review and update all package `__init__.py` exports for consistency
+      — **all 7 packages verified, all `__all__` match imports**
 - [ ] Run full test suite and update any stale line/class references
       in docstrings
 
