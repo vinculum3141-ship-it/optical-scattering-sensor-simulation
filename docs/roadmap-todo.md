@@ -26,12 +26,15 @@ packaging, and developer experience.
 ## Phase 1 — Foundational Infrastructure
 
 - [x] **Angular / divergent source model** — non-collimated direction maps (UC1, UC4, UC5, UC6). Spherical wavefront, converging wavefront, Gaussian beam propagation with configurable waist position all implemented.
-- [ ] **Coordinate transforms for surfaces** — rotation, tilt, arbitrary pose (UC1, UC4, UC5, UC7)
-- [ ] **Flat-field / stepped-intensity source** — programmable uniform source (UC3, UC6, UC7)
-- [ ] **Spectral material model** — wavelength-dependent reflectance curves (UC2, UC4)
+- [x] **Coordinate transforms for surfaces** — rotation, tilt, arbitrary pose (UC1, UC4, UC5, UC7)
+- [x] **Flat-field / stepped-intensity source** — programmable uniform source (UC3, UC6, UC7)
+- [x] **Spectral material model** — wavelength-dependent reflectance curves (UC2, UC4)
 
 ### Phase 1 — Completed
 
+- [x] **Spectral material model** — `SellmeierCoefficients`, `Material.refractive_index_at(λ)`, `Material.F0(λ)`, tabulated n/k interpolation, `refractive_index_fn` callable; `CookTorranceScattering` auto-derives F₀ from surface material (UC2, UC4)
+- [x] **Flat-field / stepped-intensity source** — `FlatFieldSource` with configurable intensity levels and `generate_intensity_sweep()` (UC3, UC6, UC7)
+- [x] **Coordinate transforms for surfaces** — `Surface.transform(R)`, `rotate_x/y/z(angle)`, rotation of normals and slopes (UC1, UC4, UC5, UC7)
 - [x] **Incidence angle convenience** — `source.incidence_angle` / `incidence_angle_degrees` on LightSource (UC1, UC4)
 - [x] **Coherence / speckle model** — `SpeckleNoise` detector noise model, `Surface.phase_screen()`, pipeline integration (UC1, UC7)
 - [x] **Spherical wavefront** — `source.wavefront = "spherical"` with per-pixel direction from origin (UC1, UC4, UC5, UC6)

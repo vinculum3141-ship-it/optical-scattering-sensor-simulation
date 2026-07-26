@@ -1,4 +1,4 @@
-from .base import Surface, SurfaceGenerator, GeometryAnalyzer, Material
+from .base import Surface, SurfaceGenerator, GeometryAnalyzer, Material, SellmeierCoefficients
 from .generators import (
     AnisotropicRoughSurface,
     FlatSurface,
@@ -18,6 +18,7 @@ __all__ = [
     "ParticleSurface",
     "RoughSurface",
     "ScratchedSurface",
+    "SellmeierCoefficients",
     "SinusoidalSurface",
     "Surface",
     "SurfaceGenerator",

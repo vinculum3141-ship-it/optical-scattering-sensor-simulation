@@ -14,6 +14,8 @@ References
 
 from __future__ import annotations
 
+from typing import Optional
+
 import numpy as np
 
 from .base import ScatteredField, ScatteringModel
@@ -48,18 +50,28 @@ class CookTorranceScattering(ScatteringModel):
     roughness : float
         RMS slope of the microfacet distribution α.  Typical values:
         0.01 (nearly mirror) to 0.5 (very rough).  Default 0.1.
-    fresnel_reflectance : float
-        Reflectance at normal incidence F₀.  Common values: 0.04 (glass),
+    fresnel_reflectance : float or None
+        Reflectance at normal incidence F₀.  If ``None``, the model
+        derives F₀ from ``surface.material.F0(lightfield.wavelength)``
+        at evaluation time.  Common explicit values: 0.04 (glass),
         0.5 (silicon), 0.9+ (aluminium, gold).  Default 0.04.
     albedo : float
         Diffuse albedo — fraction of non-specular reflected power.
         Default 0.5.
     """
 
-    def __init__(self, roughness: float = 0.1, fresnel_reflectance: float = 0.04, albedo: float = 0.5):
+    def __init__(self, roughness: float = 0.1, fresnel_reflectance: Optional[float] = 0.04, albedo: float = 0.5):
         self.roughness = max(roughness, 1e-6)
-        self.fresnel_reflectance = float(fresnel_reflectance)
+        self.fresnel_reflectance = fresnel_reflectance
         self.albedo = float(albedo)
+
+    def _resolve_F0(self, lightfield, surface) -> float:
+        if self.fresnel_reflectance is not None:
+            return self.fresnel_reflectance
+        if hasattr(surface, 'material') and surface.material is not None:
+            wl = getattr(lightfield, 'wavelength', 550e-9)
+            return surface.material.F0(wl)
+        return 0.04
 
     def evaluate(self, lightfield, surface, view_direction):
         incoming = np.asarray(lightfield.direction, dtype=float)
@@ -69,6 +81,8 @@ class CookTorranceScattering(ScatteringModel):
 
         view_direction = np.asarray(view_direction, dtype=float)
         view_direction = view_direction / np.linalg.norm(view_direction)
+
+        F0 = self._resolve_F0(lightfield, surface)
 
         H, W = incoming.shape[0], incoming.shape[1]
         wi = -incoming  # direction from surface toward light
@@ -90,7 +104,7 @@ class CookTorranceScattering(ScatteringModel):
 
         if np.any(valid):
             D = distribution_beckmann(n_dot_h[valid], self.roughness)
-            F = fresnel_schlick(l_dot_h[valid], self.fresnel_reflectance)
+            F = fresnel_schlick(l_dot_h[valid], F0)
             G = geometry_smith(n_dot_l[valid], n_dot_v[valid], self.roughness)
 
             brdf = F * G * D / (4.0 * n_dot_l[valid] * n_dot_v[valid] + 1e-10)

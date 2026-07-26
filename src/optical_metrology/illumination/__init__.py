@@ -27,6 +27,7 @@ Spectral models (:mod:`illumination.spectrum`)
 """
 
 from .broadband import BroadbandLamp
+from .flatfield import FlatFieldSource
 from .laser import Laser
 from .led import LED
 from .lightfield import LightField
@@ -39,6 +40,7 @@ from .sunlight import Sunlight
 __all__ = [
     "BeamProfile",
     "BroadbandLamp",
+    "FlatFieldSource",
     "BroadbandSpectrum",
     "BlackbodySpectrum",
     "GaussianBeamProfile",

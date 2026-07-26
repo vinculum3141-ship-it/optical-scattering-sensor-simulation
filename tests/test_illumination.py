@@ -1,9 +1,14 @@
 """Unit tests for the illumination package."""
 
+import re
+
 import numpy as np
+import pytest
 
 from optical_metrology.illumination import (
     BroadbandLamp,
+    BroadbandSpectrum,
+    FlatFieldSource,
     LED,
     Laser,
     LightField,
@@ -147,6 +152,52 @@ def test_gaussian_beam_waist_off_grid_reduces_peak():
     peak = lf.intensity[1, 1]
     assert peak < src.power, "beam should be wider away from waist, reducing peak"
     assert peak > 0, "peak should still be positive"
+
+
+def test_flat_field_source_uses_uniform_profile():
+    src = FlatFieldSource(power=2.0)
+    lf = src.generate_light_field(shape=(8, 8))
+    assert np.allclose(lf.intensity, 2.0, rtol=1e-10)
+
+
+def test_flat_field_source_default_spectrum_is_broadband():
+    src = FlatFieldSource()
+    assert isinstance(src.spectrum, BroadbandSpectrum)
+
+
+def test_flat_field_source_intensity_levels_validation():
+    src = FlatFieldSource(power=1.0, intensity_levels=[0.0, 0.25, 0.5, 1.0])
+    assert src.intensity_levels == [0.0, 0.25, 0.5, 1.0]
+
+    with pytest.raises(ValueError, match=re.escape("intensity_levels must be in [0, 1]")):
+        FlatFieldSource(power=1.0, intensity_levels=[-0.1, 0.5])
+
+    with pytest.raises(ValueError, match=re.escape("intensity_levels must be in [0, 1]")):
+        FlatFieldSource(power=1.0, intensity_levels=[0.5, 1.5])
+
+
+def test_flat_field_intensity_sweep_returns_correct_number():
+    levels = [0.0, 0.1, 0.5, 0.8, 1.0]
+    src = FlatFieldSource(power=10.0, intensity_levels=levels)
+    fields = src.generate_intensity_sweep(shape=(4, 4))
+    assert len(fields) == len(levels)
+    for field, level in zip(fields, levels):
+        assert np.allclose(field.intensity, 10.0 * level, rtol=1e-10)
+        assert np.allclose(field.power, 10.0 * level, rtol=1e-10)
+
+
+def test_flat_field_intensity_sweep_preserves_direction():
+    levels = [0.0, 0.5, 1.0]
+    src = FlatFieldSource(power=1.0, intensity_levels=levels)
+    fields = src.generate_intensity_sweep(shape=(4, 4))
+    for f in fields:
+        assert np.allclose(f.direction, np.array([0.0, 0.0, 1.0]))
+
+
+def test_flat_field_source_default_intensity_level():
+    src = FlatFieldSource(power=5.0)
+    lf = src.generate_light_field(shape=(4, 4))
+    assert np.allclose(lf.intensity, 5.0, rtol=1e-10)
 
 
 def test_gaussian_beam_waist_farther_reduces_peak_more():
