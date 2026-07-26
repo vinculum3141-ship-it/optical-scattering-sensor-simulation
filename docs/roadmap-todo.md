@@ -186,7 +186,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 - [x] Defect detection analysis module — `DefectAnalyzer` with blob finding (CCA), scratch classification, pass/fail
 - [x] Pass/fail decision logic — `DefectAnalyzer.pass_fail()` with configurable limits
 - [x] Tiled acquisition / multi-FOV stitching helper — `TiledAcquisition`
-- [ ] Robot Framework tests for defect inspection workflow
+- [x] Robot Framework tests for defect inspection workflow
 - [x] Integration test: end-to-end defect inspection simulation
 
 ## Phase 2b — Sensor Performance Characterization (UC3)
