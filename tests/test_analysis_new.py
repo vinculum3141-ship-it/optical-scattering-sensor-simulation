@@ -2,6 +2,7 @@ import numpy as np
 
 from optical_metrology.analysis import (
     ContrastAnalyzer,
+    DefectAnalyzer,
     EdgeDetectionAnalyzer,
     ErrorMapAnalyzer,
     FFTAnalyzer,
@@ -12,6 +13,7 @@ from optical_metrology.analysis import (
     SNRAnalyzer,
     SaturationAnalyzer,
     SpeckleRoughnessEstimator,
+    TiledAcquisition,
 )
 from optical_metrology.detector import DigitalImage
 
@@ -314,3 +316,55 @@ def test_mtf_sinusoidal_no_frequency_raises():
     image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
     with pytest.raises(ValueError, match="lp_per_mm must be provided"):
         MTFAnalyzer(target_type="sinusoidal").analyze(image)
+
+
+def test_defect_analyzer_detects_blob():
+    pixels = np.zeros((16, 16), dtype=np.uint16)
+    pixels[6:10, 6:10] = 4095
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = DefectAnalyzer(threshold=0.5, min_area=4).analyze(image).measurements
+    assert m["has_defects"]
+    assert m["defect_count"] == 1
+    assert m["blob_count"] == 1
+
+
+def test_defect_analyzer_no_defects():
+    pixels = np.zeros((8, 8), dtype=np.uint16)
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = DefectAnalyzer(threshold=1.5).analyze(image).measurements
+    assert not m["has_defects"]
+
+
+def test_defect_analyzer_classifies_scratch():
+    pixels = np.zeros((16, 16), dtype=np.uint16)
+    pixels[8, 2:14] = 4095
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = DefectAnalyzer(threshold=0.5, min_area=2).analyze(image).measurements
+    assert m["scratch_count"] >= 1
+
+
+def test_defect_analyzer_pass_fail():
+    pixels = np.zeros((8, 8), dtype=np.uint16)
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    da = DefectAnalyzer(threshold=1.5)
+    da.analyze(image)
+    passed, reason = da.pass_fail(max_defects=1, require_zero=True)
+    assert passed
+
+
+def test_tiled_acquisition_stitches():
+    def fake_pipeline(r, c, h, w):
+        return np.ones((h, w), dtype=np.float32) * (r + c)
+    ta = TiledAcquisition(tile_height=8, tile_width=8, overlap=0.0)
+    result = ta.acquire(fake_pipeline, 16, 16)
+    assert result.shape == (16, 16)
+    assert result[0, 0] == 0.0
+    assert result[8, 8] == 16.0
+
+
+def test_tiled_acquisition_tile_grid():
+    ta = TiledAcquisition(tile_height=10, tile_width=10, overlap=0.0)
+    tiles = ta.tile_grid(20, 20)
+    assert len(tiles) == 4
+    assert tiles[0][:2] == (0, 0)
+    assert tiles[3][:2] == (10, 10)

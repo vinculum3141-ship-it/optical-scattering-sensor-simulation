@@ -253,6 +253,177 @@ class AnisotropicRoughSurface(Surface):
         return self.amplitude * height
 
 
+class DentSurface(Surface):
+    """A surface with a smooth Gaussian dent (circular depression).
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Grid dimensions ``(height, width)``.
+    depth : float
+        Maximum depth of the dent at its centre (positive value).
+    radius : float
+        Standard deviation of the Gaussian profile in pixels.
+        The dent extends approximately 3× *radius* from centre.
+    centre : tuple of float or None
+        ``(row, col)`` centre of the dent.  If ``None``, the dent is
+        centred on the grid.
+    material : Material or None
+        Material to attach to the surface.
+    """
+
+    def __init__(self, shape: Tuple[int, int], depth: float = 0.5, radius: float = 4.0, centre: Optional[Tuple[float, float]] = None, material: Optional[Material] = None):
+        self.depth = depth
+        self.radius = radius
+        self.centre = centre
+        self.shape = shape
+        height = self.generate(shape)
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.__dict__.update(surface.__dict__)
+
+    def generate(self, shape: Tuple[int, int]) -> np.ndarray:
+        height = np.zeros(shape, dtype=float)
+        h, w = shape
+        cy, cx = self.centre if self.centre is not None else (h / 2.0, w / 2.0)
+        yy, xx = np.ogrid[:h, :w]
+        dist_sq = (xx - cx) ** 2 + (yy - cy) ** 2
+        height -= self.depth * np.exp(-dist_sq / (2.0 * self.radius ** 2))
+        return height
+
+
+class PitSurface(Surface):
+    """A surface with a step-like circular pit.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Grid dimensions ``(height, width)``.
+    depth : float
+        Depth of the pit (positive value subtracted from height).
+    radius : float
+        Radius of the pit in pixels.
+    centre : tuple of float or None
+        ``(row, col)`` centre of the pit.  If ``None``, centred on grid.
+    material : Material or None
+        Material to attach to the surface.
+    """
+
+    def __init__(self, shape: Tuple[int, int], depth: float = 0.5, radius: float = 4.0, centre: Optional[Tuple[float, float]] = None, material: Optional[Material] = None):
+        self.depth = depth
+        self.radius = radius
+        self.centre = centre
+        self.shape = shape
+        height = self.generate(shape)
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.__dict__.update(surface.__dict__)
+
+    def generate(self, shape: Tuple[int, int]) -> np.ndarray:
+        height = np.zeros(shape, dtype=float)
+        h, w = shape
+        cy, cx = self.centre if self.centre is not None else (h / 2.0, w / 2.0)
+        yy, xx = np.ogrid[:h, :w]
+        dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
+        height[dist <= self.radius] -= self.depth
+        return height
+
+
+class CrackSurface(Surface):
+    """A surface with a thin branching crack-like feature.
+
+    The crack traces a path of connected pixels with random lateral
+    deviations, producing a jagged line.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Grid dimensions ``(height, width)``.
+    depth : float
+        Depth of the crack (positive value subtracted from height).
+    width : int
+        Width of the crack in pixels.
+    length : int
+        Approximate length of the crack in pixels.
+    jaggedness : float
+        Amplitude of random lateral deviations (pixels).
+        Default 1.0 produces mild waviness.
+    material : Material or None
+        Material to attach to the surface.
+    """
+
+    def __init__(self, shape: Tuple[int, int], depth: float = 0.4, width: int = 1, length: int = 20, jaggedness: float = 1.0, material: Optional[Material] = None):
+        self.depth = depth
+        self.width = width
+        self.length = length
+        self.jaggedness = jaggedness
+        self.shape = shape
+        height = self.generate(shape)
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.__dict__.update(surface.__dict__)
+
+    def generate(self, shape: Tuple[int, int]) -> np.ndarray:
+        height = np.zeros(shape, dtype=float)
+        h, w = shape
+        rng = np.random.default_rng(42)
+        y = float(h // 2)
+        x = float(w // 4)
+        for _ in range(self.length):
+            ix, iy = int(round(x)), int(round(y))
+            if 0 <= iy < h and 0 <= ix < w:
+                for dw in range(-self.width // 2, self.width // 2 + 1):
+                    for dh in range(-self.width // 2, self.width // 2 + 1):
+                        py, px = iy + dh, ix + dw
+                        if 0 <= py < h and 0 <= px < w:
+                            height[py, px] -= self.depth
+            x += 1.0
+            y += rng.uniform(-self.jaggedness, self.jaggedness)
+        return height
+
+
+class StainSurface(Surface):
+    """A surface with a shallow, diffuse stain-like region.
+
+    The stain is modelled as a smooth Gaussian depression with a
+    large radius relative to depth, simulating a contamination
+    residue.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Grid dimensions ``(height, width)``.
+    depth : float
+        Maximum depth at the centre (positive value).
+    radius : float
+        Standard deviation of the Gaussian profile in pixels.
+        Typically larger than for a dent (diffuse edge).
+    centre : tuple of float or None
+        ``(row, col)`` centre.  If ``None``, centred on grid.
+    asymmetry : float
+        Stretch factor > 1 makes the stain elliptical along the
+        y-axis.  Default 1.0 (circular).
+    material : Material or None
+        Material to attach to the surface.
+    """
+
+    def __init__(self, shape: Tuple[int, int], depth: float = 0.15, radius: float = 8.0, centre: Optional[Tuple[float, float]] = None, asymmetry: float = 1.0, material: Optional[Material] = None):
+        self.depth = depth
+        self.radius = radius
+        self.centre = centre
+        self.asymmetry = asymmetry
+        self.shape = shape
+        height = self.generate(shape)
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.__dict__.update(surface.__dict__)
+
+    def generate(self, shape: Tuple[int, int]) -> np.ndarray:
+        height = np.zeros(shape, dtype=float)
+        h, w = shape
+        cy, cx = self.centre if self.centre is not None else (h / 2.0, w / 2.0)
+        yy, xx = np.ogrid[:h, :w]
+        dist_sq = (xx - cx) ** 2 + (yy - cy) ** 2 / self.asymmetry ** 2
+        height -= self.depth * np.exp(-dist_sq / (2.0 * self.radius ** 2))
+        return height
+
+
 class ParticleSurface(Surface):
     """A surface with localized Gaussian bumps simulating particles.
 

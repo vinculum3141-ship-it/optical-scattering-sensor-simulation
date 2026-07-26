@@ -2,12 +2,16 @@ import numpy as np
 
 from optical_metrology.surface import (
     AnisotropicRoughSurface,
+    CrackSurface,
+    DentSurface,
     FlatSurface,
     ImportedSurface,
     Material,
+    PitSurface,
     RoughSurface,
     SellmeierCoefficients,
     SinusoidalSurface,
+    StainSurface,
     Surface,
     ThinFilmStack,
 )
@@ -277,3 +281,28 @@ def test_thinfilm_multilayer_stack():
     R = tf.reflectance(wavelength=550e-9, angle=0.0)
     bare_R = ((1.0 - 1.5) / (1.0 + 1.5)) ** 2
     assert abs(R - bare_R) > 0.01, "Multilayer should differ from bare substrate"
+
+
+def test_dent_surface_creates_depression():
+    surf = DentSurface(shape=(16, 16), depth=0.5, radius=3.0)
+    min_h = np.min(surf.height)
+    assert min_h < 0, "Dent should create negative height"
+    assert min_h > -1.0, "Minimum should not exceed depth"
+
+
+def test_pit_surface_sharp_circle():
+    surf = PitSurface(shape=(16, 16), depth=0.5, radius=4.0, centre=(8, 8))
+    assert surf.height[8, 8] == -0.5
+    assert surf.height[0, 0] == 0.0
+
+
+def test_crack_surface_creates_line():
+    surf = CrackSurface(shape=(16, 16), depth=0.4, width=1, length=10)
+    assert np.min(surf.height) < 0
+    assert np.sum(surf.height < 0) >= 10
+
+
+def test_stain_surface_diffuse():
+    surf = StainSurface(shape=(16, 16), depth=0.15, radius=8.0)
+    assert np.min(surf.height) < 0
+    assert np.count_nonzero(surf.height < -0.01) > 50

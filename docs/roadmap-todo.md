@@ -181,18 +181,18 @@ The following should be implemented **just before** (not ahead of) the use case 
 ## Phase 2a — Surface Defect Inspection (UC1)
 
 - [ ] **RayleighScattering / MieScattering** (skeletons in `scattering/particle.py`) — implement when particle-contamination scattering is needed for defect inspection
-- [ ] Directional illumination models (ring light, dark-field, bright-field)
-- [ ] Defect-specific surface generators (dents, pits, burrs, cracks, stains)
-- [ ] Defect detection analysis module (blob finder, scratch segmentation)
-- [ ] Pass/fail decision logic
-- [ ] Tiled acquisition / multi-FOV stitching helper
+- [x] Directional illumination models — `bright_field()`, `dark_field()`, `ring_light()` factory functions
+- [x] Defect-specific surface generators — `DentSurface`, `PitSurface`, `CrackSurface`, `StainSurface`
+- [x] Defect detection analysis module — `DefectAnalyzer` with blob finding (CCA), scratch classification, pass/fail
+- [x] Pass/fail decision logic — `DefectAnalyzer.pass_fail()` with configurable limits
+- [x] Tiled acquisition / multi-FOV stitching helper — `TiledAcquisition`
 - [ ] Robot Framework tests for defect inspection workflow
-- [ ] Integration test: end-to-end defect inspection simulation
+- [x] Integration test: end-to-end defect inspection simulation
 
 ## Phase 2b — Sensor Performance Characterization (UC3)
 
 - [ ] Photon transfer curve analysis module (variance vs. mean)
-- [ ] SNR analysis module (signal / noise vs. intensity)
+- [x] SNR analysis module (signal / noise vs. intensity) — `SNRAnalyzer`
 - [ ] Dynamic range calculation
 - [ ] Linearity test module (% deviation from ideal)
 - [ ] Standard test chart generators (Siemens star, slanted edge, greyscale wedge)

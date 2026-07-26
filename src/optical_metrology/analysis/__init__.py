@@ -49,6 +49,7 @@ sketches and trigger use cases.
 
 from .base import AnalysisModule, AnalysisReport, ImageAnalyzer
 from .contrast import ContrastAnalyzer, SaturationAnalyzer
+from .defects import DefectAnalyzer
 from .edge_detection import EdgeDetectionAnalyzer
 from .error_map import ErrorMapAnalyzer
 from .fft_analyzer import FFTAnalyzer
@@ -58,6 +59,7 @@ from .intensity_profile import IntensityProfileAnalyzer
 from .mtf import MTFAnalyzer
 from .snr import SNRAnalyzer
 from .speckle_roughness import SpeckleRoughnessEstimator
+from .tiled import TiledAcquisition
 
 __all__ = [
     # Orchestration
@@ -66,6 +68,7 @@ __all__ = [
     "ImageAnalyzer",
     # Quality Assessment
     "ContrastAnalyzer",
+    "DefectAnalyzer",
     "EdgeDetectionAnalyzer",
     "ErrorMapAnalyzer",
     "FFTAnalyzer",
@@ -76,4 +79,5 @@ __all__ = [
     "SNRAnalyzer",
     "SaturationAnalyzer",
     "SpeckleRoughnessEstimator",
+    "TiledAcquisition",
 ]

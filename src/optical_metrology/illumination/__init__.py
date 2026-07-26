@@ -27,6 +27,7 @@ Spectral models (:mod:`illumination.spectrum`)
 """
 
 from .broadband import BroadbandLamp
+from .directional import bright_field, dark_field, ring_light
 from .extent import SourceExtent
 from .flatfield import FlatFieldSource
 from .laser import Laser
@@ -42,9 +43,11 @@ from .temporal import TemporalEnvelope
 __all__ = [
     "BeamProfile",
     "BroadbandLamp",
-    "FlatFieldSource",
+    "bright_field",
     "BroadbandSpectrum",
     "BlackbodySpectrum",
+    "dark_field",
+    "FlatFieldSource",
     "GaussianBeamProfile",
     "GaussianSpectrum",
     "LED",
@@ -53,6 +56,7 @@ __all__ = [
     "LightSource",
     "MonochromaticSpectrum",
     "PolarizationState",
+    "ring_light",
     "SpectralDistribution",
     "SourceExtent",
     "Sunlight",

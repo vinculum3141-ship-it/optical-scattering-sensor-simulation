@@ -18,6 +18,9 @@ from optical_metrology.illumination import (
     SourceExtent,
     Sunlight,
     TemporalEnvelope,
+    bright_field,
+    dark_field,
+    ring_light,
 )
 
 
@@ -266,3 +269,19 @@ def test_source_extent_gaussian():
 def test_source_extent_invalid_shape_raises():
     with pytest.raises(ValueError, match="Unsupported source shape"):
         SourceExtent(shape="triangle")
+
+
+def test_bright_field_normal_incidence():
+    src = bright_field(incidence_angle=0.0)
+    assert np.allclose(src.propagation_direction, [0, 0, -1])
+
+
+def test_dark_field_nonzero_incidence():
+    src = dark_field(incidence_angle=0.785, azimuth=0.0)
+    assert src.incidence_angle > 0.1
+
+
+def test_ring_light_returns_tuple():
+    rings = ring_light(n_segments=4)
+    assert len(rings) == 4
+    assert all(isinstance(s, LightSource) for s in rings)
