@@ -65,7 +65,7 @@ wavenumber, NA is the numerical aperture, and r is the radial
 coordinate in the image plane.
 
 ```python
-from optics import AiryPSF
+from optical_metrology.optics import AiryPSF
 
 psf = AiryPSF(wavelength=532e-9, numerical_aperture=0.25, pixel_size=5e-6)
 kernel = psf.kernel(size=31)  # normalised 31×31 kernel
@@ -97,7 +97,7 @@ If no PSF model is provided, a 3×3 box filter (uniform average) is used:
 ## Key API
 
 ```python
-from optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
 
 # Configure the imaging system
 optics = OpticalSystem(
@@ -155,7 +155,7 @@ is stored in `OpticalSystem` but is not yet used for grid resampling.
 ## Complete Example
 
 ```python
-from optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
 
 optics = OpticalSystem(
     focal_length=0.1,

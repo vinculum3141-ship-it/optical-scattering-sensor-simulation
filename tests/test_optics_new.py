@@ -1,6 +1,6 @@
 import numpy as np
 
-from optics import AiryPSF
+from optical_metrology.optics import AiryPSF
 
 
 def test_airy_psf_kernel_normalised():

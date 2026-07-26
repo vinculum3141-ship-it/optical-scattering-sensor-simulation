@@ -1,7 +1,7 @@
 import numpy as np
 
-from detector import CMOSDetector, DigitalImage, DetectorNoiseModel
-from optics import SensorField
+from optical_metrology.detector import CMOSDetector, DigitalImage, DetectorNoiseModel
+from optical_metrology.optics import SensorField
 
 
 def test_detector_pipeline_creates_digital_image():

@@ -1,22 +1,15 @@
 """Robot Framework test library for the detector package."""
 
-import sys
-from pathlib import Path
-
-_project_root = str(Path(__file__).resolve().parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
 import numpy as np
 
-from detector import (
+from optical_metrology.detector import (
     CMOSDetector,
     ColumnDefectNoise,
     DigitalImage,
     FixedPatternNoise,
     HotPixelNoise,
 )
-from optics import SensorField
+from optical_metrology.optics import SensorField
 
 
 class DetectorLibrary:

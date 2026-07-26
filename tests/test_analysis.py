@@ -1,7 +1,7 @@
 import numpy as np
 
-from analysis import AnalysisReport, HistogramAnalyzer, ImageAnalyzer
-from detector import DigitalImage
+from optical_metrology.analysis import AnalysisReport, HistogramAnalyzer, ImageAnalyzer
+from optical_metrology.detector import DigitalImage
 
 
 def test_histogram_analyzer_returns_report():

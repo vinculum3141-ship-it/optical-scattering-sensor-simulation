@@ -1,6 +1,6 @@
 import numpy as np
 
-from surface import (
+from optical_metrology.surface import (
     AnisotropicRoughSurface,
     FlatSurface,
     ImportedSurface,

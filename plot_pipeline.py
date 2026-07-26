@@ -17,12 +17,12 @@ import os
 
 import numpy as np
 
-from illumination import Laser, GaussianBeamProfile
-from surface import RoughSurface, Material
-from scattering import LambertianScattering
-from optics import OpticalSystem, GaussianPSF, OpticalPropagator
-from detector import CMOSDetector
-from analysis import ImageAnalyzer, HistogramAnalyzer
+from optical_metrology.illumination import Laser, GaussianBeamProfile
+from optical_metrology.surface import RoughSurface, Material
+from optical_metrology.scattering import LambertianScattering
+from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from optical_metrology.detector import CMOSDetector
+from optical_metrology.analysis import ImageAnalyzer, HistogramAnalyzer
 
 
 def main():

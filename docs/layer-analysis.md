@@ -63,7 +63,7 @@ width approximation.
 ### HistogramAnalyzer
 
 ```python
-from analysis import HistogramAnalyzer
+from optical_metrology.analysis import HistogramAnalyzer
 
 analyzer = HistogramAnalyzer()
 report = analyzer.analyze(image)
@@ -75,7 +75,7 @@ report.measurements["mean_intensity"]  # float
 ### ImageAnalyzer
 
 ```python
-from analysis import ImageAnalyzer, HistogramAnalyzer
+from optical_metrology.analysis import ImageAnalyzer, HistogramAnalyzer
 
 analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
 report = analyzer.analyze(image)
@@ -133,7 +133,7 @@ Computes three standard contrast metrics:
   background level (defaults to the image mean).
 
 ```python
-from analysis import ContrastAnalyzer
+from optical_metrology.analysis import ContrastAnalyzer
 
 analyzer = ContrastAnalyzer(background=None)
 report = analyzer.analyze(image)
@@ -145,7 +145,7 @@ print(report.measurements["rms_contrast"])
 Detects pixels at or near the maximum digital value.
 
 ```python
-from analysis import SaturationAnalyzer
+from optical_metrology.analysis import SaturationAnalyzer
 
 analyzer = SaturationAnalyzer(threshold=0.99)  # ≥ 99% of max
 report = analyzer.analyze(image)
@@ -156,13 +156,13 @@ print(f"Saturation fraction: {report.measurements['saturation_fraction']:.2%}")
 ## Complete Example
 
 ```python
-from analysis import (
+from optical_metrology.analysis import (
     ContrastAnalyzer,
     HistogramAnalyzer,
     ImageAnalyzer,
     SaturationAnalyzer,
 )
-from detector import DigitalImage
+from optical_metrology.detector import DigitalImage
 import numpy as np
 
 pixels = np.array(
@@ -190,7 +190,7 @@ print(report.measurements)
 ## Creating a Custom Analysis Module
 
 ```python
-from analysis import AnalysisModule, AnalysisReport
+from optical_metrology.analysis import AnalysisModule, AnalysisReport
 
 class EntropyAnalyzer(AnalysisModule):
     def analyze(self, image):

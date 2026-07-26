@@ -1,15 +1,8 @@
 """Robot Framework test library for the surface package."""
 
-import sys
-from pathlib import Path
-
-_project_root = str(Path(__file__).resolve().parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
 import numpy as np
 
-from surface import (
+from optical_metrology.surface import (
     AnisotropicRoughSurface,
     FlatSurface,
     RoughSurface,

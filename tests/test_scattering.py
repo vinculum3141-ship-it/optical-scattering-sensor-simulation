@@ -1,13 +1,13 @@
 import numpy as np
 
-from illumination import LightField
-from scattering import (
+from optical_metrology.illumination import LightField
+from optical_metrology.scattering import (
     CookTorranceScattering,
     LambertianScattering,
     ScatteredField,
     ScatteringModel,
 )
-from surface import Material, Surface
+from optical_metrology.surface import Material, Surface
 
 
 def test_lambertian_scattering_returns_scattered_field():

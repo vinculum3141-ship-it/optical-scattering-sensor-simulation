@@ -1,7 +1,7 @@
 import numpy as np
 
-from optics import GaussianPSF, OpticalPropagator, OpticalSystem, SensorField
-from scattering import ScatteredField
+from optical_metrology.optics import GaussianPSF, OpticalPropagator, OpticalSystem, SensorField
+from optical_metrology.scattering import ScatteredField
 
 
 def test_optical_propagator_returns_sensor_field():

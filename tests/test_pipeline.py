@@ -1,12 +1,12 @@
 import numpy as np
 
-from analysis import HistogramAnalyzer
-from detector import CMOSDetector
-from illumination import Laser, GaussianBeamProfile
-from optics import GaussianPSF, OpticalPropagator, OpticalSystem
-from pipeline import SimulationPipeline
-from scattering import LambertianScattering
-from surface import Material, RoughSurface
+from optical_metrology.analysis import HistogramAnalyzer
+from optical_metrology.detector import CMOSDetector
+from optical_metrology.illumination import Laser, GaussianBeamProfile
+from optical_metrology.optics import GaussianPSF, OpticalPropagator, OpticalSystem
+from optical_metrology.scattering import LambertianScattering
+from optical_metrology.pipeline import SimulationPipeline
+from optical_metrology.surface import Material, RoughSurface
 
 
 def test_pipeline_run_returns_all_stages():
@@ -41,7 +41,7 @@ def test_pipeline_partial_illumination_only():
 
 
 def test_pipeline_partial_detector_only():
-    from optics import SensorField
+    from optical_metrology.optics import SensorField
     pipeline = SimulationPipeline(
         detector=CMOSDetector(exposure_time=0.1),
     )

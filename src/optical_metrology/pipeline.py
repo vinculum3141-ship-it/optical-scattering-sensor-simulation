@@ -7,12 +7,12 @@ set any to ``None`` to skip that stage.
 
 Usage
 -----
->>> from illumination import Laser, GaussianBeamProfile
->>> from surface import RoughSurface, Material
->>> from scattering import LambertianScattering
->>> from optics import OpticalSystem, GaussianPSF, OpticalPropagator
->>> from detector import CMOSDetector
->>> from analysis import HistogramAnalyzer
+>>> from optical_metrology.illumination import Laser, GaussianBeamProfile
+>>> from optical_metrology.surface import RoughSurface, Material
+>>> from optical_metrology.scattering import LambertianScattering
+>>> from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
+>>> from optical_metrology.detector import CMOSDetector
+>>> from optical_metrology.analysis import HistogramAnalyzer
 >>>
 >>> pipeline = SimulationPipeline(
 ...     source=Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),
@@ -37,10 +37,10 @@ from typing import List, Optional
 
 import numpy as np
 
-from analysis import AnalysisReport, ImageAnalyzer
-from detector import DigitalImage
-from optics import SensorField
-from scattering import ScatteredField
+from .analysis import AnalysisReport, ImageAnalyzer
+from .detector import DigitalImage
+from .optics import SensorField
+from .scattering import ScatteredField
 
 
 @dataclass

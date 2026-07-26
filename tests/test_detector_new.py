@@ -1,6 +1,6 @@
 import numpy as np
 
-from detector import (
+from optical_metrology.detector import (
     BloomingNoise,
     CMOSDetector,
     ColumnDefectNoise,
@@ -10,9 +10,9 @@ from detector import (
     PhotoResponseNonUniformity,
     SpeckleNoise,
 )
-from optics import SensorField
+from optical_metrology.optics import SensorField
 
-from surface.base import Surface, Material
+from optical_metrology.surface.base import Surface, Material
 
 
 def _sensor_field(shape=(8, 8), irradiance=1e3, wavelength=532e-9):

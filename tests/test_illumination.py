@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from illumination import (
+from optical_metrology.illumination import (
     BroadbandLamp,
     LED,
     Laser,

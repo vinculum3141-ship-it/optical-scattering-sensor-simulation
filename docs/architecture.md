@@ -125,11 +125,11 @@ array directly to the detector.
 
 ## Pipeline Orchestrator
 
-`pipeline.py` at the repository root provides a `SimulationPipeline`
+`optical_metrology.pipeline` provides a `SimulationPipeline`
 class that wires the six layers together in a single call:
 
 ```python
-from pipeline import SimulationPipeline
+from optical_metrology.pipeline import SimulationPipeline
 
 pipeline = SimulationPipeline(
     source=laser,

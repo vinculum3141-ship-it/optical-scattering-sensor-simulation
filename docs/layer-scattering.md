@@ -91,7 +91,7 @@ class MyModel(ScatteringModel):
 ## Key API
 
 ```python
-from scattering import LambertianScattering
+from optical_metrology.scattering import LambertianScattering
 
 model = LambertianScattering(albedo=0.7)
 result = model.evaluate(
@@ -126,7 +126,7 @@ view direction, and `shininess` controls the width of the highlight
   to more than 1).
 
 ```python
-from scattering import PhongScattering
+from optical_metrology.scattering import PhongScattering
 
 model = PhongScattering(diffuse_albedo=0.6, specular_albedo=0.4, shininess=32.0)
 result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
@@ -157,7 +157,7 @@ where:
 - The model conserves energy (albedo ≤ 1 ensures total reflectance ≤ 1).
 
 ```python
-from scattering import OrenNayarScattering
+from optical_metrology.scattering import OrenNayarScattering
 
 model = OrenNayarScattering(albedo=0.8, roughness=0.5)
 result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
@@ -168,7 +168,7 @@ result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
 The Cook-Torrance model is a physically based microfacet BRDF combining a Beckmann normal distribution, Schlick Fresnel approximation, and Smith geometry attenuation. A Lambertian diffuse term provides energy conservation. The specular/diffuse ratio is governed by the Fresnel term.
 
 ```python
-from scattering import CookTorranceScattering
+from optical_metrology.scattering import CookTorranceScattering
 
 model = CookTorranceScattering(roughness=0.1, fresnel_reflectance=0.04, albedo=0.5)
 result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
@@ -226,9 +226,9 @@ outgoing = np.repeat(outgoing, W, axis=1)
 
 ```python
 import numpy as np
-from illumination import Laser, GaussianBeamProfile
-from surface import RoughSurface, Material
-from scattering import LambertianScattering
+from optical_metrology.illumination import Laser, GaussianBeamProfile
+from optical_metrology.surface import RoughSurface, Material
+from optical_metrology.scattering import LambertianScattering
 
 laser = Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0))
 laser.propagation_direction = [0, 0, -1]
@@ -247,7 +247,7 @@ print(f"Radiance: {result.radiance.min():.4g} — {result.radiance.max():.4g}")
 Implement the `ScatteringModel` interface:
 
 ```python
-from scattering import ScatteringModel, ScatteredField
+from optical_metrology.scattering import ScatteringModel, ScatteredField
 
 class OrenNayarScattering(ScatteringModel):
     def __init__(self, albedo=0.8, roughness=0.5):

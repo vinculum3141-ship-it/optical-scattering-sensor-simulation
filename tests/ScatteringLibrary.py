@@ -1,23 +1,15 @@
 """Robot Framework test library for the scattering package."""
 
-import sys
-from pathlib import Path
-
-_project_root = str(Path(__file__).resolve().parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
 import numpy as np
 
-from illumination import LightField
-from scattering import (
+from optical_metrology.illumination import LightField
+from optical_metrology.scattering import (
     LambertianScattering,
     OrenNayarScattering,
     PhongScattering,
-    ScatteredField,
-    ScatteringModel,
+    CookTorranceScattering,
 )
-from surface import Material, Surface
+from optical_metrology.surface import Material, Surface
 
 
 class ScatteringLibrary:

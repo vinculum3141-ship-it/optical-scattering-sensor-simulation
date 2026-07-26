@@ -1,7 +1,7 @@
 import numpy as np
 
-from analysis import ContrastAnalyzer, ImageAnalyzer, SaturationAnalyzer
-from detector import DigitalImage
+from optical_metrology.analysis import ContrastAnalyzer, ImageAnalyzer, SaturationAnalyzer
+from optical_metrology.detector import DigitalImage
 
 
 def _image(pixels=None, bit_depth=12):

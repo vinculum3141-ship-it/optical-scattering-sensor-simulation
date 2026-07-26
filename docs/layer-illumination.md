@@ -143,7 +143,7 @@ This lets the base `__post_init__` handle everything else uniformly.
 ## Complete Example
 
 ```python
-from illumination import Laser, GaussianBeamProfile, PolarizationState
+from optical_metrology.illumination import Laser, GaussianBeamProfile, PolarizationState
 
 laser = Laser(
     wavelength=532e-9,
@@ -163,7 +163,7 @@ print(f"Polarisation:   {field.polarization.kind}")
 Subclass `LightSource` and override `default_spectrum()`:
 
 ```python
-from illumination import LightSource, MonochromaticSpectrum
+from optical_metrology.illumination import LightSource, MonochromaticSpectrum
 
 class MySource(LightSource):
     def default_spectrum(self):

@@ -148,7 +148,7 @@ The framework ships with seven concrete noise models:
 | Blooming | `BloomingNoise` | Charge overflow spill | bloom_factor, iterations, full_well_capacity |
 
 ```python
-from detector import (
+from optical_metrology.detector import (
     CMOSDetector,
     ColumnDefectNoise,
     DeadPixelNoise,
@@ -174,7 +174,7 @@ detector = CMOSDetector(
 ### Custom Noise Models
 
 ```python
-from detector import DetectorNoiseModel
+from optical_metrology.detector import DetectorNoiseModel
 
 class FixedPatternNoise(DetectorNoiseModel):
     def __init__(self, pattern):
@@ -195,8 +195,8 @@ synthetic data without constructing a full `SensorField`.
 ## Complete Example
 
 ```python
-from detector import CMOSDetector
-from optics import SensorField
+from optical_metrology.detector import CMOSDetector
+from optical_metrology.optics import SensorField
 import numpy as np
 
 sensor_field = SensorField(

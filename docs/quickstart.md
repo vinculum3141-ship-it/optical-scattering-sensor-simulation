@@ -9,14 +9,11 @@
 
 ## Installation
 
-No package installation is required — the framework is used directly
-from the repository root. Clone or copy the repository, then:
-
 ```bash
 python -m venv .venv
 source .venv/bin/activate          # Linux/macOS
 # or .venv\Scripts\activate        # Windows
-pip install numpy
+pip install -e .                   # install optical-metrology in editable mode
 ```
 
 ## Running the Full Pipeline Demo
@@ -45,13 +42,13 @@ select the custom pipeline to build an end-to-end simulation from scratch.
 For a cleaner single-call approach, use `SimulationPipeline`:
 
 ```python
-from pipeline import SimulationPipeline
-from illumination import Laser, GaussianBeamProfile
-from surface import RoughSurface, Material
-from scattering import LambertianScattering
-from optics import OpticalSystem, GaussianPSF, OpticalPropagator
-from detector import CMOSDetector
-from analysis import HistogramAnalyzer
+from optical_metrology.pipeline import SimulationPipeline
+from optical_metrology.illumination import Laser, GaussianBeamProfile
+from optical_metrology.surface import RoughSurface, Material
+from optical_metrology.scattering import LambertianScattering
+from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from optical_metrology.detector import CMOSDetector
+from optical_metrology.analysis import HistogramAnalyzer
 
 pipeline = SimulationPipeline(
     source=Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),
@@ -72,11 +69,11 @@ Every component is optional — set any to `None` to skip that stage.
 ## A Complete Six-Line Pipeline
 
 ```python
-from illumination import Laser, GaussianBeamProfile
-from surface import RoughSurface, Material
-from scattering import LambertianScattering
-from optics import OpticalSystem, GaussianPSF, OpticalPropagator
-from detector import CMOSDetector
+from optical_metrology.illumination import Laser, GaussianBeamProfile
+from optical_metrology.surface import RoughSurface, Material
+from optical_metrology.scattering import LambertianScattering
+from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from optical_metrology.detector import CMOSDetector
 
 laser = Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0))
 laser.propagation_direction = [0, 0, -1]

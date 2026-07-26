@@ -44,7 +44,7 @@ finite-difference methods. It does **not** know about light or scattering.
 - Normals capture the periodic slope variation.
 
 ```python
-from surface import SinusoidalSurface
+from optical_metrology.surface import SinusoidalSurface
 surf = SinusoidalSurface((64, 64), period=16.0, amplitude=0.5)
 ```
 
@@ -54,7 +54,7 @@ surf = SinusoidalSurface((64, 64), period=16.0, amplitude=0.5)
   machined metal, brushed plastic).
 
 ```python
-from surface import AnisotropicRoughSurface
+from optical_metrology.surface import AnisotropicRoughSurface
 surf = AnisotropicRoughSurface((64, 64), sigma_x=8.0, sigma_y=2.0, amplitude=0.5)
 ```
 
@@ -63,7 +63,7 @@ surf = AnisotropicRoughSurface((64, 64), sigma_x=8.0, sigma_y=2.0, amplitude=0.5
 Loads an external height map from a `.npy`, `.csv`, or `.txt` file, or directly from a NumPy array. Geometry (normals, slopes, curvature, roughness) is derived automatically via `GeometryAnalyzer`. Useful for bringing in real AFM or profilometry data.
 
 ```python
-from surface import ImportedSurface
+from optical_metrology.surface import ImportedSurface
 surf = ImportedSurface("measurement.npy", material=Material("silicon"))
 ```
 
@@ -127,7 +127,7 @@ print(rough.normals[0, 0])   # [x, y, z] unit vector
 ### GeometryAnalyzer
 
 ```python
-from surface import GeometryAnalyzer, Material
+from optical_metrology.surface import GeometryAnalyzer, Material
 height = np.random.randn(32, 32) * 0.2
 surface = GeometryAnalyzer.analyze(height, material=Material("custom"))
 ```
@@ -177,7 +177,7 @@ seed for variety.
 ## Complete Example
 
 ```python
-from surface import RoughSurface, Material
+from optical_metrology.surface import RoughSurface, Material
 
 surface = RoughSurface(
     shape=(64, 64),
@@ -194,7 +194,7 @@ print(f"Normal at origin: {surface.normals[32, 32]}")
 ## Creating a Custom Surface Generator
 
 ```python
-from surface import SurfaceGenerator, GeometryAnalyzer, Material, Surface
+from optical_metrology.surface import SurfaceGenerator, GeometryAnalyzer, Material, Surface
 import numpy as np
 
 class CheckerboardSurface(SurfaceGenerator):
