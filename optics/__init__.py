@@ -1,5 +1,12 @@
+from .airy import AiryPSF
 from .base import OpticalSystem, SensorField
-from .psf import GaussianPSF
 from .propagator import OpticalPropagator
+from .psf import GaussianPSF
 
-__all__ = ["GaussianPSF", "OpticalPropagator", "OpticalSystem", "SensorField"]
+__all__ = [
+    "AiryPSF",
+    "GaussianPSF",
+    "OpticalPropagator",
+    "OpticalSystem",
+    "SensorField",
+]

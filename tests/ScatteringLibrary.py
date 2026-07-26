@@ -10,7 +10,13 @@ if _project_root not in sys.path:
 import numpy as np
 
 from illumination import LightField
-from scattering import LambertianScattering, ScatteredField, ScatteringModel
+from scattering import (
+    LambertianScattering,
+    OrenNayarScattering,
+    PhongScattering,
+    ScatteredField,
+    ScatteringModel,
+)
 from surface import Material, Surface
 
 
@@ -94,3 +100,69 @@ class ScatteringLibrary:
         actual = type(self._model).__name__
         if actual != expected_type:
             raise AssertionError(f"Expected {expected_type}, got {actual}")
+
+    def create_phong_model(self, diffuse_albedo, specular_albedo, shininess):
+        self._model = PhongScattering(
+            diffuse_albedo=float(diffuse_albedo),
+            specular_albedo=float(specular_albedo),
+            shininess=float(shininess),
+        )
+        return self._model
+
+    def evaluate_phong(self, intensity_arr, direction_arr, normals_arr, view_str, diffuse, specular, shininess):
+        intensity_arr = np.asarray(intensity_arr, dtype=float)
+        direction_arr = np.asarray(direction_arr, dtype=float)
+        normals_arr = np.asarray(normals_arr, dtype=float)
+        h, w = intensity_arr.shape[:2]
+        lightfield = LightField(
+            intensity=np.asarray(intensity_arr, dtype=float),
+            direction=np.asarray(direction_arr, dtype=float),
+            wavelength=532e-9,
+            polarization=None,
+        )
+        surface = Surface(
+            height=np.zeros((h, w), dtype=float),
+            normals=np.asarray(normals_arr, dtype=float),
+            curvature=np.zeros((h, w), dtype=float),
+            slope_x=np.zeros((h, w), dtype=float),
+            slope_y=np.zeros((h, w), dtype=float),
+            roughness=0.0,
+            material=Material(),
+        )
+        view = np.array([float(x) for x in view_str.split(",")])
+        model = PhongScattering(
+            diffuse_albedo=float(diffuse),
+            specular_albedo=float(specular),
+            shininess=float(shininess),
+        )
+        self._result = model.evaluate(lightfield, surface, view)
+        return self._result
+
+    def create_orennayar_model(self, albedo, roughness):
+        self._model = OrenNayarScattering(albedo=float(albedo), roughness=float(roughness))
+        return self._model
+
+    def evaluate_orennayar(self, intensity_arr, direction_arr, normals_arr, view_str, albedo, roughness):
+        intensity_arr = np.asarray(intensity_arr, dtype=float)
+        direction_arr = np.asarray(direction_arr, dtype=float)
+        normals_arr = np.asarray(normals_arr, dtype=float)
+        h, w = intensity_arr.shape[:2]
+        lightfield = LightField(
+            intensity=np.asarray(intensity_arr, dtype=float),
+            direction=np.asarray(direction_arr, dtype=float),
+            wavelength=532e-9,
+            polarization=None,
+        )
+        surface = Surface(
+            height=np.zeros((h, w), dtype=float),
+            normals=np.asarray(normals_arr, dtype=float),
+            curvature=np.zeros((h, w), dtype=float),
+            slope_x=np.zeros((h, w), dtype=float),
+            slope_y=np.zeros((h, w), dtype=float),
+            roughness=0.0,
+            material=Material(),
+        )
+        view = np.array([float(x) for x in view_str.split(",")])
+        model = OrenNayarScattering(albedo=float(albedo), roughness=float(roughness))
+        self._result = model.evaluate(lightfield, surface, view)
+        return self._result

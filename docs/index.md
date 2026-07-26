@@ -31,8 +31,9 @@ Each section calls out which audience it primarily addresses.
 | [Optics Layer](layer-optics.md) | Both | Imaging systems, PSF convolution, propagation |
 | [Detector Layer](layer-detector.md) | Both | Photon conversion, noise, ADC, CMOS pipeline |
 | [Analysis Layer](layer-analysis.md) | Both | Histograms, statistics, pluggable modules |
-| [Testing & Verification](testing.md) | Engineers | Unit tests, Robot Framework, verification strategy |
+| [Testing & Verification](testing.md) | Engineers | 55 pytest + 64 Robot Framework tests, verification strategy |
 | [Extending the Framework](extending.md) | Engineers | Custom sources, surfaces, scattering, noise, analysis |
+| [Pipeline Orchestrator](quickstart.md#using-the-pipeline-orchestrator) | Both | Single-call `SimulationPipeline` class |
 
 ## Package Overview
 
@@ -43,6 +44,8 @@ scattering/       → Scattering models (BRDF implementations)
 optics/           → Imaging-system propagation (PSF convolution)
 detector/         → Digital sensor pipeline (CMOS model)
 analysis/         → Image analysis (histograms, statistics)
+pipeline.py       → Pipeline orchestrator (single-call simulation)
+utils/            → Shared utilities (heatmap visualisation)
 ```
 
 ## Key Design Principles

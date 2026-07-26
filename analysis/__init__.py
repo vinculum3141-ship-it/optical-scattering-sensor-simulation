@@ -1,16 +1,63 @@
-"""Image analysis and reporting modules for digital detector output.
+"""Measurement and analysis modules for digital detector output.
 
-This package provides the final analysis stage of the simulation pipeline:
-extracting quantitative measurements from captured :class:`~detector.DigitalImage` s.
+This package provides the final stage of the simulation pipeline:
+extracting quantitative measurements from captured
+:class:`~detector.DigitalImage` s.  Modules fall into three groups:
 
-    - :class:`AnalysisReport` — structured output (histogram, measurements dict)
-    - :class:`AnalysisModule` — pluggable base for individual analysis routines
-    - :class:`HistogramAnalyzer` — computes pixel histogram and basic statistics
-    - :class:`ImageAnalyzer` — orchestrator that runs multiple modules and merges
-      their reports into one
+Quality Assessment
+    How good is the image?  Histogram statistics, SNR, contrast
+    metrics, focus sharpness, saturation detection.
+
+Optical Characterisation
+    How well did the imaging system perform?  MTF, FFT-based
+    frequency analysis, PSF estimation.
+
+Metrology
+    What are the engineering measurements?  Edge width / feature
+    size, surface roughness, defect detection and classification,
+    particle sizing, scratch measurement.
+
+This classification mirrors the way real optical inspection systems
+are evaluated in semiconductor metrology and industrial machine
+vision.
+
+Orchestrator and base classes
+-----------------------------
+- :class:`AnalysisReport` — structured output container
+- :class:`AnalysisModule` — pluggable base for individual routines
+- :class:`ImageAnalyzer` — runs multiple modules and merges results
+
+Modules (existing)
+------------------
+Quality Assessment
+- :class:`HistogramAnalyzer` — pixel histogram + mean/min/max
+- :class:`ContrastAnalyzer` — RMS, Michelson, Weber contrast
+- :class:`SaturationAnalyzer` — saturated pixel fraction
+
+Modules (documented in docs/roadmap-todo.md, implement before use case)
+------------------------------------------------------------------------
+Quality Assessment       | Optical Characterisation | Metrology
+-------------------------|--------------------------|--------------------------
+:class:`FocusAnalyzer`   | :class:`MTFAnalyzer`     | :class:`EdgeDetectionAnalyzer`
+:class:`SNRAnalyzer`     | :class:`FFTAnalyzer`     | :class:`SpeckleRoughnessEstimator`
+                         |                          | :class:`IntensityProfileAnalyzer`
+                         |                          | Defect detection (UC1)
+
+See ``docs/roadmap-todo.md`` → *Pre-deployment gaps* for implementation
+sketches and trigger use cases.
 """
 
 from .base import AnalysisModule, AnalysisReport, ImageAnalyzer
 from .histogram import HistogramAnalyzer
+from .contrast import ContrastAnalyzer, SaturationAnalyzer
 
-__all__ = ["AnalysisModule", "AnalysisReport", "HistogramAnalyzer", "ImageAnalyzer"]
+__all__ = [
+    # Orchestration
+    "AnalysisModule",
+    "AnalysisReport",
+    "ImageAnalyzer",
+    # Quality Assessment
+    "ContrastAnalyzer",
+    "HistogramAnalyzer",
+    "SaturationAnalyzer",
+]

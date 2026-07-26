@@ -45,10 +45,15 @@ class LightSource:
         Unit vector along which the beam propagates.  Normalised on
         input.  Defaults to ``+z``.
     origin : ndarray, 3-element
-        Spatial origin of the source in world coordinates.  Defaults
-        to the origin.
+        Spatial position of the source in world coordinates.  Used as
+        the emission point for :attr:`wavefront` ``"spherical"``.
+        Defaults to ``[0, 0, 0]``.
     divergence : float
         Full-angle beam divergence in radians.
+    wavefront : str
+        Wavefront geometry.  ``"planar"`` (default) — collimated beam,
+        uniform direction across grid.  ``"spherical"`` — point source,
+        per-pixel direction computed from :attr:`origin`.
     spectrum : SpectralDistribution or None
         Spectral model.  If ``None``, ``default_spectrum()`` is called.
     """
@@ -61,6 +66,7 @@ class LightSource:
     propagation_direction: Optional[np.ndarray] = None
     origin: Optional[np.ndarray] = None
     divergence: float = 0.0
+    wavefront: str = "planar"
     spectrum: Optional[SpectralDistribution] = None
 
     def __post_init__(self):
@@ -89,8 +95,40 @@ class LightSource:
             else:
                 raise ValueError(f"Unsupported beam profile: {self.beam_profile}")
 
+        if self.wavefront not in ("planar", "spherical"):
+            raise ValueError(f"Unsupported wavefront: {self.wavefront!r}; expected 'planar' or 'spherical'")
+
         if self.spectrum is None:
             self.spectrum = self.default_spectrum()
+
+    @property
+    def incidence_angle(self) -> float:
+        """Incidence angle in radians, assuming a surface normal of [0, 0, 1].
+
+        Derived from ``propagation_direction``.  0 = normal incidence
+        (beam perpendicular to surface), π/2 = grazing.  The property
+        converts ``propagation_direction`` to an angle so that the two
+        stay synchronised: setting one updates the other.
+
+        For surfaces with arbitrary normals, the per-pixel incidence
+        angle is computed in the scattering model via the dot product.
+        """
+        return float(np.arccos(np.clip(-self.propagation_direction[2], -1.0, 1.0)))
+
+    @incidence_angle.setter
+    def incidence_angle(self, angle_rad: float):
+        cz = np.cos(float(angle_rad))
+        sz = np.sin(float(angle_rad))
+        self.propagation_direction = np.array([sz, 0.0, -cz], dtype=float)
+
+    @property
+    def incidence_angle_degrees(self) -> float:
+        """Incidence angle in degrees.  See :attr:`incidence_angle`."""
+        return float(np.degrees(self.incidence_angle))
+
+    @incidence_angle_degrees.setter
+    def incidence_angle_degrees(self, angle_deg: float):
+        self.incidence_angle = float(np.radians(angle_deg))
 
     def default_spectrum(self) -> SpectralDistribution:
         """Return the default spectrum for this source type.
@@ -108,7 +146,11 @@ class LightSource:
 
         The intensity at each grid point is the product of the
         beam-profile evaluation and the total source power.  The
-        direction is constant across the grid (collimated beam).
+        direction depends on the :attr:`wavefront`:
+
+        * ``"planar"`` (default) — uniform direction across grid (collimated beam).
+        * ``"spherical"`` — per-pixel direction from :attr:`origin` toward
+          each grid point (point source).
 
         Parameters
         ----------
@@ -126,13 +168,31 @@ class LightSource:
         """
         if isinstance(shape, int):
             shape = (shape, shape)
+        H, W = int(shape[0]), int(shape[1])
+
         intensity = self.beam_profile.evaluate(shape, spacing=spacing)
-        direction = np.repeat(self.propagation_direction[None, None, :], int(shape[0]), axis=0)
-        direction = np.repeat(direction, int(shape[1]), axis=1)
+
+        if self.wavefront == "spherical":
+            # Physical coordinates of each grid point, assuming the grid
+            # lies in the z = 0 plane centered at (0, 0).
+            x = (np.arange(W) - (W - 1) / 2.0) * spacing
+            y = ((H - 1) / 2.0 - np.arange(H)) * spacing
+            xx, yy = np.meshgrid(x, y)
+            dx = xx - self.origin[0]
+            dy = yy - self.origin[1]
+            dz = 0.0 - self.origin[2]
+            norm = np.sqrt(dx**2 + dy**2 + dz**2)
+            direction = np.stack([dx / norm, dy / norm, dz / norm], axis=-1)
+        else:
+            direction = np.repeat(self.propagation_direction[None, None, :], H, axis=0)
+            direction = np.repeat(direction, W, axis=1)
+
         return LightField(
             intensity=intensity * self.power,
             direction=direction,
             wavelength=self.wavelength,
             polarization=self.polarization,
+            coherence_length=self.coherence_length,
+            power=self.power,
             phase=None,
         )

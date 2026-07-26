@@ -30,9 +30,17 @@ AnalysisReport
     └── measurements: dict (e.g. {"mean_intensity": 2048.0})
 ```
 
-## HistogramAnalyzer
+## Built-in Analysis Modules
 
-The only built-in module. For each unique pixel value in the image,
+| Module | Class | Measurements | Use Case |
+|---|---|---|---|
+| Histogram | `HistogramAnalyzer` | mean_intensity, max_intensity, min_intensity | Basic statistics |
+| Contrast | `ContrastAnalyzer` | rms_contrast, michelson_contrast, weber_contrast, mean_intensity, std_intensity | Image quality, pattern detection |
+| Saturation | `SaturationAnalyzer` | saturated_pixels, saturation_fraction, max_digital_value, pixel_max | Overexposure detection |
+
+### HistogramAnalyzer
+
+For each unique pixel value in the image,
 it counts how many pixels share that value.
 
 ### Output Measurements
@@ -114,28 +122,69 @@ existing code.
 (2D array). This works with `DigitalImage` directly or any
 duck-typed equivalent.
 
+### ContrastAnalyzer
+
+Computes three standard contrast metrics:
+
+- **RMS contrast** — σ(I) / μ(I), the coefficient of variation.
+- **Michelson contrast** — (I_max - I_min) / (I_max + I_min), for
+  periodic patterns.
+- **Weber contrast** — (I_max - I_bg) / I_bg, relative to a
+  background level (defaults to the image mean).
+
+```python
+from analysis import ContrastAnalyzer
+
+analyzer = ContrastAnalyzer(background=None)
+report = analyzer.analyze(image)
+print(report.measurements["rms_contrast"])
+```
+
+### SaturationAnalyzer
+
+Detects pixels at or near the maximum digital value.
+
+```python
+from analysis import SaturationAnalyzer
+
+analyzer = SaturationAnalyzer(threshold=0.99)  # ≥ 99% of max
+report = analyzer.analyze(image)
+print(f"Saturated pixels: {report.measurements['saturated_pixels']}")
+print(f"Saturation fraction: {report.measurements['saturation_fraction']:.2%}")
+```
+
 ## Complete Example
 
 ```python
-from analysis import HistogramAnalyzer, ImageAnalyzer
+from analysis import (
+    ContrastAnalyzer,
+    HistogramAnalyzer,
+    ImageAnalyzer,
+    SaturationAnalyzer,
+)
 from detector import DigitalImage
 import numpy as np
 
-# Create a synthetic image
 pixels = np.array(
     [[0, 1, 2],
      [3, 4, 5]], dtype=np.uint16
 )
 image = DigitalImage(pixels=pixels, metadata={"bit_depth": 8})
 
-# Analyse
-analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
+# Compose multiple analysis modules
+analyzer = ImageAnalyzer(modules=[
+    HistogramAnalyzer(),
+    ContrastAnalyzer(),
+    SaturationAnalyzer(),
+])
 report = analyzer.analyze(image)
 
-print(f"Mean intensity:  {report.measurements['mean_intensity']:.1f}")
-print(f"Max intensity:   {report.measurements['max_intensity']}")
-print(f"Histogram bins:  {len(report.histogram)}")
-print(f"Histogram:       {report.histogram}")
+print(report.measurements)
+# {
+#   "mean_intensity": ..., "max_intensity": ...,
+#   "rms_contrast": ..., "saturated_pixels": 0,
+#   ...
+# }
 ```
 
 ## Creating a Custom Analysis Module

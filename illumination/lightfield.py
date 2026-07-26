@@ -28,6 +28,13 @@ class LightField:
         Centre wavelength of the illumination in metres.
     polarization : PolarizationState
         Polarisation state of the field.
+    coherence_length : float
+        Temporal coherence length in metres.  Carried through from the
+        :class:`~illumination.source.LightSource` so that speckle and
+        interference models can access it without referencing the source.
+    power : float
+        Total optical power in Watts.  The sum of ``intensity`` over
+        the grid equals this value (up to discretisation).
     phase : np.ndarray | None
         2D array of relative optical phase (radians) at each grid
         point.  ``None`` means the phase is undefined or irrelevant
@@ -38,6 +45,8 @@ class LightField:
     direction: np.ndarray
     wavelength: float
     polarization: object
+    coherence_length: float = 0.0
+    power: float = 0.0
     phase: Optional[np.ndarray] = None
 
     _SHADES = [" ", "\u2591", "\u2592", "\u2593", "\u2588"]

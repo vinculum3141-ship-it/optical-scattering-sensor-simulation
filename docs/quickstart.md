@@ -40,6 +40,35 @@ python playground.py
 Opens a numbered menu. Choose any layer to inspect it in detail, or
 select the custom pipeline to build an end-to-end simulation from scratch.
 
+## Using the Pipeline Orchestrator
+
+For a cleaner single-call approach, use `SimulationPipeline`:
+
+```python
+from pipeline import SimulationPipeline
+from illumination import Laser, GaussianBeamProfile
+from surface import RoughSurface, Material
+from scattering import LambertianScattering
+from optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from detector import CMOSDetector
+from analysis import HistogramAnalyzer
+
+pipeline = SimulationPipeline(
+    source=Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),
+    surface=RoughSurface((16, 16), sigma=4.0, amplitude=0.3, material=Material("silicon")),
+    scattering=LambertianScattering(albedo=0.7),
+    optics=OpticalSystem(focal_length=0.05, aperture_diameter=0.008),
+    propagator=OpticalPropagator(GaussianPSF(sigma=1.0)),
+    detector=CMOSDetector(exposure_time=1e-5, gain=1.0),
+    analysers=[HistogramAnalyzer()],
+)
+result = pipeline.run(shape=(16, 16), spacing=0.5)
+print(result.digital_image.pixels.min(), "-", result.digital_image.pixels.max(), "ADU")
+print(result.report.measurements)
+```
+
+Every component is optional — set any to `None` to skip that stage.
+
 ## A Complete Six-Line Pipeline
 
 ```python

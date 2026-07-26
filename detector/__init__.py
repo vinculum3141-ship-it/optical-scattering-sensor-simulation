@@ -11,5 +11,25 @@ converting a :class:`~optics.SensorField` into a digital image.
 """
 
 from .base import CMOSDetector, DigitalImage, DetectorNoiseModel
+from .noise_models import (
+    BloomingNoise,
+    ColumnDefectNoise,
+    DeadPixelNoise,
+    FixedPatternNoise,
+    HotPixelNoise,
+    PhotoResponseNonUniformity,
+    SpeckleNoise,
+)
 
-__all__ = ["CMOSDetector", "DigitalImage", "DetectorNoiseModel"]
+__all__ = [
+    "BloomingNoise",
+    "CMOSDetector",
+    "ColumnDefectNoise",
+    "DeadPixelNoise",
+    "DetectorNoiseModel",
+    "DigitalImage",
+    "FixedPatternNoise",
+    "HotPixelNoise",
+    "PhotoResponseNonUniformity",
+    "SpeckleNoise",
+]

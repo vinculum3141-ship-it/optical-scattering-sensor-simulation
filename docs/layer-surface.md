@@ -13,6 +13,16 @@ finite-difference methods. It does **not** know about light or scattering.
 
 ## Surface Types
 
+| Generator | Class | Parameters | Use Case |
+|---|---|---|---|
+| Flat | `FlatSurface` | shape, material | Ideal reference surface |
+| Rough (isotropic) | `RoughSurface` | shape, sigma, amplitude, material | Random correlated roughness |
+| Rough (anisotropic) | `AnisotropicRoughSurface` | shape, sigma_x, sigma_y, amplitude, material | Directional roughness (machined metal, brushed surfaces) |
+| Sinusoidal | `SinusoidalSurface` | shape, period, amplitude, phase, material | Diffraction gratings, periodic textures, wavy substrates |
+| Scratched | `ScratchedSurface` | shape, scratch_depth, scratch_width, material | Defect modelling, groove artefacts |
+| Particle | `ParticleSurface` | shape, particle_count, amplitude, sigma, material | Contamination, dust, localized bumps |
+| Imported | `ImportedSurface` | source, spacing, material | Loading external height maps (AFM, profilometry, CSV) |
+
 ### FlatSurface
 - Zero height everywhere.
 - Zero roughness, zero slopes, normals all pointing exactly +z.
@@ -27,6 +37,35 @@ finite-difference methods. It does **not** know about light or scattering.
 - A diagonal groove with programmable depth and width.
 - All heights are zero except for the groove pixels, which are lowered
   by `scratch_depth`.
+
+### SinusoidalSurface
+- A sinusoidal wave along the x-axis: h(x) = amplitude × sin(2πx / period + phase).
+- Zero-mean height, useful for diffraction-grating simulations.
+- Normals capture the periodic slope variation.
+
+```python
+from surface import SinusoidalSurface
+surf = SinusoidalSurface((64, 64), period=16.0, amplitude=0.5)
+```
+
+### AnisotropicRoughSurface
+- Starts as white noise, blurred with different sigma in x and y.
+- Produces directionally correlated roughness (e.g. ground glass,
+  machined metal, brushed plastic).
+
+```python
+from surface import AnisotropicRoughSurface
+surf = AnisotropicRoughSurface((64, 64), sigma_x=8.0, sigma_y=2.0, amplitude=0.5)
+```
+
+### ImportedSurface
+
+Loads an external height map from a `.npy`, `.csv`, or `.txt` file, or directly from a NumPy array. Geometry (normals, slopes, curvature, roughness) is derived automatically via `GeometryAnalyzer`. Useful for bringing in real AFM or profilometry data.
+
+```python
+from surface import ImportedSurface
+surf = ImportedSurface("measurement.npy", material=Material("silicon"))
+```
 
 ### ParticleSurface
 - Localised Gaussian bumps at random (seeded) locations.
@@ -62,6 +101,12 @@ surface = Surface(
     roughness=0.0,             # float
     material=Material("silicon"),
 )
+
+# Terminal visualisation (height, slope, curvature panels):
+print(surface.visualize(max_width=72, color=True))
+
+# Phase delay map for coherent illumination:
+phi = surface.phase_screen(wavelength=532e-9)  # radians
 ```
 
 ### Surface Generators

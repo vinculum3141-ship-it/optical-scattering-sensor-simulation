@@ -60,6 +60,8 @@ source = LightSource(
     beam_profile="uniform",   # or BeamProfile instance
     propagation_direction=[0, 0, 1],  # auto-normalised
     divergence=0.0,           # full-angle divergence (rad)
+    coherence_length=1e-3,    # temporal coherence length (m)
+    wavefront="planar",       # "planar" or "spherical"
 )
 field = source.generate_light_field(shape=(64, 64), spacing=1.0)
 ```
@@ -71,6 +73,7 @@ field.intensity    # ndarray (H, W) — irradiance in W/m²
 field.direction    # ndarray (H, W, 3) — unit propagation vectors
 field.wavelength   # float — centre wavelength in m
 field.polarization # PolarizationState
+field.coherence_length  # float — temporal coherence length (m)
 field.phase        # ndarray or None
 
 print(field.visualize(max_width=80, color=True))  # terminal heatmap
@@ -100,6 +103,30 @@ print(field.visualize(max_width=80, color=True))  # terminal heatmap
 The direction is **constant** across the grid — the beam is always
 collimated at the available resolution. Divergence is recorded as a
 parameter but not used to modify the direction map.
+
+### Wavefront
+
+Set ``wavefront="planar"`` (default) for a collimated beam with a
+constant direction, or ``wavefront="spherical"`` for a point source
+that emits from ``origin`` with per-pixel directions computed
+automatically.
+
+### Incidence Angle
+
+``incidence_angle`` (radians) and ``incidence_angle_degrees`` derive
+from ``propagation_direction`` assuming a surface normal of [0, 0, 1].
+Setting one updates the other.
+
+```python
+source = Laser(wavelength=532e-9)
+source.incidence_angle = np.radians(30)  # sets propagation_direction
+```
+
+### Coherence Length
+
+``coherence_length`` (default 1 mm for lasers, 10 µm for LEDs) sets
+the temporal coherence length of the source. This propagates into the
+``LightField`` and is consumed by downstream speckle models.
 
 ### Subclass Pattern
 

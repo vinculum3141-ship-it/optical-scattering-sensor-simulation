@@ -6,9 +6,10 @@
 
 The framework employs a two-tier testing strategy:
 
-- **Unit tests (pytest)** — 16 tests across all six layers, covering
-  core functionality and edge cases. Fast, run on every change.
-- **Acceptance tests (Robot Framework)** — 43 tests across all six
+- **Unit tests (pytest)** — 81 tests across all six layers plus
+  pipeline and utilities, covering core functionality, edge cases,
+  and all models. Fast, run on every change.
+- **Acceptance tests (Robot Framework)** — 64 tests across all six
   layers, covering realistic usage scenarios. Documents expected
   behaviour in natural-language form.
 
@@ -16,22 +17,35 @@ The framework employs a two-tier testing strategy:
 
 ```
 tests/
-├── test_illumination.py    # pytest — 4 tests
-├── test_surface.py         # pytest — 4 tests
-├── test_scattering.py      # pytest — 5 tests
-├── test_optics.py          # pytest — 1 test
-├── test_detector.py        # pytest — 1 test
-├── test_analysis.py        # pytest — 1 test
-├── illumination.robot      # Robot Framework — 16 tests
-├── surface.robot           # Robot Framework — 10 tests
-├── scattering.robot        # Robot Framework — 5 tests
-├── detector.robot          # Robot Framework — 6 tests
-├── analysis.robot          # Robot Framework — 6 tests
-├── IlluminationLibrary.py  # Robot keyword library
-├── SurfaceLibrary.py       # Robot keyword library
-├── ScatteringLibrary.py    # Robot keyword library
-├── DetectorLibrary.py      # Robot keyword library
-└── AnalysisLibrary.py      # Robot keyword library
+├── test_illumination.py      # pytest — 11 tests
+├── test_surface.py           # pytest — 4 tests
+├── test_surface_new.py       # pytest — 9 tests
+├── test_scattering.py        # pytest — 11 tests
+├── test_scattering_new.py    # pytest — 6 tests
+├── test_optics.py            # pytest — 1 test
+├── test_optics_new.py        # pytest — 5 tests
+├── test_detector.py          # pytest — 1 test
+├── test_detector_new.py      # pytest — 16 tests
+├── test_analysis.py          # pytest — 1 test
+├── test_analysis_new.py      # pytest — 6 tests
+├── test_pipeline.py          # pytest — 5 tests
+├── test_utils.py             # pytest — 4 tests
+├── illumination.robot        # Robot Framework — 16 tests
+├── surface.robot             # Robot Framework — 10 tests
+├── scattering.robot          # Robot Framework — 5 tests
+├── detector.robot            # Robot Framework — 6 tests
+├── analysis.robot            # Robot Framework — 6 tests
+├── IlluminationLibrary.py    # Robot keyword library
+├── SurfaceLibrary.py         # Robot keyword library
+├── ScatteringLibrary.py      # Robot keyword library
+├── DetectorLibrary.py        # Robot keyword library
+├── AnalysisLibrary.py        # Robot keyword library
+├── OpticsLibrary.py          # Robot keyword library
+├── detector_new.robot        # Robot Framework — 8 tests (new models)
+├── optics_new.robot          # Robot Framework — 3 tests (Airy PSF)
+├── scattering_new.robot      # Robot Framework — 2 tests (Oren-Nayar, Phong)
+├── surface_new.robot         # Robot Framework — 8 tests (new generators)
+└── analysis_new.robot        # Robot Framework — 3 tests (contrast)
 ```
 
 ## Running Tests
@@ -71,24 +85,21 @@ python -m robot --outputdir robot_output tests/
 
 Each unit test verifies a single, specific behaviour:
 
-| Layer | Test | What it verifies |
-|---|---|---|
-| Illumination | `test_laser_defaults_and_spectrum` | Laser constructor defaults and spectral model |
-| Illumination | `test_lightfield_generation_uses_beam_profile` | `generate_light_field()` output shapes and values |
-| Illumination | `test_source_direction_is_normalized` | Direction vector normalisation |
-| Illumination | `test_subclasses_expose_expected_spectral_models` | LED/Sunlight/Lamp spectral attachments |
-| Surface | `test_flat_surface_has_zero_height_and_zero_derived_geometry` | Flat surface is all zeros |
-| Surface | `test_rough_surface_has_nonzero_roughness_and_shape` | Rough surface has valid geometry |
-| Surface | `test_scratched_surface_creates_a_visible_groove` | Scratch creates negative heights |
-| Surface | `test_particle_surface_creates_localized_bumps` | Particles produce positive bumps |
-| Scattering | `test_lambertian_scattering_returns_scattered_field` | Output types and shapes |
-| Scattering | `test_lambertian_radiance_scales_with_albedo` | Proportionality to albedo |
-| Scattering | `test_lambertian_normal_incidence_gives_peak_radiance` | Normal incidence → radiance = albedo |
-| Scattering | `test_lambertian_grazing_angle_gives_zero_radiance` | Perpendicular → zero |
-| Scattering | `test_scattering_model_base_raises_not_implemented` | Abstract base enforces interface |
-| Optics | `test_optical_propagator_returns_sensor_field` | Propagation output shapes and attributes |
-| Detector | `test_detector_pipeline_creates_digital_image` | Capture returns correctly-shaped DigitalImage |
-| Analysis | `test_histogram_analyzer_returns_report` | Histogram shape and measurements |
+| Layer | Tests | What it verifies |
+|---|---|---|---|
+| Illumination | 11 tests | Laser/LED/Sunlight defaults, light field generation, direction normalisation, spectral models, wavefront (planar/spherical), incidence angle |
+| Surface (original) | 4 tests | Flat/rough/scratched/particle surface geometry |
+| Surface (extended) | 9 tests | Sinusoidal periodicity, anisotropic roughness, imported surfaces, phase screen formula, visualisation |
+| Scattering (original) | 11 tests | Lambertian (4) + scattering base + Cook-Torrance (6: shape, nonnegativity, roughness monotonicity, Fresnel response, grazing limit, non-square grid) |
+| Scattering (extended) | 6 tests | Phong (diffuse/specular/grazing), Oren-Nayar (return/shape/roughness→Lambertian limit) |
+| Optics (original) | 1 test | Propagation output shapes |
+| Optics (extended) | 5 tests | Airy PSF normalisation, central peak, symmetry, odd-size auto, invalid size |
+| Detector (original) | 1 test | Capture returns correctly-shaped DigitalImage |
+| Detector (extended) | 16 tests | Fixed-pattern noise, hot pixels, column defect, PRNU, dead pixels, multiple noise chaining, speckle (smooth/coherent/incoherent), capture with surface, blooming (no spill / neighbour spill / integrated) |
+| Analysis (original) | 1 test | Histogram shape and measurements |
+| Analysis (extended) | 6 tests | Contrast (RMS/Michelson/Weber/uniform/high-contrast), saturation detection, ImageAnalyzer orchestration |
+| Pipeline | 5 tests | Full pipeline stages, partial illumination/detector only, pipeline description, surface generator integration |
+| Utilities | 4 tests | Heatmap rendering, dimensions, uniform input, downsampling |
 
 ### Statistical Bounds for Stochastic Tests
 

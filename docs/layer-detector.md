@@ -133,6 +133,44 @@ Shot noise, dark current, and read noise are all stochastic — outputs
 vary between runs. Tests use **statistical bounds** rather than exact
 values.
 
+## Built-in Noise Models
+
+The framework ships with seven concrete noise models:
+
+| Noise Model | Class | Type | Parameters |
+|---|---|---|---|
+| Fixed-pattern noise | `FixedPatternNoise` | Additive offset | pattern (array or float σ) |
+| Photo-response non-uniformity | `PhotoResponseNonUniformity` | Multiplicative gain | magnitude (fraction) |
+| Hot pixels | `HotPixelNoise` | Poisson dark current | density, hot_current, exposure_time |
+| Column defects | `ColumnDefectNoise` | Column gain scaling | column_index, scale_factor |
+| Dead / stuck pixels | `DeadPixelNoise` | Fixed replacement | density, stuck_value |
+| Speckle | `SpeckleNoise` | Multiplicative speckle | coherence_length |
+| Blooming | `BloomingNoise` | Charge overflow spill | bloom_factor, iterations, full_well_capacity |
+
+```python
+from detector import (
+    CMOSDetector,
+    ColumnDefectNoise,
+    DeadPixelNoise,
+    FixedPatternNoise,
+    HotPixelNoise,
+    PhotoResponseNonUniformity,
+    SpeckleNoise,
+    BloomingNoise,
+)
+
+detector = CMOSDetector(
+    exposure_time=0.1,
+    noise_models=[
+        FixedPatternNoise(pattern=5.0),       # 5 e⁻ offset everywhere
+        PhotoResponseNonUniformity(magnitude=0.01),  # 1% gain variation
+        HotPixelNoise(density=0.001, hot_current=100.0, exposure_time=0.1),
+        ColumnDefectNoise(column_index=32, scale_factor=0.5),
+        DeadPixelNoise(density=0.001, stuck_value=0),
+    ],
+)
+```
+
 ### Custom Noise Models
 
 ```python

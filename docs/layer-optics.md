@@ -36,14 +36,43 @@ OpticalSystem(
 )
 ```
 
+### PSF Models
+
+| Model | Class | Parameters | Use Case |
+|---|---|---|---|
+| Gaussian | `GaussianPSF` | sigma (pixels) | Simple blur, fast convolution |
+| Airy disk | `AiryPSF` | wavelength, numerical_aperture, pixel_size | Diffraction-limited imaging |
+
 ### Gaussian PSF
 
-The current PSF model is an isotropic 2D Gaussian:
+An isotropic 2D Gaussian kernel:
 
     PSF(x, y) ∝ exp(-(x² + y²) / (2σ²))
 
 The kernel is normalised to unit sum so energy is conserved during
 convolution. The **σ** parameter controls the blur width (in pixels).
+
+### Airy Disk PSF
+
+The Airy disk is the PSF of a perfect circular aperture in the
+Fraunhofer diffraction regime.  It represents the theoretical best
+focus achievable by an aberration-free optical system.
+
+    I(r) = (2 × J1(k × NA × r) / (k × NA × r))²
+
+where J1 is the first-order Bessel function, k = 2π/λ is the
+wavenumber, NA is the numerical aperture, and r is the radial
+coordinate in the image plane.
+
+```python
+from optics import AiryPSF
+
+psf = AiryPSF(wavelength=532e-9, numerical_aperture=0.25, pixel_size=5e-6)
+kernel = psf.kernel(size=31)  # normalised 31×31 kernel
+```
+
+The Bessel function J1 is computed via a series expansion — no SciPy
+dependency required.
 
 ## Propagation
 

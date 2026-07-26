@@ -52,3 +52,50 @@ def test_subclasses_expose_expected_spectral_models():
     assert led.spectral_distribution().kind == "gaussian"
     assert sunlight.spectral_distribution().kind == "blackbody"
     assert lamp.spectral_distribution().kind == "broadband"
+
+
+def test_planar_wavefront_uniform_direction():
+    src = LightSource(wavelength=532e-9, propagation_direction=[0, 0, -1])
+    lf = src.generate_light_field(shape=(8, 8), spacing=0.5)
+    assert lf.direction.shape == (8, 8, 3)
+    assert np.allclose(lf.direction, [0, 0, -1])
+
+
+def test_spherical_wavefront_center_direction():
+    src = LightSource(wavelength=532e-9, wavefront="spherical", origin=[0, 0, 1.0])
+    lf = src.generate_light_field(shape=(5, 5), spacing=1.0)
+    assert np.allclose(lf.direction[2, 2], [0, 0, -1], atol=1e-10)
+
+
+def test_spherical_wavefront_corner_has_transverse_components():
+    src = LightSource(wavelength=532e-9, wavefront="spherical", origin=[0, 0, 1.0])
+    lf = src.generate_light_field(shape=(5, 5), spacing=1.0)
+    corner = lf.direction[0, 0]
+    assert abs(corner[0]) > 0.1
+    assert abs(corner[1]) > 0.1
+    assert corner[2] < 0  # pointing toward grid
+
+
+def test_spherical_wavefront_all_normalised():
+    src = LightSource(wavelength=532e-9, wavefront="spherical", origin=[0, 0, 1.0])
+    lf = src.generate_light_field(shape=(8, 8), spacing=0.5)
+    norms = np.linalg.norm(lf.direction, axis=2)
+    assert np.allclose(norms, 1.0)
+
+
+def test_spherical_wavefront_asymmetric_origin():
+    src = LightSource(wavelength=532e-9, wavefront="spherical", origin=[2.0, 0, 1.0])
+    lf = src.generate_light_field(shape=(3, 3), spacing=1.0)
+    assert lf.direction[1, 0, 0] < lf.direction[1, 2, 0], \
+        "left pixels should point more leftward (more negative x)"
+
+
+def test_wavefront_default_is_planar():
+    src = LightSource(wavelength=532e-9)
+    assert src.wavefront == "planar"
+
+
+def test_invalid_wavefront_raises():
+    import pytest
+    with pytest.raises(ValueError, match="Unsupported wavefront"):
+        LightSource(wavelength=532e-9, wavefront="diverging")
