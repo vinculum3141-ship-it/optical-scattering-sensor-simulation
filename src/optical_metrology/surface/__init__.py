@@ -1,4 +1,5 @@
 from .base import Surface, SurfaceGenerator, GeometryAnalyzer, Material, SellmeierCoefficients
+from .thinfilm import ThinFilmStack
 from .generators import (
     AnisotropicRoughSurface,
     FlatSurface,
@@ -22,4 +23,5 @@ __all__ = [
     "SinusoidalSurface",
     "Surface",
     "SurfaceGenerator",
+    "ThinFilmStack",
 ]

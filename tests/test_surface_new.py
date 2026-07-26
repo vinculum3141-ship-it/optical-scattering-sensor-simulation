@@ -9,6 +9,7 @@ from optical_metrology.surface import (
     SellmeierCoefficients,
     SinusoidalSurface,
     Surface,
+    ThinFilmStack,
 )
 from optical_metrology.illumination import Laser
 from optical_metrology.scattering import CookTorranceScattering
@@ -229,3 +230,50 @@ def test_cooktorrance_auto_F0_from_material():
     result_explicit = model_explicit.evaluate(lf, surf, view)
 
     assert np.allclose(result_auto.radiance, result_explicit.radiance, rtol=1e-6)
+
+
+def test_thinfilm_no_layers_matches_fresnel():
+    """Bare substrate (no coatings) — should match direct Fresnel formula."""
+    n_inc = 1.0
+    n_sub = 1.5
+    tf = ThinFilmStack(layers=[], substrate_n=n_sub, incident_n=n_inc)
+    R = tf.reflectance(wavelength=550e-9, angle=0.0)
+    expected = ((n_inc - n_sub) / (n_inc + n_sub)) ** 2
+    assert np.allclose(R, expected, rtol=1e-6)
+
+
+def test_thinfilm_quarter_wave_ar_coating():
+    """Single-layer AR coating at λ₀ should have near-zero reflectance."""
+    n_inc = 1.0
+    n_sub = 1.5
+    n_coat = np.sqrt(n_inc * n_sub)
+    lam0 = 550e-9
+    d = lam0 / (4.0 * n_coat)
+    tf = ThinFilmStack(layers=[(d, n_coat, 0.0)], substrate_n=n_sub, incident_n=n_inc)
+    R = tf.reflectance(wavelength=lam0, angle=0.0)
+    assert R < 0.01, f"Quarter-wave AR coating R = {R}"
+
+
+def test_thinfilm_transmittance_plus_reflectance_less_than_one():
+    tf = ThinFilmStack(layers=[(100e-9, 2.0, 0.0)], substrate_n=1.5)
+    R = tf.reflectance(wavelength=550e-9, angle=0.0)
+    T = tf.transmittance(wavelength=550e-9, angle=0.0)
+    assert abs(R + T - 1.0) < 1e-10
+
+
+def test_thinfilm_angle_dependence():
+    n_inc = 1.0
+    n_sub = 1.5
+    tf = ThinFilmStack(layers=[], substrate_n=n_sub, incident_n=n_inc)
+    R0 = tf.reflectance(wavelength=550e-9, angle=0.0)
+    R30 = tf.reflectance(wavelength=550e-9, angle=np.radians(30))
+    assert R30 > R0, "Bare dielectric reflectance should increase with angle"
+
+
+def test_thinfilm_multilayer_stack():
+    """Two-layer stack should have different R than bare substrate."""
+    layers = [(100e-9, 2.0, 0.0), (150e-9, 1.7, 0.0)]
+    tf = ThinFilmStack(layers=layers, substrate_n=1.5)
+    R = tf.reflectance(wavelength=550e-9, angle=0.0)
+    bare_R = ((1.0 - 1.5) / (1.0 + 1.5)) ** 2
+    assert abs(R - bare_R) > 0.01, "Multilayer should differ from bare substrate"

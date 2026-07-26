@@ -54,7 +54,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   2. **Fixed temporal noise seeds / repeatability:** noise models (shot, dark, read) re-randomise every `capture()` call.  For PTC analysis (variance vs. mean) this is correct, but for characterising sensor stability the detector should support a `seed` parameter that makes noise reproducible across captures.  Add an optional `rng_seed` parameter to `CMOSDetector`; when set, all random draws use `np.random.default_rng(seed)` instead of the global `np.random` state.
 
-- [ ] **Thin-film interference model** (needed by UC1 Defect Inspection) — model for reflectance/transmittance of single or multi-layer coatings as a function of wavelength, incidence angle, and film thickness. Relevant for semiconductor coatings inspection and anti-reflection layer characterisation.
+- [x] **Thin-film interference model** — `ThinFilmStack` with transfer-matrix method, supports single/multi-layer coatings, arbitrary angle, TE/TM/unpolarized (UC1)
 - [ ] **Gaussian beam divergence / waist propagation** (needed by UC6 LiDAR) — functional wiring of the stored `divergence` parameter to compute beam waist at range, spot size at target surface, and intensity falloff with distance. Partially closes the remaining divergent-source gap.
 - [ ] **Optical throughput / radiometric scaling** (needed by UC3 Sensor Char first) — the propagator currently converts scattered radiance (W·m⁻²·sr⁻¹) to sensor irradiance (W/m²) by PSF convolution alone, without accounting for the optical system's throughput.  Absent this, absolute irradiance values are incorrect for SNR, PTC, or any physically calibrated measurement.
 
@@ -103,57 +103,9 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   **Edge cases:** M < 1 (demagnification, minifying), M > 1 (magnifying), non-integer scaling factors.  The zoom factor must preserve total energy (irradiance × area should be conserved).
 
-- [ ] **Zernike wavefront → PSF model** (needed by UC1 Defect Inspection with aberrated objectives, then UC7 Wafer Alignment for telecentric lens characterisation) — currently `OpticalSystem.aberrations` is an empty dict placeholder with no associated model.  The physically correct approach models wavefront error via Zernike polynomials and computes the PSF from the generalised pupil function.
+- [x] **Zernike wavefront → PSF model** — `ZernikePolynomials`, `Wavefront`, `ZernikePSF` with FFT-based generalised pupil function, Noll indexing (UC1, UC7)
 
-  **Design:**
-  ```
-  Zernike coefficients (z4, z7, z11, ...)
-          ↓
-  Wavefront error map W(ρ, θ) over the pupil
-          ↓
-  Generalised pupil function P(ρ, θ) = A(ρ, θ) · exp(i · 2π/λ · W(ρ, θ))
-          ↓
-  FFT of P → Coherent PSF (amplitude)
-          ↓
-  |FFT(P)|² → Incoherent PSF (intensity)
-          ↓
-  Convolution with scattered radiance
-  ```
-
-  **What to add:**
-  1. `ZernikePolynomials` — evaluate individual Zernike modes (Noll indexing) on a pupil grid.  Self-contained implementation using `math`/`numpy` only (no PyZDEP dependency needed).
-  2. `Wavefront` — container for Zernike coefficients, method `map(pupil_grid) → np.ndarray` returning wavefront error in metres.
-  3. `ZernikePSF` — PSF model implementing the same `kernel(size, optical_system)` interface as `GaussianPSF` and `AiryPSF`.  Internally:
-      - Build pupil coordinate grid (size × size, normalised to unit radius)
-      - Evaluate wavefront error from coefficients
-      - Build `P = exp(i·2π/λ·W)` within the pupil (zero outside)
-      - FFT → intensity → normalise to unit sum
-  4. Update `OpticalSystem.__post_init__` to accept a `Wavefront` object; the propagator passes it through when generating the PSF.
-
-  **Parameters of `ZernikePSF`:**
-  ```python
-  class ZernikePSF:
-      def __init__(self, wavefront: Wavefront, wavelength: float, numerical_aperture: float):
-          ...
-      def kernel(self, size: int = 31) -> np.ndarray:
-          ...
-  ```
-
-  **Edge cases:** pupil radius must fit within the kernel; zero coefficients → diffraction-limited (Airy) PSF; undersampled pupil (too few pixels across the pupil diameter) will alias the PSF.
-
-  **Trigger:** implement when a use case requires simulating a specific optical defect (e.g. spherical aberration in a high-NA microscope objective for UC1, or field curvature in a wafer inspection tool for UC7).
-
-- [ ] **Intensity profile / line cross-section** (needed by UC1 Defect Inspection first, then UC5 Structured Light) — extract a 1D intensity profile along a line through the image.  Useful for measuring scratch depth visibility (UC1), fringe modulation (UC5), and edge sharpness (UC7).
-
-  **What to add:**
-  ```python
-  class IntensityProfileAnalyzer(AnalysisModule):
-      def __init__(self, start=(0, 0), end=None, linewidth=1):
-          ...
-  ```
-  Sample the image pixels along the line defined by ``start`` → ``end`` using bilinear interpolation.  Return the profile array plus derived metrics (peak width, edge slope, contrast along the line).
-
-  Implementation: use `skimage.measure.profile_line` if available, or implement with `np.linspace` + `ndimage.map_coordinates` for zero dependencies.  `linewidth > 1` averages orthogonal to the profile direction for noise reduction.
+- [x] **Intensity profile / line cross-section** — `IntensityProfileAnalyzer` with bilinear interpolation, configurable linewidth, contrast metric (UC1, UC5, UC7)
 
 - [ ] **FFT / power spectrum analyser** (needed by UC5 Structured Light first, then UC4 Angle-Resolved Scattering) — compute the 2D power spectrum of an image via FFT and extract radial and angular profiles.
 
@@ -187,39 +139,9 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Edge cases: normalise gradient magnitudes to [0, 1] so thresholds are independent of bit depth; handle single-intensity images (no edges → all zeros).
 
-- [ ] **Surface roughness estimation from speckle** (needed by UC1 Defect Inspection) — estimate surface roughness from the contrast of a speckle pattern in a coherently illuminated image.
+- [x] **Surface roughness estimation from speckle** — `SpeckleRoughnessEstimator` using inverse speckle contrast model, optional ROI (UC1)
 
-  **What to add:**
-  ```python
-  class SpeckleRoughnessEstimator(AnalysisModule):
-      def __init__(self, coherence_length, wavelength):
-          ...
-  ```
-  Uses the inverse of the speckle contrast model in `SpeckleNoise`:
-  ```
-  contrast = std(pixels) / mean(pixels)
-  roughness_estimate = (coherence_length / 2) * sqrt(1/contrast² - 1)
-  ```
-  Report `speckle_contrast`, `estimated_roughness_rms`, and a validity flag (estimate is unreliable when contrast ≈ 0 or contrast ≈ 1).
-
-  Limitation: requires a region of uniform surface roughness and illumination.  The analyser should accept an optional ROI mask.
-
-- [ ] **Focus / sharpness metric** (needed by UC1 Defect Inspection for through-focus scanning, then UC5 Structured Light for projector focus) — compute a scalar focus score from the image without requiring a reference.
-
-  **What to add:**
-  ```python
-  class FocusAnalyzer(AnalysisModule):
-      def __init__(self, method="laplacian_variance"):
-          ...
-  ```
-  Implement three common methods, selectable via the ``method`` parameter:
-  - ``laplacian_variance`` — variance of the Laplacian response (default).  High value = sharp.
-  - ``tenengrad`` — mean squared gradient magnitude from a Sobel filter.
-  - ``brenner`` — sum of squared differences between pixels two apart in x.
-
-  Report ``focus_score`` and ``method`` in measurements.  Normalise the score to [0, 1] by dividing by the maximum possible value for the given bit depth (optional — return raw score by default).
-
-  Edge cases: single-intensity image → score = 0; very small images where derivative kernels don't fit → fall back to pixel-difference method.
+- [x] **Focus / sharpness metric** — `FocusAnalyzer` with laplacian-variance, tenengrad, and brenner methods (UC1, UC5)
 
 - [ ] **Signal-to-noise ratio estimator** (needed by UC3 Sensor Char) — compute SNR from a single image or a pair of flat-field images.
 
@@ -251,18 +173,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Edge cases: slanted edge not found → raise a clear error; the edge must be at a small angle (2–10°) for proper oversampling; requires a sufficiently large ROI around the edge.
 
-- [ ] **Error map / ground-truth comparison** (needed by UC5 Structured Light first for height reconstruction validation, then UC7 Wafer Alignment for overlay accuracy) — compute per-pixel difference between a simulated (measured) image and a known ground-truth image.
-
-  **What to add:**
-  ```python
-  class ErrorMapAnalyzer(AnalysisModule):
-      def __init__(self, reference_image):
-          ...
-  ```
-  The reference is a ``DigitalImage`` (or raw array) supplied at construction.  The analyser computes:
-  - ``error_map`` — per-pixel absolute difference (for visualisation, returned as a 2D array in measurements).
-  - ``rmse`` — root-mean-square error.
-  - ``mae`` — mean absolute error.
+- [x] **Error map / ground-truth comparison** — `ErrorMapAnalyzer` with RMSE, MAE, max error, PSNR; accepts ``DigitalImage`` or raw array (UC5, UC7)
   - ``max_error`` — maximum absolute pixel difference.
   - ``psnr`` — peak signal-to-noise ratio (dB): 20 log₁₀(max_val / rmse).
 

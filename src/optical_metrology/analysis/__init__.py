@@ -48,8 +48,12 @@ sketches and trigger use cases.
 """
 
 from .base import AnalysisModule, AnalysisReport, ImageAnalyzer
-from .histogram import HistogramAnalyzer
 from .contrast import ContrastAnalyzer, SaturationAnalyzer
+from .error_map import ErrorMapAnalyzer
+from .focus import FocusAnalyzer
+from .histogram import HistogramAnalyzer
+from .intensity_profile import IntensityProfileAnalyzer
+from .speckle_roughness import SpeckleRoughnessEstimator
 
 __all__ = [
     # Orchestration
@@ -58,6 +62,10 @@ __all__ = [
     "ImageAnalyzer",
     # Quality Assessment
     "ContrastAnalyzer",
+    "ErrorMapAnalyzer",
+    "FocusAnalyzer",
     "HistogramAnalyzer",
+    "IntensityProfileAnalyzer",
     "SaturationAnalyzer",
+    "SpeckleRoughnessEstimator",
 ]

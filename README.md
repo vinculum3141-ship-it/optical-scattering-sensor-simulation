@@ -222,6 +222,7 @@ All source code lives under `src/optical_metrology/`.
 | `src/optical_metrology/illumination/led.py` | `LED` — Gaussian spectrum, 0.5 rad divergence |
 | `src/optical_metrology/illumination/sunlight.py` | `Sunlight` — black-body at 5778 K |
 | `src/optical_metrology/illumination/broadband.py` | `BroadbandLamp` — flat spectrum over a range |
+| `src/optical_metrology/illumination/flatfield.py` | `FlatFieldSource` — programmable uniform source with intensity sweep |
 | `src/optical_metrology/illumination/profiles.py` | `GaussianBeamProfile`, `UniformBeamProfile`, `TopHatBeamProfile` |
 | `src/optical_metrology/illumination/spectrum.py` | `MonochromaticSpectrum`, `GaussianSpectrum`, `BlackbodySpectrum`, `BroadbandSpectrum` |
 | `src/optical_metrology/illumination/polarization.py` | `PolarizationState` — unpolarised, linear, circular, elliptical |
@@ -231,8 +232,9 @@ All source code lives under `src/optical_metrology/`.
 
 | File | Contents |
 |------|----------|
-| `src/optical_metrology/surface/base.py` | `Surface`, `Material`, `GeometryAnalyzer`, `SurfaceGenerator`, `phase_screen()`, `visualize()` |
+| `src/optical_metrology/surface/base.py` | `Surface`, `Material` (with `SellmeierCoefficients`, `n(λ)`, `F0(λ)`), `GeometryAnalyzer`, `SurfaceGenerator`, `phase_screen()`, `visualize()` |
 | `src/optical_metrology/surface/generators.py` | `FlatSurface`, `RoughSurface`, `ScratchedSurface`, `ParticleSurface`, `SinusoidalSurface`, `AnisotropicRoughSurface`, `ImportedSurface` |
+| `src/optical_metrology/surface/thinfilm.py` | `ThinFilmStack` — transfer-matrix thin-film reflectance/transmittance |
 
 ### Scattering
 
@@ -254,6 +256,7 @@ All source code lives under `src/optical_metrology/`.
 | `src/optical_metrology/optics/base.py` | `OpticalSystem`, `SensorField` |
 | `src/optical_metrology/optics/psf.py` | `GaussianPSF` — isotropic Gaussian blur |
 | `src/optical_metrology/optics/airy.py` | `AiryPSF` — diffraction-limited Airy disk (self-contained Bessel, no scipy dep) |
+| `src/optical_metrology/optics/zernike.py` | `ZernikePolynomials`, `Wavefront`, `ZernikePSF` — Zernike-aberrated PSF via FFT |
 | `src/optical_metrology/optics/propagator.py` | `OpticalPropagator` — PSF convolution, radiance → irradiance |
 
 ### Detector
@@ -270,11 +273,10 @@ All source code lives under `src/optical_metrology/`.
 | `src/optical_metrology/analysis/base.py` | `AnalysisModule`, `AnalysisReport`, `ImageAnalyzer` | Orchestration |
 | `src/optical_metrology/analysis/histogram.py` | `HistogramAnalyzer` — pixel histogram, mean/min/max | Quality Assessment |
 | `src/optical_metrology/analysis/contrast.py` | `ContrastAnalyzer` (RMS, Michelson, Weber), `SaturationAnalyzer` | Quality Assessment |
-
-Additional analysis modules documented in `docs/roadmap-todo.md` (pre-deployment gaps):
-Quality Assessment — `FocusAnalyzer`, `SNRAnalyzer`.
-Optical Characterisation — `MTFAnalyzer`, `FFTAnalyzer`.
-Metrology — `IntensityProfileAnalyzer`, `EdgeDetectionAnalyzer`, `SpeckleRoughnessEstimator`.
+| `src/optical_metrology/analysis/focus.py` | `FocusAnalyzer` — laplacian-variance, tenengrad, brenner | Quality Assessment |
+| `src/optical_metrology/analysis/intensity_profile.py` | `IntensityProfileAnalyzer` — 1D line profile with bilinear interpolation | Metrology |
+| `src/optical_metrology/analysis/error_map.py` | `ErrorMapAnalyzer` — RMSE, MAE, max error, PSNR vs ground truth | Metrology |
+| `src/optical_metrology/analysis/speckle_roughness.py` | `SpeckleRoughnessEstimator` — roughness from speckle contrast | Metrology |
 
 ### Scripts and tests
 
@@ -285,17 +287,17 @@ Metrology — `IntensityProfileAnalyzer`, `EdgeDetectionAnalyzer`, `SpeckleRough
 | `plot_pipeline.py` | Standalone — runs pipeline, saves matplotlib PNGs |
 | `examples/basic_pipeline.ipynb` | Jupyter notebook — basic pipeline example |
 | `examples/defect_inspection.ipynb` | Jupyter notebook — UC1 defect inspection |
-| `tests/test_illumination.py` | Pytest (11 tests) |
+| `tests/test_illumination.py` | Pytest (24 tests) |
 | `tests/test_surface.py` | Pytest (4 tests) |
-| `tests/test_surface_new.py` | Pytest (9 tests) |
+| `tests/test_surface_new.py` | Pytest (31 tests) |
 | `tests/test_scattering.py` | Pytest (11 tests) |
 | `tests/test_scattering_new.py` | Pytest (6 tests) |
 | `tests/test_optics.py` | Pytest (1 test) |
-| `tests/test_optics_new.py` | Pytest (5 tests) |
+| `tests/test_optics_new.py` | Pytest (13 tests) |
 | `tests/test_detector.py` | Pytest (1 test) |
 | `tests/test_detector_new.py` | Pytest (16 tests) |
 | `tests/test_analysis.py` | Pytest (1 test) |
-| `tests/test_analysis_new.py` | Pytest (6 tests) |
+| `tests/test_analysis_new.py` | Pytest (23 tests) |
 | `tests/test_pipeline.py` | Pytest (5 tests) |
 | `tests/test_utils.py` | Pytest (4 tests) |
 | `tests/*.robot` | Robot Framework acceptance tests (43 tests) |
@@ -305,7 +307,7 @@ Metrology — `IntensityProfileAnalyzer`, `EdgeDetectionAnalyzer`, `SpeckleRough
 ## Testing
 
 ```bash
-# Pytest — 81 unit tests across all layers
+# Pytest — 140 unit tests across all layers
 python -m pytest -q
 
 # Robot Framework — 43 acceptance tests (requires pip install -e ".[dev]")
