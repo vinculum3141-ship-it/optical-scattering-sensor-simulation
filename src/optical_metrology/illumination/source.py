@@ -51,9 +51,22 @@ class LightSource:
     divergence : float
         Full-angle beam divergence in radians.
     wavefront : str
-        Wavefront geometry.  ``"planar"`` (default) — collimated beam,
-        uniform direction across grid.  ``"spherical"`` — point source,
-        per-pixel direction computed from :attr:`origin`.
+        Wavefront geometry.
+        ``"planar"`` (default) — collimated beam, uniform direction.
+        ``"spherical"`` — divergent point source, per-pixel direction.
+        ``"converging"`` — rays converge toward a focal point.
+    waist_position : float
+        Z-coordinate of the Gaussian beam waist in the same coordinate
+        system as the grid.  The grid lies in the z = 0 plane.
+        When ``waist_position = 0`` (default), the waist is at the grid
+        plane and no propagation scaling is applied.  Non-zero values
+        cause the beam to expand (or contract) according to Gaussian
+        beam propagation, scaling intensity by ``(w0 / w(z))²``.
+    focal_distance : Optional[float]
+        Distance from the grid plane to the focal point for
+        ``wavefront="converging"``.  The focal point is located at
+        ``propagation_direction * focal_distance`` beyond the grid.
+        If ``None``, defaults to 10× the grid size.
     spectrum : SpectralDistribution or None
         Spectral model.  If ``None``, ``default_spectrum()`` is called.
     """
@@ -67,6 +80,8 @@ class LightSource:
     origin: Optional[np.ndarray] = None
     divergence: float = 0.0
     wavefront: str = "planar"
+    waist_position: float = 0.0
+    focal_distance: Optional[float] = None
     spectrum: Optional[SpectralDistribution] = None
 
     def __post_init__(self):
@@ -95,8 +110,8 @@ class LightSource:
             else:
                 raise ValueError(f"Unsupported beam profile: {self.beam_profile}")
 
-        if self.wavefront not in ("planar", "spherical"):
-            raise ValueError(f"Unsupported wavefront: {self.wavefront!r}; expected 'planar' or 'spherical'")
+        if self.wavefront not in ("planar", "spherical", "converging"):
+            raise ValueError(f"Unsupported wavefront: {self.wavefront!r}; expected 'planar', 'spherical', or 'converging'")
 
         if self.spectrum is None:
             self.spectrum = self.default_spectrum()
@@ -141,6 +156,27 @@ class LightSource:
         """Return the spectral distribution attached to this source."""
         return self.spectrum
 
+    def _compute_grid_coords(self, shape, spacing):
+        """Return (xx, yy) meshgrid of physical coordinates for the grid plane."""
+        H, W = shape
+        x = (np.arange(W) - (W - 1) / 2.0) * spacing
+        y = ((H - 1) / 2.0 - np.arange(H)) * spacing
+        return np.meshgrid(x, y)
+
+    def _gaussian_beam_scaling(self, w0: float) -> float:
+        """Compute intensity scaling factor for Gaussian beam propagation.
+
+        Returns the factor ``(w0 / w(z))²`` where ``w(z)`` is the beam
+        radius at the grid plane (z=0).  When ``waist_position == 0``
+        the waist coincides with the grid plane and the factor is 1.
+        """
+        if self.waist_position == 0.0:
+            return 1.0
+        dz = -self.waist_position
+        zR = np.pi * w0 ** 2 / self.wavelength
+        w_at_grid = w0 * np.sqrt(1.0 + (dz / zR) ** 2)
+        return float((w0 / w_at_grid) ** 2)
+
     def generate_light_field(self, shape: Tuple[int, int], spacing: float = 1.0) -> LightField:
         """Generate a :class:`LightField` over a 2D spatial grid.
 
@@ -151,6 +187,13 @@ class LightSource:
         * ``"planar"`` (default) — uniform direction across grid (collimated beam).
         * ``"spherical"`` — per-pixel direction from :attr:`origin` toward
           each grid point (point source).
+        * ``"converging"`` — per-pixel direction toward a focal point
+          beyond the grid plane.
+
+        When using a :class:`GaussianBeamProfile` with a non-zero
+        :attr:`waist_position`, the intensity is scaled according to
+        Gaussian beam propagation (beam expansion/contraction with
+        distance from the waist).
 
         Parameters
         ----------
@@ -172,23 +215,36 @@ class LightSource:
 
         intensity = self.beam_profile.evaluate(shape, spacing=spacing)
 
+        gaussian_scale = 1.0
+        if isinstance(self.beam_profile, GaussianBeamProfile):
+            gaussian_scale = self._gaussian_beam_scaling(self.beam_profile.w0)
+
         if self.wavefront == "spherical":
-            # Physical coordinates of each grid point, assuming the grid
-            # lies in the z = 0 plane centered at (0, 0).
-            x = (np.arange(W) - (W - 1) / 2.0) * spacing
-            y = ((H - 1) / 2.0 - np.arange(H)) * spacing
-            xx, yy = np.meshgrid(x, y)
+            xx, yy = self._compute_grid_coords((H, W), spacing)
             dx = xx - self.origin[0]
             dy = yy - self.origin[1]
             dz = 0.0 - self.origin[2]
             norm = np.sqrt(dx**2 + dy**2 + dz**2)
             direction = np.stack([dx / norm, dy / norm, dz / norm], axis=-1)
+
+        elif self.wavefront == "converging":
+            fd = self.focal_distance
+            if fd is None:
+                fd = 10.0 * max(H, W) * spacing
+            focal_point = np.array([0.0, 0.0, fd], dtype=float)
+            xx, yy = self._compute_grid_coords((H, W), spacing)
+            dx = focal_point[0] - xx
+            dy = focal_point[1] - yy
+            dz = focal_point[2] - 0.0
+            norm = np.sqrt(dx**2 + dy**2 + dz**2)
+            direction = np.stack([dx / norm, dy / norm, dz / norm], axis=-1)
+
         else:
             direction = np.repeat(self.propagation_direction[None, None, :], H, axis=0)
             direction = np.repeat(direction, W, axis=1)
 
         return LightField(
-            intensity=intensity * self.power,
+            intensity=intensity * gaussian_scale * self.power,
             direction=direction,
             wavelength=self.wavelength,
             polarization=self.polarization,

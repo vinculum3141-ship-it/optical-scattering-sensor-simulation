@@ -25,7 +25,7 @@ packaging, and developer experience.
 
 ## Phase 1 — Foundational Infrastructure
 
-- [~] **Angular / divergent source model** — non-collimated direction maps (UC1, UC4, UC5, UC6). Partially closed: spherical wavefront implemented; still needed: converging beam, configurable waist position, Gaussian beam propagation
+- [x] **Angular / divergent source model** — non-collimated direction maps (UC1, UC4, UC5, UC6). Spherical wavefront, converging wavefront, Gaussian beam propagation with configurable waist position all implemented.
 - [ ] **Coordinate transforms for surfaces** — rotation, tilt, arbitrary pose (UC1, UC4, UC5, UC7)
 - [ ] **Flat-field / stepped-intensity source** — programmable uniform source (UC3, UC6, UC7)
 - [ ] **Spectral material model** — wavelength-dependent reflectance curves (UC2, UC4)
