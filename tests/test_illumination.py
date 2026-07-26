@@ -9,13 +9,15 @@ from optical_metrology.illumination import (
     BroadbandLamp,
     BroadbandSpectrum,
     FlatFieldSource,
+    GaussianBeamProfile,
     LED,
     Laser,
     LightField,
     LightSource,
     MonochromaticSpectrum,
+    SourceExtent,
     Sunlight,
-    GaussianBeamProfile,
+    TemporalEnvelope,
 )
 
 
@@ -209,3 +211,58 @@ def test_gaussian_beam_waist_farther_reduces_peak_more():
     lf_far = src_far.generate_light_field(shape=(3, 3), spacing=0.5)
     assert lf_far.intensity[1, 1] < lf_near.intensity[1, 1], \
         "farther from waist should have lower peak intensity"
+
+
+def test_temporal_envelope_gaussian_defaults():
+    te = TemporalEnvelope(pulse_energy=1e-6, pulse_duration=1e-9, repetition_rate=1e6)
+    assert te.shape == "gaussian"
+    assert np.isclose(te.average_power, 1.0)
+    assert te.peak_power > 0
+
+
+def test_temporal_envelope_rectangular():
+    te = TemporalEnvelope(shape="rectangular", pulse_energy=1e-6, pulse_duration=1e-9, repetition_rate=1e6)
+    t = np.linspace(-2e-9, 2e-9, 5)
+    env = te.envelope(t)
+    assert env[0] == 0.0
+    assert env[2] == 1.0
+
+
+def test_temporal_envelope_invalid_shape_raises():
+    with pytest.raises(ValueError, match="Unsupported pulse shape"):
+        TemporalEnvelope(shape="sawtooth", pulse_energy=1e-6)
+
+
+def test_temporal_envelope_peak_power_from_energy():
+    te = TemporalEnvelope(pulse_energy=1e-6, pulse_duration=1e-9, repetition_rate=1e6)
+    assert np.isclose(te.peak_power, 1e-6 / te.effective_pulse_width)
+
+
+def test_temporal_envelope_energy_from_peak_power():
+    te = TemporalEnvelope(peak_power=1e3, pulse_duration=1e-9, repetition_rate=1e6)
+    assert np.isclose(te.pulse_energy, 1e3 * te.effective_pulse_width)
+
+
+def test_source_extent_uniform_disk():
+    se = SourceExtent(shape="uniform_disk", radius=1e-3)
+    x = np.linspace(-2e-3, 2e-3, 5)
+    y = np.linspace(-2e-3, 2e-3, 5)
+    xx, yy = np.meshgrid(x, y)
+    ap = se.aperture_function(xx, yy)
+    assert ap[2, 2] == 1.0
+    assert ap[0, 0] == 0.0
+
+
+def test_source_extent_gaussian():
+    se = SourceExtent(shape="gaussian", radius=1e-3)
+    x = np.array([0.0, 1e-3])
+    y = np.array([0.0, 0.0])
+    xx, yy = np.meshgrid(x, y)
+    ap = se.aperture_function(xx, yy)
+    assert ap[0, 0] == 1.0
+    assert ap[0, 1] == pytest.approx(np.exp(-0.5), rel=1e-6)
+
+
+def test_source_extent_invalid_shape_raises():
+    with pytest.raises(ValueError, match="Unsupported source shape"):
+        SourceExtent(shape="triangle")

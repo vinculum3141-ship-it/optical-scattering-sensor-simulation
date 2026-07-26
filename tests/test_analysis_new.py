@@ -1,6 +1,18 @@
 import numpy as np
 
-from optical_metrology.analysis import ContrastAnalyzer, ErrorMapAnalyzer, FocusAnalyzer, ImageAnalyzer, IntensityProfileAnalyzer, SaturationAnalyzer, SpeckleRoughnessEstimator
+from optical_metrology.analysis import (
+    ContrastAnalyzer,
+    EdgeDetectionAnalyzer,
+    ErrorMapAnalyzer,
+    FFTAnalyzer,
+    FocusAnalyzer,
+    ImageAnalyzer,
+    IntensityProfileAnalyzer,
+    MTFAnalyzer,
+    SNRAnalyzer,
+    SaturationAnalyzer,
+    SpeckleRoughnessEstimator,
+)
 from optical_metrology.detector import DigitalImage
 
 
@@ -219,3 +231,86 @@ def test_speckle_roughness_roi_selection():
     roi = SpeckleRoughnessEstimator(coherence_length=1e-3, wavelength=532e-9, roi=(4, 4, 8, 8)).analyze(image).measurements
     assert "speckle_contrast" in roi
     assert roi["estimated_roughness_rms"] > 0
+
+
+def test_snr_single_image_returns_measurements():
+    pixels = np.ones((8, 8), dtype=np.uint16) * 2048
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = SNRAnalyzer(method="single_image").analyze(image).measurements
+    assert "snr_db" in m
+    assert "signal_mean" in m
+
+
+def test_snr_high_signal_gives_high_snr():
+    rng = np.random.default_rng(42)
+    pixels = (1000 + rng.normal(0, 10, size=(32, 32))).astype(np.uint16)
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = SNRAnalyzer(method="single_image").analyze(image).measurements
+    assert m["snr_db"] > 20  # 1000/10 = 100 → 40 dB
+
+
+def test_snr_flat_field_pair_returns_measurements():
+    rng = np.random.default_rng(42)
+    im1 = DigitalImage(pixels=rng.poisson(1000, size=(16, 16)).astype(np.uint16), metadata={"bit_depth": 12})
+    im2 = DigitalImage(pixels=rng.poisson(1000, size=(16, 16)).astype(np.uint16), metadata={"bit_depth": 12})
+    m = SNRAnalyzer(method="flat_field_pair", second_image=im2).analyze(im1).measurements
+    assert "snr_db" in m
+
+
+def test_snr_invalid_method_raises():
+    import pytest
+    with pytest.raises(ValueError, match="Unknown SNR method"):
+        SNRAnalyzer(method="invalid")
+
+
+def test_edge_detection_returns_counts():
+    pixels = np.zeros((16, 16), dtype=np.uint16)
+    pixels[:, 8:] = 4095
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = EdgeDetectionAnalyzer().analyze(image).measurements
+    assert m["edge_count"] > 0
+    assert 0 < m["edge_density"] < 1
+
+
+def test_edge_detection_uniform_image_no_edges():
+    pixels = np.ones((8, 8), dtype=np.uint16) * 2048
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = EdgeDetectionAnalyzer().analyze(image).measurements
+    assert m["edge_count"] == 0
+
+
+def test_fft_analyzer_returns_measurements():
+    rng = np.random.default_rng(42)
+    pixels = rng.random((16, 16)).astype(np.float32) * 4095
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = FFTAnalyzer().analyze(image).measurements
+    assert "dc_fraction" in m
+    assert "radial_profile" in m
+    assert "peak_spatial_frequency" in m
+    assert "power_spectrum_slope" in m
+
+
+def test_fft_analyzer_dc_removal():
+    pixels = np.ones((8, 8), dtype=np.uint16) * 2048
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = FFTAnalyzer(dc_removal=True).analyze(image).measurements
+    assert m["dc_fraction"] < 0.5
+
+
+def test_mtf_sinusoidal_returns_mtf():
+    pixels = np.zeros((16, 16), dtype=np.uint16)
+    x = np.arange(16)
+    pattern = (np.sin(2 * np.pi * x / 4) + 1) * 2047
+    pixels[:] = pattern.astype(np.uint16)
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    m = MTFAnalyzer(target_type="sinusoidal", lp_per_mm=10.0).analyze(image).measurements
+    assert "mtf" in m
+    assert "measured_modulation" in m
+
+
+def test_mtf_sinusoidal_no_frequency_raises():
+    import pytest
+    pixels = np.ones((8, 8), dtype=np.uint16) * 2048
+    image = DigitalImage(pixels=pixels, metadata={"bit_depth": 12})
+    with pytest.raises(ValueError, match="lp_per_mm must be provided"):
+        MTFAnalyzer(target_type="sinusoidal").analyze(image)

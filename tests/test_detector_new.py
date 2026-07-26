@@ -228,3 +228,34 @@ def test_blooming_integrated_with_detector():
     image = detector.capture(sf)
     assert image.pixels.shape == (8, 8)
     assert np.any(image.pixels > 0)
+
+
+def test_detector_qe_callable():
+    qe_fn = lambda wl: 0.3 if wl > 600e-9 else 0.9
+    det = CMOSDetector(quantum_efficiency=qe_fn)
+    sf = _sensor_field(irradiance=1e-6, wavelength=532e-9)
+    img1 = det.capture(sf)
+    sf2 = _sensor_field(irradiance=1e-6, wavelength=700e-9)
+    img2 = det.capture(sf2)
+    assert np.mean(img1.pixels) > np.mean(img2.pixels), \
+        "higher QE at 532nm should produce more electrons"
+
+
+def test_detector_rng_seed_reproducible():
+    det1 = CMOSDetector(rng_seed=42)
+    det2 = CMOSDetector(rng_seed=42)
+    sf = _sensor_field(irradiance=1e4, wavelength=532e-9)
+    img1 = det1.capture(sf)
+    img2 = det2.capture(sf)
+    assert np.array_equal(img1.pixels, img2.pixels), \
+        "same seed should give identical images"
+
+
+def test_detector_dcnu_increases_variance():
+    sf = _sensor_field(irradiance=0.0, wavelength=532e-9)
+    det_uniform = CMOSDetector(dark_current=1000.0, exposure_time=1.0, dcnu_sigma=0.0, rng_seed=42)
+    det_dcnu = CMOSDetector(dark_current=1000.0, exposure_time=1.0, dcnu_sigma=0.05, rng_seed=42)
+    img_u = det_uniform.capture(sf)
+    img_d = det_dcnu.capture(sf)
+    assert float(np.var(img_d.pixels.astype(float))) > float(np.var(img_u.pixels.astype(float))), \
+        "DCNU should increase dark-frame variance"

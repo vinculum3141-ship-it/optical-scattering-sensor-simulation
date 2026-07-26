@@ -45,18 +45,17 @@ packaging, and developer experience.
 
 The following should be implemented **just before** (not ahead of) the use case that first needs them:
 
-- [ ] **Pulsed source model** (standalone, needed by UC6 LiDAR) — temporal pulse envelope (Gaussian/rectangular), pulse energy, peak power, repetition rate. Add as a `TemporalEnvelope` class composed into `Laser` when UC6 is activated.
-- [ ] **Source extent model** (standalone, needed by UC5 Structured Light) — extended source aperture, partially coherent extended sources. Add as a `SourceExtent` class when UC5 is activated.
-- [ ] **Spectral quantum efficiency** `QE(λ)` (needed by UC3 Sensor Char first, then UC2 Multi-Spectral) — change `CMOSDetector.quantum_efficiency` from a single float to a callable `QE(wavelength)` or interpolated curve. Enables wavelength-dependent photoresponse for multi-spectral simulation.
-- [ ] **Dark current non-uniformity (DCNU) and temporal noise characterisation** (needed by UC3 Sensor Char) — two refinements required for realistic PTC and SNR analysis:
+- [x] **Pulsed source model** (standalone, needed by UC6 LiDAR) — `TemporalEnvelope` dataclass with Gaussian/rectangular pulse shapes, pulse energy/peak power, repetition rate, duty cycle, average power computation.
+- [x] **Source extent model** (standalone, needed by UC5 Structured Light) — `SourceExtent` dataclass with uniform_disk/gaussian/rectangle apertures, coherence factor, aperture function evaluation.
+- [x] **Spectral quantum efficiency** `QE(λ)` (needed by UC3 Sensor Char first, then UC2 Multi-Spectral) — `CMOSDetector.quantum_efficiency` accepts a callable ``QE(wavelength)`` for wavelength-dependent photoresponse.
+- [x] **Dark current non-uniformity (DCNU) and temporal noise characterisation** (needed by UC3 Sensor Char) — two refinements required for realistic PTC and SNR analysis:
 
-  1. **DCNU:** dark current is currently uniform across all pixels.  Real sensors exhibit ~1–5 % pixel-to-pixel variation.  Add a per-pixel dark-current scale factor drawn from a narrow Gaussian (mean 1.0, σ = 0.01–0.05) at sensor initialisation and stored for the sensor lifetime.  Implementation: replace the scalar dark-current multiplication with `electrons += np.random.poisson(self.dark_current * self.exposure_time * self._dcnu_map)` where `_dcnu_map` is drawn once per detector instance.
-
-  2. **Fixed temporal noise seeds / repeatability:** noise models (shot, dark, read) re-randomise every `capture()` call.  For PTC analysis (variance vs. mean) this is correct, but for characterising sensor stability the detector should support a `seed` parameter that makes noise reproducible across captures.  Add an optional `rng_seed` parameter to `CMOSDetector`; when set, all random draws use `np.random.default_rng(seed)` instead of the global `np.random` state.
+   - [x] **DCNU:** `_dcnu_map` drawn per-detector-instance from narrow Gaussian; pixel-wise dark-current scaling.
+   - [x] **Fixed temporal noise seeds:** `CMOSDetector.rng_seed` parameter; reproducible noise via `np.random.default_rng(seed)`.
 
 - [x] **Thin-film interference model** — `ThinFilmStack` with transfer-matrix method, supports single/multi-layer coatings, arbitrary angle, TE/TM/unpolarized (UC1)
-- [ ] **Gaussian beam divergence / waist propagation** (needed by UC6 LiDAR) — functional wiring of the stored `divergence` parameter to compute beam waist at range, spot size at target surface, and intensity falloff with distance. Partially closes the remaining divergent-source gap.
-- [ ] **Optical throughput / radiometric scaling** (needed by UC3 Sensor Char first) — the propagator currently converts scattered radiance (W·m⁻²·sr⁻¹) to sensor irradiance (W/m²) by PSF convolution alone, without accounting for the optical system's throughput.  Absent this, absolute irradiance values are incorrect for SNR, PTC, or any physically calibrated measurement.
+- [x] **Gaussian beam divergence / waist propagation** (needed by UC6 LiDAR) — `_effective_waist()` computes waist from `divergence`; Gaussian beam propagation scaling in `generate_light_field()`.
+- [x] **Optical throughput / radiometric scaling** (needed by UC3 Sensor Char first) — `OpticalPropagator.propagate()` scales convolved irradiance by ``π · NA²`` when `throughput_enabled=True`.
 
   **What to change:**
   `OpticalPropagator.propagate()` must scale the convolved irradiance by the system's collection efficiency.  For a simple paraxial model the throughput is:
@@ -80,7 +79,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   **Side effect:** fixes `AiryPSF` being decoupled from `OpticalSystem` — the `_get_psf()` helper should pass `optical_system.wavelength` and `optical_system.numerical_aperture` to the PSF kernel so both PSFs are consistent with the system they belong to.
 
-- [ ] **Optical magnification / field mapping** (needed by UC7 Wafer Alignment first, then UC5 Structured Light) — `OpticalSystem.magnification` is stored but never used by the propagator.  The scattered field and sensor field currently share identical pixel dimensions, which is incorrect for any system with non-unity magnification.
+- [x] **Optical magnification / field mapping** (needed by UC7 Wafer Alignment first, then UC5 Structured Light) — `OpticalPropagator.propagate()` resamples the scattered radiance via bilinear interpolation when `magnification_enabled=True` and system magnification differs from 1.0.
 
   **What to change:**
   `OpticalPropagator.propagate()` must resample the scattered radiance to account for magnification before convolution.  For a system with magnification M:
@@ -107,7 +106,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 - [x] **Intensity profile / line cross-section** — `IntensityProfileAnalyzer` with bilinear interpolation, configurable linewidth, contrast metric (UC1, UC5, UC7)
 
-- [ ] **FFT / power spectrum analyser** (needed by UC5 Structured Light first, then UC4 Angle-Resolved Scattering) — compute the 2D power spectrum of an image via FFT and extract radial and angular profiles.
+- [x] **FFT / power spectrum analyser** (needed by UC5 Structured Light first, then UC4 Angle-Resolved Scattering) — compute the 2D power spectrum of an image via FFT and extract radial and angular profiles.
 
   **What to add:**
   ```python
@@ -123,7 +122,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Edge case: DC removal before FFT for better dynamic range; windowing (Hann) to reduce spectral leakage; correct frequency axis labelling.
 
-- [ ] **Edge detection analyser** (needed by UC7 Wafer Alignment first, then UC1 Defect Inspection) — locate and characterise step edges in the image.
+- [x] **Edge detection analyser** (needed by UC7 Wafer Alignment first, then UC1 Defect Inspection) — locate and characterise step edges in the image.
 
   **What to add:**
   ```python
@@ -143,7 +142,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 - [x] **Focus / sharpness metric** — `FocusAnalyzer` with laplacian-variance, tenengrad, and brenner methods (UC1, UC5)
 
-- [ ] **Signal-to-noise ratio estimator** (needed by UC3 Sensor Char) — compute SNR from a single image or a pair of flat-field images.
+- [x] **Signal-to-noise ratio estimator** (needed by UC3 Sensor Char) — `SNRAnalyzer` with single-image and flat-field-pair methods.
 
   **What to add:**
   ```python
@@ -157,7 +156,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Report ``snr_db`` (20 log₁₀(μ/σ)), ``signal_mean``, ``noise_std``.  Accept optional ``signal_region`` and ``noise_region`` as (row, col, height, width) tuples for ROI-based estimation.
 
-- [ ] **MTF (modulation transfer function) analyser** (needed by UC3 Sensor Char first, then UC4 Angle-Resolved Scattering) — compute the system MTF from an image of a known test target (slanted edge, Siemens star, or sinusoidal grating).
+- [x] **MTF (modulation transfer function) analyser** (needed by UC3 Sensor Char first, then UC4 Angle-Resolved Scattering) — `MTFAnalyzer` with sinusoidal-target method.
 
   **What to add:**
   ```python

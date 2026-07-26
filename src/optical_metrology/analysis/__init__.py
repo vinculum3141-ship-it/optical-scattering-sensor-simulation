@@ -49,10 +49,14 @@ sketches and trigger use cases.
 
 from .base import AnalysisModule, AnalysisReport, ImageAnalyzer
 from .contrast import ContrastAnalyzer, SaturationAnalyzer
+from .edge_detection import EdgeDetectionAnalyzer
 from .error_map import ErrorMapAnalyzer
+from .fft_analyzer import FFTAnalyzer
 from .focus import FocusAnalyzer
 from .histogram import HistogramAnalyzer
 from .intensity_profile import IntensityProfileAnalyzer
+from .mtf import MTFAnalyzer
+from .snr import SNRAnalyzer
 from .speckle_roughness import SpeckleRoughnessEstimator
 
 __all__ = [
@@ -62,10 +66,14 @@ __all__ = [
     "ImageAnalyzer",
     # Quality Assessment
     "ContrastAnalyzer",
+    "EdgeDetectionAnalyzer",
     "ErrorMapAnalyzer",
+    "FFTAnalyzer",
     "FocusAnalyzer",
     "HistogramAnalyzer",
     "IntensityProfileAnalyzer",
+    "MTFAnalyzer",
+    "SNRAnalyzer",
     "SaturationAnalyzer",
     "SpeckleRoughnessEstimator",
 ]

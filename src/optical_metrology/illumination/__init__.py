@@ -27,6 +27,7 @@ Spectral models (:mod:`illumination.spectrum`)
 """
 
 from .broadband import BroadbandLamp
+from .extent import SourceExtent
 from .flatfield import FlatFieldSource
 from .laser import Laser
 from .led import LED
@@ -36,6 +37,7 @@ from .profiles import BeamProfile, GaussianBeamProfile, TopHatBeamProfile, Unifo
 from .source import LightSource
 from .spectrum import BroadbandSpectrum, BlackbodySpectrum, GaussianSpectrum, MonochromaticSpectrum, SpectralDistribution
 from .sunlight import Sunlight
+from .temporal import TemporalEnvelope
 
 __all__ = [
     "BeamProfile",
@@ -52,7 +54,9 @@ __all__ = [
     "MonochromaticSpectrum",
     "PolarizationState",
     "SpectralDistribution",
+    "SourceExtent",
     "Sunlight",
+    "TemporalEnvelope",
     "TopHatBeamProfile",
     "UniformBeamProfile",
 ]

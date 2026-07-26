@@ -1,6 +1,13 @@
 import numpy as np
+import pytest
 
-from optical_metrology.optics import AiryPSF, Wavefront, ZernikePolynomials, ZernikePSF
+from optical_metrology.optics import AiryPSF, OpticalPropagator, OpticalSystem, SensorField, Wavefront, ZernikePolynomials, ZernikePSF
+
+
+class _MockScatteredField:
+    def __init__(self, radiance, polarization=None):
+        self.radiance = radiance
+        self.polarization = polarization or "unpolarized"
 
 
 def test_airy_psf_kernel_normalised():
@@ -106,3 +113,47 @@ def test_zernike_psf_odd_size_auto():
     psf = ZernikePSF(wf, wavelength=532e-9, numerical_aperture=0.25)
     kernel = psf.kernel(size=20)
     assert kernel.shape[0] % 2 == 1
+
+
+def test_propagator_throughput_scales_irradiance():
+    opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.5, focal_length=50e-3, magnification=1.0)
+    field = _MockScatteredField(radiance=np.ones((5, 5)))
+    prop_on = OpticalPropagator(throughput_enabled=True)
+    prop_off = OpticalPropagator(throughput_enabled=False)
+    sf_on = prop_on.propagate(field, opt)
+    sf_off = prop_off.propagate(field, opt)
+    expected = np.pi * 0.5 ** 2
+    assert np.allclose(sf_on.irradiance, sf_off.irradiance * expected)
+
+
+def test_propagator_throughput_disabled():
+    opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.5, focal_length=50e-3, magnification=1.0)
+    field = _MockScatteredField(radiance=np.ones((5, 5)))
+    prop = OpticalPropagator(throughput_enabled=False)
+    sf = prop.propagate(field, opt)
+    assert np.isclose(sf.irradiance[2, 2], 1.0)
+
+
+def test_propagator_magnification_resamples():
+    opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.25, focal_length=50e-3, magnification=0.5)
+    field = _MockScatteredField(radiance=np.eye(10))
+    prop = OpticalPropagator(magnification_enabled=True, throughput_enabled=False)
+    sf = prop.propagate(field, opt)
+    assert sf.irradiance.shape == (5, 5)
+
+
+def test_propagator_magnification_unity_no_change():
+    opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.25, focal_length=50e-3, magnification=1.0)
+    rad = np.ones((5, 5))
+    field = _MockScatteredField(radiance=rad)
+    prop = OpticalPropagator(magnification_enabled=True, throughput_enabled=False)
+    sf = prop.propagate(field, opt)
+    assert sf.irradiance.shape == (5, 5)
+
+
+def test_propagator_magnification_disabled():
+    opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.25, focal_length=50e-3, magnification=0.5)
+    field = _MockScatteredField(radiance=np.eye(10))
+    prop = OpticalPropagator(magnification_enabled=False, throughput_enabled=False)
+    sf = prop.propagate(field, opt)
+    assert sf.irradiance.shape == (10, 10)

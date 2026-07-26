@@ -12,7 +12,7 @@ added via the :class:`DetectorNoiseModel` interface.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Callable, Optional, Union
 
 import numpy as np
 
@@ -140,8 +140,10 @@ class CMOSDetector:
     ----------
     exposure_time : float
         Integration time in seconds (default 10 ms).
-    quantum_efficiency : float
+    quantum_efficiency : float or callable
         Fraction of incident photons converted to electrons (0–1).
+        If a callable ``QE(wavelength) → float``, it is evaluated at
+        the illumination wavelength at capture time.
     dark_current : float
         Dark current in electrons per second (default 5 e⁻/s).
     read_noise_sigma : float
@@ -154,6 +156,14 @@ class CMOSDetector:
         Number of bits for ADC quantisation (e.g. 12 → 4096 levels).
     pixel_area : float
         Area of a single pixel in m² (default 5 μm × 5 μm).
+    rng_seed : int or None
+        If set, all random draws use ``np.random.default_rng(self.rng_seed)``
+        instead of the global ``np.random`` state, making noise
+        reproducible across captures.
+    dcnu_sigma : float
+        Relative standard deviation of pixel-to-pixel dark-current
+        non-uniformity.  0 = uniform (default).  Typical real-sensor
+        values are 0.01–0.05 (1–5 %).
     noise_models : list of DetectorNoiseModel or None
         Additional noise stages applied after read noise.
     """
@@ -161,13 +171,15 @@ class CMOSDetector:
     def __init__(
         self,
         exposure_time: float = 0.01,
-        quantum_efficiency: float = 0.9,
+        quantum_efficiency: Union[float, Callable[[float], float]] = 0.9,
         dark_current: float = 5.0,
         read_noise_sigma: float = 2.0,
         full_well_capacity: float = 80000.0,
         gain: float = 2.0,
         bit_depth: int = 12,
         pixel_area: float = 25e-12,
+        rng_seed: Optional[int] = None,
+        dcnu_sigma: float = 0.0,
         noise_models: Optional[list[DetectorNoiseModel]] = None,
     ):
         self.exposure_time = exposure_time
@@ -179,6 +191,15 @@ class CMOSDetector:
         self.bit_depth = bit_depth
         self.pixel_area = pixel_area
         self.noise_models = noise_models or []
+        self.rng_seed = rng_seed
+        self.dcnu_sigma = float(dcnu_sigma)
+        self._rng = np.random.default_rng(rng_seed) if rng_seed is not None else None
+        self._dcnu_map: Optional[np.ndarray] = None
+
+    def _resolve_qe(self, wavelength: float) -> float:
+        if callable(self.quantum_efficiency):
+            return float(self.quantum_efficiency(wavelength))
+        return float(self.quantum_efficiency)
 
     def capture(self, sensor_field, surface=None) -> DigitalImage:
         """Expose the sensor and return a digital image.
@@ -199,23 +220,30 @@ class CMOSDetector:
             Quantised pixel values and capture metadata.
         """
         irradiance = np.asarray(sensor_field.irradiance, dtype=float)
+        wavelength = sensor_field.wavelength
+        rng = self._rng if self._rng is not None else np.random
 
         # Step 1: irradiance (W/m²) → incident photons per pixel
-        #   photon energy E = hc/λ
-        #   photon count = (irradiance × pixel_area × time) / E
-        photon_energy = 6.62607015e-34 * 2.99792458e8 / sensor_field.wavelength
+        photon_energy = 6.62607015e-34 * 2.99792458e8 / wavelength
         photons = (irradiance * self.pixel_area * self.exposure_time) / photon_energy
 
-        # Step 2: quantum efficiency → photoelectrons
-        electrons = photons * self.quantum_efficiency
+        # Step 2: quantum efficiency → photoelectrons (wavelength-dependent)
+        qe = self._resolve_qe(wavelength)
+        electrons = photons * qe
 
-        # Step 3: shot noise (Poisson) + dark current (Poisson)
-        electrons = np.random.poisson(electrons)
-        dark = np.random.poisson(self.dark_current * self.exposure_time, size=electrons.shape)
+        # Step 3: shot noise (Poisson) + dark current (Poisson) with DCNU
+        electrons = rng.poisson(electrons)
+
+        dark_current = self.dark_current * self.exposure_time
+        if self.dcnu_sigma > 0:
+            if self._dcnu_map is None or self._dcnu_map.shape != electrons.shape:
+                self._dcnu_map = rng.normal(1.0, self.dcnu_sigma, size=electrons.shape)
+            dark_current = dark_current * self._dcnu_map
+        dark = rng.poisson(dark_current, size=electrons.shape)
         electrons = electrons + dark
 
         # Step 4: read noise (Gaussian)
-        read_noise = np.random.normal(0.0, self.read_noise_sigma, size=electrons.shape)
+        read_noise = rng.normal(0.0, self.read_noise_sigma, size=electrons.shape)
         electrons = electrons + read_noise
 
         # Step 4.5: prepare speckle noise models with surface data
@@ -223,7 +251,7 @@ class CMOSDetector:
             from .noise_models import SpeckleNoise
             for noise_model in self.noise_models:
                 if isinstance(noise_model, SpeckleNoise):
-                    noise_model.prepare(surface.height, sensor_field.wavelength)
+                    noise_model.prepare(surface.height, wavelength)
 
         # Step 5: custom noise models
         for noise_model in self.noise_models:
@@ -251,12 +279,15 @@ class CMOSDetector:
     def pipeline_describe(self) -> str:
         """Return a human-readable summary of the detector pipeline steps."""
         area_cm2 = self.pixel_area * 1e4
+        qe_str = "QE(wavelength)" if callable(self.quantum_efficiency) else f"{self.quantum_efficiency}"
+        dcnu_str = f", DCNU σ={self.dcnu_sigma}" if self.dcnu_sigma > 0 else ""
+        seed_str = f", seed={self.rng_seed}" if self.rng_seed is not None else ""
         lines = [
             "CMOS detector pipeline:",
             f"  Step 1  Irradiance → photons    (E = hc/λ, pixel_area={self.pixel_area:.1e} m² = {area_cm2:.1e} cm² × exposure_time={self.exposure_time} s)",
-            f"  Step 2  Quantum efficiency       ({self.quantum_efficiency} e⁻/photon)",
-            f"  Step 3  Shot noise (Poisson)     + dark current ({self.dark_current} e⁻/s × {self.exposure_time} s)",
-            f"  Step 4  Read noise (Gaussian)    σ = {self.read_noise_sigma} e⁻",
+            f"  Step 2  Quantum efficiency       ({qe_str} e⁻/photon)",
+            f"  Step 3  Shot noise (Poisson)     + dark current ({self.dark_current} e⁻/s × {self.exposure_time} s{dcnu_str})",
+            f"  Step 4  Read noise (Gaussian)    σ = {self.read_noise_sigma} e⁻{seed_str}",
         ]
         if self.noise_models:
             for m in self.noise_models:

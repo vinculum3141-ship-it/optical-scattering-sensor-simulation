@@ -163,6 +163,18 @@ class LightSource:
         y = ((H - 1) / 2.0 - np.arange(H)) * spacing
         return np.meshgrid(x, y)
 
+    def _effective_waist(self, profile_waist: Optional[float] = None) -> float:
+        """Return the effective beam waist radius in metres.
+
+        Priority: profile waist → waist from ``divergence`` → fallback
+        (half the grid size as a sensible default).
+        """
+        if profile_waist is not None and profile_waist > 0:
+            return profile_waist
+        if self.divergence > 0:
+            return float(self.wavelength / (np.pi * self.divergence))
+        return 1.0
+
     def _gaussian_beam_scaling(self, w0: float) -> float:
         """Compute intensity scaling factor for Gaussian beam propagation.
 
@@ -217,7 +229,11 @@ class LightSource:
 
         gaussian_scale = 1.0
         if isinstance(self.beam_profile, GaussianBeamProfile):
-            gaussian_scale = self._gaussian_beam_scaling(self.beam_profile.w0)
+            w0 = self._effective_waist(self.beam_profile.w0)
+            gaussian_scale = self._gaussian_beam_scaling(w0)
+        elif self.divergence > 0 and self.waist_position != 0:
+            w0 = self._effective_waist(None)
+            gaussian_scale = self._gaussian_beam_scaling(w0)
 
         if self.wavefront == "spherical":
             xx, yy = self._compute_grid_coords((H, W), spacing)
