@@ -180,7 +180,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2a — Surface Defect Inspection (UC1)
 
-- [ ] **RayleighScattering / MieScattering** (skeletons in `scattering/particle.py`) — implement when particle-contamination scattering is needed for defect inspection
+- [x] **RayleighScattering / MieScattering** (skeletons in `scattering/particle.py`) — implemented with H-G phase function approximation
 - [x] Directional illumination models — `bright_field()`, `dark_field()`, `ring_light()` factory functions
 - [x] Defect-specific surface generators — `DentSurface`, `PitSurface`, `CrackSurface`, `StainSurface`
 - [x] Defect detection analysis module — `DefectAnalyzer` with blob finding (CCA), scratch classification, pass/fail
@@ -207,7 +207,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 - [x] Edge detection / fiducial finding (sub-pixel, Hough transform)
 - [x] Registration / overlay analysis (nominal vs. measured positions)
 - [x] Statistical process control output (Cpk, mean shift, trend)
-- [ ] Real-time performance model (latency budget, throughput)
+- [ ] Real-time performance model (latency budget, throughput) — deferred (non-functional)
 - [x] Robot Framework tests for wafer inspection workflow
 - [x] Integration test: misaligned chip detection end-to-end
 
@@ -223,25 +223,25 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2e — Angle-Resolved Scattering Measurement (UC4)
 
-- [ ] **BeckmannScattering** — implement full model (skeleton exists in `scattering/beckmann.py`, uses `distribution_beckmann()` from `cooktorrance.py`) — needed as a candidate model in BRDF fitting
-- [ ] **GGXScattering** — implement full model (skeleton exists in `scattering/ggx.py`, uses GGX distribution D = α² / (π((n·h)²(α²-1)+1)²)) — needed as a candidate model in BRDF fitting
-- [ ] Goniometric sweep workflow (auto-vary θ_i, θ_r, collect measurements)
-- [ ] BRDF fitting analysis (fit model parameters to angle-resolved data)
-- [ ] Polarised BRDF (Fresnel coefficients, Mueller matrix propagation)
-- [ ] Standard reference materials (Spectralon, mirror)
-- [ ] BSDF (transmissive scattering) model
-- [ ] Angle-resolved output format (BRDF table, polar plot)
-- [ ] Robot Framework tests for goniometric workflow
-- [ ] Integration test: BRDF characterisation end-to-end
+- [x] **BeckmannScattering** — implemented with full microfacet BRDF
+- [x] **GGXScattering** — implemented with full microfacet BRDF
+- [x] Goniometric sweep workflow — `GoniometricSweep` in `analysis/goniometry.py`
+- [x] BRDF fitting analysis — `BRDFFitter` in `analysis/brdf_fit.py` (least-squares fitting)
+- [ ] Polarised BRDF (Fresnel coefficients, Mueller matrix propagation) — deferred
+- [ ] Standard reference materials (Spectralon, mirror) — deferred
+- [ ] BSDF (transmissive scattering) model — deferred
+- [ ] Angle-resolved output format (BRDF table, polar plot) — deferred
+- [ ] Robot Framework tests for goniometric workflow — deferred
+- [ ] Integration test: BRDF characterisation end-to-end — deferred
 
 ## Phase 2f — Structured Light 3D Scanning (UC5)
 
 - [x] Structured illumination source (fringe projection, phase-shifted patterns) — `FringeProjector` in `illumination/structured.py`
-- [ ] Divergent projection model (projector fan-out geometry)
+- [ ] Divergent projection model (projector fan-out geometry) — deferred
 - [x] Phase extraction analysis (phase-shifting algorithm) — `PhaseExtractor` in `analysis/phase.py`
 - [x] Phase unwrapping (spatial flood-fill) — `PhaseUnwrapper` in `analysis/phase.py`
 - [x] Height reconstruction from phase → disparity map — `HeightReconstructor` in `analysis/reconstruction.py`
-- [ ] Projector-camera calibration model (intrinsic/extrinsic parameters)
+- [ ] Projector-camera calibration model (intrinsic/extrinsic parameters) — deferred
 - [x] Surface comparison (RMS error map between reconstruction and ground truth) — `SurfaceComparator` in `analysis/reconstruction.py`
 - [x] Robot Framework tests for structured light workflow — `StructuredLightLibrary.py` + `structured_light.robot`
 - [x] Integration test: sinusoidal surface scan end-to-end — `test_uc5_integration.py`
@@ -257,7 +257,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 - [x] SPAD / Geiger-mode detector — `SPADDetector` (dead time, PDE, dark counts, jitter)
 - [x] Waveform analysis — `WaveformAnalyzer` (peak detection, CFD)
 - [x] Point cloud output — `generate_point_cloud()` (range, azimuth, elevation → xyz + intensity)
-- [ ] Atmospheric effects (extinction, backscatter, turbulence) — deferred
+- [ ] Atmospheric effects (extinction, backscatter, turbulence) — deferred (model uses η_atm in range equation)
 - [x] Robot Framework tests for LiDAR workflow
 - [x] Integration test: LiDAR range measurement end-to-end
 
