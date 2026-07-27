@@ -248,18 +248,18 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2g — LiDAR Range Finding (UC6)
 
-- [ ] **RayleighScattering** — implement full model (skeleton exists in `scattering/particle.py`) — needed for atmospheric molecular backscatter (∝ 1/λ⁴)
-- [ ] **MieScattering** — implement full model (skeleton exists in `scattering/particle.py`, requires Mie-theory computation for size parameter x = 2πr/λ) — needed for aerosol and droplet scattering
-- [ ] Pulsed laser source (temporal pulse profile, peak power, PRR)
-- [ ] Scanning mechanism (galvanometer, rotating polygon, MEMS mirror)
-- [ ] LiDAR range equation implementation
-- [ ] Time-of-flight propagation (time delay, pulse broadening, multiple returns)
-- [ ] SPAD / Geiger-mode detector model (photon counting, dead time, jitter)
-- [ ] Waveform analysis (peak detection, constant-fraction discriminator)
-- [ ] Point cloud output data structure (x, y, z, intensity, timestamp)
-- [ ] Atmospheric effects (extinction, backscatter, turbulence)
-- [ ] Robot Framework tests for LiDAR workflow
-- [ ] Integration test: LiDAR range measurement end-to-end
+- [x] **RayleighScattering** — implemented with ∝ 1/λ⁴ wavelength dependence
+- [x] **MieScattering** — implemented with Henyey-Greenstein phase function approximation
+- [x] Pulsed laser source — `TemporalEnvelope` (Gaussian/rectangular, pulse energy, PRR) — done pre-deployment
+- [x] Scanning mechanism — `ScanningMechanism` (raster/spiral patterns)
+- [x] LiDAR range equation — `LiDARRangeEquation` with inverse-square law
+- [x] Time-of-flight propagation — `TimeOfFlightPropagator` with tilt broadening
+- [x] SPAD / Geiger-mode detector — `SPADDetector` (dead time, PDE, dark counts, jitter)
+- [x] Waveform analysis — `WaveformAnalyzer` (peak detection, CFD)
+- [x] Point cloud output — `generate_point_cloud()` (range, azimuth, elevation → xyz + intensity)
+- [ ] Atmospheric effects (extinction, backscatter, turbulence) — deferred
+- [x] Robot Framework tests for LiDAR workflow
+- [x] Integration test: LiDAR range measurement end-to-end
 
 ## Before Phase 2 — final architecture review pass
 

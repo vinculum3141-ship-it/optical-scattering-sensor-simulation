@@ -59,6 +59,7 @@ from .focus import FocusAnalyzer
 from .goniometry import GoniometricSweep
 from .histogram import HistogramAnalyzer
 from .intensity_profile import IntensityProfileAnalyzer
+from .lidar import LiDARRangeEquation, TimeOfFlightPropagator, WaveformAnalyzer, generate_point_cloud
 from .linearity import LinearityTestAnalyzer
 from .mtf import MTFAnalyzer
 from .phase import PhaseExtractor, PhaseUnwrapper
@@ -91,8 +92,10 @@ __all__ = [
     "greyscale_wedge",
     "HistogramAnalyzer",
     "IntensityProfileAnalyzer",
+    "LiDARRangeEquation",
     "LinearityTestAnalyzer",
     "HeightReconstructor",
+    "generate_point_cloud",
     "MTFAnalyzer",
     "PhaseExtractor",
     "PhaseUnwrapper",
@@ -103,6 +106,8 @@ __all__ = [
     "RegistrationAnalyzer",
     "SaturationAnalyzer",
     "siemens_star",
+    "TimeOfFlightPropagator",
+    "WaveformAnalyzer",
     "slanted_edge",
     "SPCAnalyzer",
     "SpectralAnalyzer",

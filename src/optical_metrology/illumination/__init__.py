@@ -36,6 +36,7 @@ from .lightfield import LightField
 from .multispectral import ChannelConfig, FilterWheelSource, MultiChannelLightField, MultiSpectralSource
 from .polarization import PolarizationState
 from .profiles import BeamProfile, GaussianBeamProfile, TopHatBeamProfile, UniformBeamProfile
+from .scanning import ScanningMechanism
 from .source import LightSource
 from .spectrum import BroadbandSpectrum, BlackbodySpectrum, GaussianSpectrum, MonochromaticSpectrum, SpectralDistribution
 from .sunlight import Sunlight
@@ -66,6 +67,7 @@ __all__ = [
     "ring_light",
     "SpectralDistribution",
     "SourceExtent",
+    "ScanningMechanism",
     "Sunlight",
     "TemporalEnvelope",
     "TopHatBeamProfile",
