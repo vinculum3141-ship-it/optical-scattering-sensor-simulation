@@ -476,3 +476,78 @@ Suggested order based on complexity:
 - Integration tests covering multi-step workflows
 - Performance benchmarks
 - User documentation for each use case
+
+---
+
+## Learning & Playability Roadmap
+
+This framework is built for **learning** — understanding how optical
+metrology pipelines work by running and modifying real simulations.
+Every use case should ship with **modular, fully playable notebooks and
+Python scripts** that use ``optical_metrology`` as an **imported library**
+(``pip install -e .`` in an environment).
+
+### UC1 — Surface Defect Inspection
+- **Notebook:** Walk through bright-field vs. dark-field vs. ring-light
+  inspection of a scratched wafer.  Let the user toggle defect type
+  (dent, pit, crack, stain), illumination geometry, and threshold to
+  see pass/fail flip in real time.
+- **Script:** ``python -m examples.run_uc1_inspection --defect scratch --illumination darkfield``
+- **Interactive:** Sliders for scratch depth, incidence angle, detector
+  noise level.
+
+### UC2 — Multi-Spectral Material ID
+- **Notebook:** Load a multi-spectral light field, sweep wavelengths,
+  compute SAM per pixel, classify materials.  Let the user add reference
+  spectra and see classification confidence maps update.
+- **Script:** ``python -m examples.run_uc2_material_id --materials silicon,sio2,al``
+- **Interactive:** Click on the image to add a reference spectrum.
+
+### UC3 — Sensor Characterisation
+- **Notebook:** Generate flat-field images at increasing exposures,
+  compute PTC, fit gain, plot variance vs. mean.  Show dynamic range
+  and linearity error as adjustable exposure sweeps run.
+- **Script:** ``python -m examples.run_uc3_sensor_char --exposure-range 1e-6 1e-3 --steps 20``
+- **Interactive:** Slider for exposure time updates PTC plot live.
+
+### UC4 — Angle-Resolved Scattering
+- **Notebook:** Sweep incidence / reflection angles, collect BRDF
+  table, fit Beckmann vs. GGX models, compare goodness-of-fit.
+- **Script:** ``python -m examples.run_uc4_brdf --model beckmann --roughness 0.15``
+- **Interactive:** 2D polar plot of BRDF that updates as roughness changes.
+
+### UC5 — Structured Light 3D Scanning
+- **Notebook:** Project fringe patterns onto a sinusoidal surface,
+  extract phase, unwrap, reconstruct height, compare to ground truth.
+- **Script:** ``python -m examples.run_uc5_structured_light --period 16 --phase-shifts 4``
+- **Interactive:** Animate fringe projection and show phase map, height map,
+  error map side-by-side.
+
+### UC6 — LiDAR Range Finding
+- **Notebook:** Simulate a LiDAR pulse, propagate to target at 50 m,
+  detect return with SPAD, compute ToF, convert to point cloud.
+- **Script:** ``python -m examples.run_uc6_lidar --range 50 --aerosol-density 1e5``
+- **Interactive:** Drag the target distance slider and see received
+  power, ToF histogram, and point cloud update in real time.
+
+### UC7 — Wafer Alignment
+- **Notebook:** Create a wafer with fiducial marks, apply misalignment,
+  run template matching, measure dx/dy/rotation, compute Cpk.
+- **Script:** ``python -m examples.run_uc7_alignment --dx 3 --dy -1 --rotation 0.5``
+- **Interactive:** Drag misalignment sliders and watch the overlay
+  error heatmap update.
+
+### Deliverable Format
+Each use case ships three things:
+
+| Artifact | Description |
+|----------|-------------|
+| ``examples/uc<N>_playground.ipynb`` | Jupyter notebook with markdown narrative, side-by-side plots, interactive widgets |
+| ``examples/run_uc<N>_pipeline.py`` | CLI script with argparse (``--help`` lists all knobs) |
+| ``tests/test_uc<N>_integration.py`` | Existing pytest integration test (already done for all 7 UCs) |
+
+The notebooks should be **self-contained** — they install nothing beyond
+``pip install -e .`` in the venv, import ``optical_metrology``, and work.
+Widget sliders (``ipywidgets``) are preferred for interactivity; if that
+adds a dependency, use ``¶``-driven code cells the user can re-run with
+different parameters.
