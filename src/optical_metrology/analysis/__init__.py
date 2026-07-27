@@ -6,16 +6,17 @@ extracting quantitative measurements from captured
 
 Quality Assessment
     How good is the image?  Histogram statistics, SNR, contrast
-    metrics, focus sharpness, saturation detection.
+    metrics, focus sharpness, saturation detection, sensor
+    characterisation (PTC, dynamic range, linearity).
 
 Optical Characterisation
     How well did the imaging system perform?  MTF, FFT-based
-    frequency analysis, PSF estimation.
+    frequency analysis, phase extraction, height reconstruction.
 
 Metrology
     What are the engineering measurements?  Edge width / feature
     size, surface roughness, defect detection and classification,
-    particle sizing, scratch measurement.
+    particle sizing, scratch measurement, registration, SPC.
 
 This classification mirrors the way real optical inspection systems
 are evaluated in semiconductor metrology and industrial machine
@@ -27,24 +28,50 @@ Orchestrator and base classes
 - :class:`AnalysisModule` — pluggable base for individual routines
 - :class:`ImageAnalyzer` — runs multiple modules and merges results
 
-Modules (existing)
-------------------
+Modules by group
+----------------
 Quality Assessment
-- :class:`HistogramAnalyzer` — pixel histogram + mean/min/max
-- :class:`ContrastAnalyzer` — RMS, Michelson, Weber contrast
-- :class:`SaturationAnalyzer` — saturated pixel fraction
+    :class:`HistogramAnalyzer` — pixel histogram + mean/min/max
+    :class:`ContrastAnalyzer` — RMS, Michelson, Weber contrast
+    :class:`SaturationAnalyzer` — saturated pixel fraction
+    :class:`FocusAnalyzer` — Laplacian/Tenengrad/Brenner sharpness
+    :class:`SNRAnalyzer` — single-image and flat-field-pair SNR
+    :class:`PTCAnalyzer` — photon transfer curve (gain, read noise, FWC)
+    :class:`DynamicRangeAnalyzer` — max/min dynamic range
+    :class:`LinearityTestAnalyzer` — linearity error vs. exposure
 
-Modules (documented in docs/roadmap-todo.md, implement before use case)
-------------------------------------------------------------------------
-Quality Assessment       | Optical Characterisation | Metrology
--------------------------|--------------------------|--------------------------
-:class:`FocusAnalyzer`   | :class:`MTFAnalyzer`     | :class:`EdgeDetectionAnalyzer`
-:class:`SNRAnalyzer`     | :class:`FFTAnalyzer`     | :class:`SpeckleRoughnessEstimator`
-                         |                          | :class:`IntensityProfileAnalyzer`
-                         |                          | Defect detection (UC1)
+Optical Characterisation
+    :class:`MTFAnalyzer` — modulation transfer function (sinusoidal)
+    :class:`FFTAnalyzer` — 2D power spectrum, radial profile
+    :class:`PhaseExtractor` — N-step phase-shifting algorithm (UC5)
+    :class:`PhaseUnwrapper` — spatial flood-fill unwrapping (UC5)
+    :class:`HeightReconstructor` — phase→height via triangulation (UC5)
+    :class:`SurfaceComparator` — RMS error vs. ground truth (UC5)
 
-See ``docs/roadmap-todo.md`` → *Pre-deployment gaps* for implementation
-sketches and trigger use cases.
+Metrology
+    :class:`EdgeDetectionAnalyzer` — Sobel edge detection, hysteresis
+    :class:`SpeckleRoughnessEstimator` — inverse speckle contrast
+    :class:`IntensityProfileAnalyzer` — line cross-section, contrast
+    :class:`ErrorMapAnalyzer` — RMSE, MAE, PSNR vs. reference
+    :class:`DefectAnalyzer` — blob/scratch detection, classification,
+        pass/fail decision (UC1)
+    :class:`TiledAcquisition` — multi-FOV scanning and stitching (UC1)
+    :class:`SpectralAnalyzer` — band ratios, spectral angle mapper,
+        material classification (UC2)
+    :class:`GoniometricSweep` — angle-resolved BRDF sweep (UC4)
+    :class:`BRDFFitter` — fits model params to BRDF data (UC4)
+    :class:`TemplateMatcher` — normalised cross-correlation (UC7)
+    :class:`RegistrationAnalyzer` — translation/rotation alignment (UC7)
+    :class:`SPCAnalyzer` — Cpk, mean shift, trend (UC7)
+    :class:`LiDARRangeEquation` — received power from range eqn (UC6)
+    :class:`TimeOfFlightPropagator` — ToF + pulse broadening (UC6)
+    :class:`WaveformAnalyzer` — peak detection, CFD (UC6)
+    :func:`generate_point_cloud` — (range, az, el) → xyz + intensity (UC6)
+
+Test chart generators (UC3)
+    :func:`siemens_star` — spatial frequency test
+    :func:`slanted_edge` — MTF edge target
+    :func:`greyscale_wedge` — linearity ramp
 """
 
 from .base import AnalysisModule, AnalysisReport, ImageAnalyzer

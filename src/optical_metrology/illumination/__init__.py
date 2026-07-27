@@ -13,6 +13,14 @@ Concrete source types
     - :class:`LED` — Gaussian spectrum source with moderate divergence
     - :class:`Sunlight` — black-body thermal source
     - :class:`BroadbandLamp` — flat-spectrum white-light source
+    - :class:`FlatFieldSource` — uniform square source for calibration
+    - :class:`MultiSpectralSource` — multiple discrete spectral bands (UC2)
+    - :class:`MultiChannelLightField` — per-channel fields stacked in channels dim (UC2)
+    - :class:`FilterWheelSource` — sequentially selects one band per frame (UC2)
+    - :class:`TemporalEnvelope` — pulsed / modulated power envelope
+    - :class:`SourceExtent` — extended aperture (angular extent in object space)
+    - :class:`FringeProjector` — phase-shifted sinusoidal fringe projector (UC5)
+    - :class:`ScanningMechanism` — raster/spiral scanner for LiDAR (UC6)
 
 Profile models (:mod:`illumination.profiles`)
     - :class:`UniformBeamProfile` — constant intensity
@@ -24,6 +32,11 @@ Spectral models (:mod:`illumination.spectrum`)
     - :class:`GaussianSpectrum` — Gaussian line shape
     - :class:`BlackbodySpectrum` — Planck distribution
     - :class:`BroadbandSpectrum` — flat over a range
+
+Directional lighting helpers
+    - :func:`bright_field` — on-axis collimated / ring-light configuration (UC1)
+    - :func:`dark_field` — off-axis grazing incidence (UC1)
+    - :func:`ring_light` — multi-angle ring configuration (UC1)
 """
 
 from .broadband import BroadbandLamp

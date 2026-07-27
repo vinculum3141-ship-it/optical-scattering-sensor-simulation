@@ -78,6 +78,11 @@ Configure illumination (ring light / dark-field / bright-field)
 - **Use-case-specific**: Defect generators (low), defect analysis (medium),
   pass/fail logic (low)
 
+### Status
+
+✅ **Phase 2 complete** — `DentSurface`, `PitSurface`, `CrackSurface`, `StainSurface`; directional factory functions (`bright_field`, `dark_field`, `ring_light`); `DefectAnalyzer` (CCA blob/scratch + pass/fail); `TiledAcquisition`. 6 integration tests + 5 Robot tests pass.
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc1--surface-defect-inspection))
+
 ---
 
 ## Use Case 2: Multi-Spectral Material Identification
@@ -124,6 +129,11 @@ Configure multi-wavelength source (N discrete channels)
 
 - **Shared prerequisites**: Spectral stacks (medium), spectral materials (low)
 - **Use-case-specific**: Spectral analysis (medium), CFA/demosaicing (medium)
+
+### Status
+
+✅ **Phase 2 complete** — `MultiChannelLightField`, `MultiSpectralSource`, `FilterWheelSource`; `SpectralAnalyzer` (SAM, band ratios, classification); `CFAConfig`/`CFADetector` (Bayer + demosaic). 24 integration tests + 6 Robot tests pass.
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc2--multi-spectral-material-identification))
 
 ---
 
@@ -172,6 +182,11 @@ Configure detector under test
 
 - **Shared prerequisites**: Flat-field source (low)
 - **Use-case-specific**: PTC/SNR analysers (medium), test charts (medium)
+
+### Status
+
+✅ **Phase 2 complete** — `PTCAnalyzer`, `DynamicRangeAnalyzer`, `LinearityTestAnalyzer`; `siemens_star()`, `slanted_edge()`, `greyscale_wedge()`. 28 integration tests + 8 Robot tests pass.
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc3--sensor-performance-characterisation))
 
 ---
 
@@ -232,6 +247,11 @@ Configure source + surface + detector
 - **Shared prerequisites**: Divergent sources (medium), coordinate transforms (medium)
 - **Use-case-specific**: Sweep workflow (low), BRDF fitting (medium), polarized BRDF (high)
 
+### Status
+
+✅ **Phase 2 complete** — `BeckmannScattering`, `GGXScattering` (full microfacet); `GoniometricSweep`; `BRDFFitter` (least-squares). Deferred: polarised BRDF, BSDF, reference materials (see `docs/roadmap-todo.md`).
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc4--angle-resolved-scattering))
+
 ---
 
 ## Use Case 5: Structured Light 3D Scanning
@@ -282,6 +302,11 @@ Configure projector + camera system (baseline, angles)
 - **Shared prerequisites**: Divergent sources (medium), coordinate transforms (medium)
 - **Use-case-specific**: Phase algorithms (high), calibration model (medium),
   height reconstruction (medium)
+
+### Status
+
+✅ **Phase 2 complete** — `FringeProjector` (phase-shifted sinusoids); `PhaseExtractor` (N-step); `PhaseUnwrapper` (flood-fill); `HeightReconstructor` (triangulation); `SurfaceComparator` (RMS error). Deferred: divergent projection model, projector-camera calibration (see `docs/roadmap-todo.md`).
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc5--structured-light-3d-scanning))
 
 ---
 
@@ -334,6 +359,11 @@ Configure laser source (pulse energy, width, repetition rate)
 - **Shared prerequisites**: Divergent sources (medium)
 - **Use-case-specific**: Pulsed laser (medium), scanning (high), SPAD detector (high),
   ToF propagation (medium), waveform analysis (medium), point cloud (low)
+
+### Status
+
+✅ **Phase 2 complete** — `RayleighScattering`, `MieScattering`; `ScanningMechanism` (raster/spiral); `LiDARRangeEquation`; `TimeOfFlightPropagator`; `SPADDetector`; `WaveformAnalyzer` (peak+CFD); `generate_point_cloud()`. Deferred: atmospheric effects (see `docs/roadmap-todo.md`).
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc6--lidar-range-finding))
 
 ---
 
@@ -388,6 +418,11 @@ Define nominal pattern (fiducial marks, track layout, chip outline)
 - **Shared prerequisites**: Coordinate transforms (medium), template matching (medium)
 - **Use-case-specific**: Wafer generators (medium), registration analysis (medium),
   SPC output (low), real-time model (low)
+
+### Status
+
+✅ **Phase 2 complete** — `WaferSurface` (fiducial crosses, die grid), `MisalignedSurface` (affine warp); `TemplateMatcher` (NCC); `RegistrationAnalyzer` (FFT cross-correlation); `SPCAnalyzer` (Cpk, trend). Deferred: real-time performance model (see `docs/roadmap-todo.md`).
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc7--wafer-chip-misalignment-detection))
 
 ---
 

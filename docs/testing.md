@@ -6,46 +6,74 @@
 
 The framework employs a two-tier testing strategy:
 
-- **Unit tests (pytest)** — 81 tests across all six layers plus
-  pipeline and utilities, covering core functionality, edge cases,
-  and all models. Fast, run on every change.
-- **Acceptance tests (Robot Framework)** — 64 tests across all six
-  layers, covering realistic usage scenarios. Documents expected
-  behaviour in natural-language form.
+- **Unit / integration tests (pytest)** — 311 tests across all seven
+  layers plus pipeline, utilities, and seven use-case integration
+  suites. Covers core functionality, edge cases, all models, and
+  end-to-end workflows. Fast, run on every change.
+- **Acceptance tests (Robot Framework)** — 96 tests across 16 files,
+  covering realistic usage scenarios. Documents expected behaviour
+  in natural-language form.
 
 ## Test Structure
 
 ```
 tests/
-├── test_illumination.py      # pytest — 11 tests
-├── test_surface.py           # pytest — 4 tests
-├── test_surface_new.py       # pytest — 9 tests
-├── test_scattering.py        # pytest — 11 tests
-├── test_scattering_new.py    # pytest — 6 tests
-├── test_optics.py            # pytest — 1 test
-├── test_optics_new.py        # pytest — 5 tests
-├── test_detector.py          # pytest — 1 test
-├── test_detector_new.py      # pytest — 16 tests
-├── test_analysis.py          # pytest — 1 test
-├── test_analysis_new.py      # pytest — 6 tests
-├── test_pipeline.py          # pytest — 5 tests
-├── test_utils.py             # pytest — 4 tests
-├── illumination.robot        # Robot Framework — 16 tests
-├── surface.robot             # Robot Framework — 10 tests
-├── scattering.robot          # Robot Framework — 5 tests
-├── detector.robot            # Robot Framework — 6 tests
-├── analysis.robot            # Robot Framework — 6 tests
-├── IlluminationLibrary.py    # Robot keyword library
-├── SurfaceLibrary.py         # Robot keyword library
-├── ScatteringLibrary.py      # Robot keyword library
-├── DetectorLibrary.py        # Robot keyword library
-├── AnalysisLibrary.py        # Robot keyword library
-├── OpticsLibrary.py          # Robot keyword library
-├── detector_new.robot        # Robot Framework — 8 tests (new models)
-├── optics_new.robot          # Robot Framework — 3 tests (Airy PSF)
-├── scattering_new.robot      # Robot Framework — 2 tests (Oren-Nayar, Phong)
-├── surface_new.robot         # Robot Framework — 8 tests (new generators)
-└── analysis_new.robot        # Robot Framework — 3 tests (contrast)
+├── Core layer tests
+│   ├── test_illumination.py                 # pytest — 35 tests
+│   ├── test_surface.py                      # pytest — 4 tests
+│   ├── test_surface_new.py                  # pytest — 35 tests
+│   ├── test_scattering.py                   # pytest — 11 tests
+│   ├── test_scattering_new.py               # pytest — 6 tests
+│   ├── test_optics.py                       # pytest — 1 test
+│   ├── test_optics_new.py                   # pytest — 18 tests
+│   ├── test_detector.py                     # pytest — 1 test
+│   ├── test_detector_new.py                 # pytest — 19 tests
+│   ├── test_analysis.py                     # pytest — 1 test
+│   ├── test_analysis_new.py                 # pytest — 39 tests
+│   ├── test_pipeline.py                     # pytest — 5 tests
+│   └── test_utils.py                        # pytest — 4 tests
+├── Use-case integration tests
+│   ├── test_uc1_integration.py              # pytest — 6 tests
+│   ├── test_uc2_multispectral.py            # pytest — 24 tests
+│   ├── test_uc2_integration.py              # pytest — 5 tests
+│   ├── test_uc3_ptc.py                      # pytest — 25 tests
+│   ├── test_uc3_integration.py              # pytest — 3 tests
+│   ├── test_uc5_structured_light.py          # pytest — 18 tests
+│   ├── test_uc5_integration.py              # pytest — 2 tests
+│   ├── test_uc6_lidar.py                    # pytest — 17 tests
+│   ├── test_uc6_integration.py              # pytest — 5 tests
+│   ├── test_uc7_wafer.py                    # pytest — 22 tests
+│   └── test_uc7_integration.py              # pytest — 5 tests
+├── Robot Framework test files
+│   ├── illumination.robot                   # Robot — 16 tests
+│   ├── surface.robot                        # Robot — 5 tests
+│   ├── surface_new.robot                    # Robot — 10 tests
+│   ├── scattering.robot                     # Robot — 5 tests
+│   ├── scattering_new.robot                 # Robot — 5 tests
+│   ├── optics_new.robot                     # Robot — 3 tests
+│   ├── detector.robot                       # Robot — 3 tests
+│   ├── detector_new.robot                   # Robot — 6 tests
+│   ├── analysis.robot                       # Robot — 5 tests
+│   ├── analysis_new.robot                   # Robot — 6 tests
+│   ├── defect_inspection.robot              # Robot — 5 tests (UC1)
+│   ├── multispectral_identification.robot    # Robot — 6 tests (UC2)
+│   ├── sensor_characterization.robot         # Robot — 8 tests (UC3)
+│   ├── structured_light.robot               # Robot — 4 tests (UC5)
+│   ├── lidar_ranging.robot                  # Robot — 5 tests (UC6)
+│   └── wafer_inspection.robot               # Robot — 4 tests (UC7)
+├── Robot keyword libraries
+│   ├── IlluminationLibrary.py
+│   ├── SurfaceLibrary.py
+│   ├── ScatteringLibrary.py
+│   ├── OpticsLibrary.py
+│   ├── DetectorLibrary.py
+│   ├── AnalysisLibrary.py
+│   ├── DefectInspectionLibrary.py
+│   ├── MultiSpectralLibrary.py
+│   ├── SensorCharLibrary.py
+│   ├── StructuredLightLibrary.py
+│   ├── LiDARLibrary.py
+│   └── WaferLibrary.py
 ```
 
 ## Running Tests
@@ -85,21 +113,27 @@ python -m robot --outputdir robot_output tests/
 
 Each unit test verifies a single, specific behaviour:
 
-| Layer | Tests | What it verifies |
+| Layer / Use Case | Tests | What it verifies |
 |---|---|---|---|
-| Illumination | 11 tests | Laser/LED/Sunlight defaults, light field generation, direction normalisation, spectral models, wavefront (planar/spherical), incidence angle |
+| Illumination | 35 tests | Laser/LED/Sunlight/BroadbandLamp defaults, light field generation, direction normalisation, spectral models, wavefront (planar/spherical), incidence angle, FlatFieldSource, MultiSpectralSource, FilterWheelSource, FringeProjector, ScanningMechanism, TemporalEnvelope, SourceExtent, directional helpers |
 | Surface (original) | 4 tests | Flat/rough/scratched/particle surface geometry |
-| Surface (extended) | 9 tests | Sinusoidal periodicity, anisotropic roughness, imported surfaces, phase screen formula, visualisation |
+| Surface (extended) | 35 tests | Sinusoidal periodicity, anisotropic roughness, imported surfaces, phase screen, visualisation, defect generators (Dent/Pit/Crack/Stain), WaferSurface, MisalignedSurface, ThinFilmStack, coordinate transforms, geometry analysis |
 | Scattering (original) | 11 tests | Lambertian (4) + scattering base + Cook-Torrance (6: shape, nonnegativity, roughness monotonicity, Fresnel response, grazing limit, non-square grid) |
-| Scattering (extended) | 6 tests | Phong (diffuse/specular/grazing), Oren-Nayar (return/shape/roughness→Lambertian limit) |
+| Scattering (extended) | 6 tests | Phong (diffuse/specular/grazing), Oren-Nayar (return/shape/roughness→Lambertian limit), Beckmann, GGX, Rayleigh, Mie |
 | Optics (original) | 1 test | Propagation output shapes |
-| Optics (extended) | 5 tests | Airy PSF normalisation, central peak, symmetry, odd-size auto, invalid size |
+| Optics (extended) | 18 tests | Airy PSF normalisation, central peak, symmetry, odd-size auto, invalid size; ZernikePSF (coefficients, wavefront, Noll indexing); GaussianPSF; optical throughput (NA²); magnification resampling |
 | Detector (original) | 1 test | Capture returns correctly-shaped DigitalImage |
-| Detector (extended) | 16 tests | Fixed-pattern noise, hot pixels, column defect, PRNU, dead pixels, multiple noise chaining, speckle (smooth/coherent/incoherent), capture with surface, blooming (no spill / neighbour spill / integrated) |
+| Detector (extended) | 19 tests | Fixed-pattern noise, hot pixels, column defect, PRNU, dead pixels, multiple noise chaining, speckle (smooth/coherent/incoherent), capture with surface, blooming (no spill / neighbour spill / integrated); CFAConfig/CFADetector (Bayer, demosaic); SPADDetector (dead time, PDE, jitter, dark counts) |
 | Analysis (original) | 1 test | Histogram shape and measurements |
-| Analysis (extended) | 6 tests | Contrast (RMS/Michelson/Weber/uniform/high-contrast), saturation detection, ImageAnalyzer orchestration |
+| Analysis (extended) | 39 tests | Contrast (RMS/Michelson/Weber/uniform/high-contrast), saturation detection, ImageAnalyzer; FocusAnalyzer (Laplacian/Tenengrad/Brenner); SNRAnalyzer (single/pair); MTFAnalyzer (sinusoidal); FFTAnalyzer (radial profile); EdgeDetectionAnalyzer; ErrorMapAnalyzer; IntensityProfileAnalyzer; SpeckleRoughnessEstimator; DefectAnalyzer (blob/scratch/pass-fail); PTCAnalyzer; DynamicRangeAnalyzer; LinearityTestAnalyzer; SpectralAnalyzer (SAM/ratios); GoniometricSweep; BRDFFitter; TemplateMatcher; RegistrationAnalyzer; SPCAnalyzer; PhaseExtractor; PhaseUnwrapper; HeightReconstructor; SurfaceComparator; LiDARRangeEquation; TimeOfFlightPropagator; WaveformAnalyzer |
 | Pipeline | 5 tests | Full pipeline stages, partial illumination/detector only, pipeline description, surface generator integration |
 | Utilities | 4 tests | Heatmap rendering, dimensions, uniform input, downsampling |
+| UC1 (Defect) | 6 tests | End-to-end defect inspection: bright-field/dark-field/ring-light, dent/pit/crack/stain surfaces, pass/fail decision |
+| UC2 (Multi-spectral) | 29 tests | Multi-channel light fields, filter wheel sweeps, CFA capture/demosaic, spectral analysis (SAM, band ratios), material classification |
+| UC3 (Sensor char) | 28 tests | PTC (gain, read noise, FWC), dynamic range, linearity error, stepped exposure sweeps, test chart generation (Siemens star, slanted edge, greyscale wedge) |
+| UC5 (Structured light) | 20 tests | Fringe projection with N phase shifts, phase extraction, flood-fill unwrapping, height reconstruction, surface comparison |
+| UC6 (LiDAR) | 22 tests | LiDAR range equation, ToF propagation, SPAD detection, waveform analysis (peak/CFD), point cloud generation, scanning patterns |
+| UC7 (Wafer) | 27 tests | Wafer surface (fiducial marks, die grid), affine misalignment, template matching (NCC), registration (FFT cross-correlation), SPC (Cpk, trend) |
 
 ### Statistical Bounds for Stochastic Tests
 
@@ -288,38 +322,20 @@ to read naturally in the Robot syntax:
 
 ### Keyword Reference by Layer
 
-| Library | Keyword | Arguments | Description |
-|---|---|---|---|
-| IlluminationLibrary | `Create Laser` | wavelength, power | Create a default Laser instance |
-| | `Create LED` | peak_wavelength, width, power | Create an LED |
-| | `Create Sunlight` | temperature, power | Create a Sunlight source |
-| | `Create Custom Source` | wavelength, power, polarization, profile_type | LightSource with specific profile |
-| | `Generate Light Field` | height, width, spacing | Generate and store a LightField |
-| | `Field Should Have Shape` | expected_shape_str | Assert intensity shape |
-| | `Field Direction Should Have Shape` | expected_shape_str | Assert direction shape |
-| | `Field Wavelength Should Be` | expected | Assert field wavelength |
-| | `Direction Vector Should Be Normalized` | — | Assert all direction vectors are unit length |
-| SurfaceLibrary | `Create Flat Surface` | height, width, material_name | Flat surface |
-| | `Create Rough Surface` | height, width, sigma, amplitude | Rough surface |
-| | `Create Scratched Surface` | height, width, depth, width | Scratched surface |
-| | `Create Particle Surface` | height, width, count, amplitude, sigma | Particle surface |
-| | `Height Should Be All Close To` | expected | Assert height values |
-| | `Roughness Should Be Greater Than` | threshold | Assert roughness > threshold |
-| | `Min Height Should Be Negative` | — | Assert min height < 0 |
-| ScatteringLibrary | `Create Lambertian Model` | albedo | Create model |
-| | `Evaluate Lambertian` | intensity_arr, direction_arr, normals_arr, view_str, albedo | Run scattering with raw arrays |
-| | `Radiance Should Be All Close To` | expected | Assert radiance values |
-| | `Radiance Should Be Non Negative` | — | Assert no negative radiance |
-| DetectorLibrary | `Create Detector` | exposure_time, quantum_efficiency, ... | Full detector config |
-| | `Create Default Detector` | — | Detector with defaults |
-| | `Capture With Detector` | height, width, wavelength | Capture a uniform field |
-| | `Pixel Range Should Be Within` | min_val, max_val | Assert digital range |
-| | `Metadata Should Contain Key` | key | Assert metadata presence |
-| AnalysisLibrary | `Create Histogram Analyzer` | — | Standalone histogram analyser |
-| | `Create Image Analyzer` | — | ImageAnalyzer with HistogramAnalyzer |
-| | `Analyze Known Image` | — | Analyse a fixed [0..5] image |
-| | `Histogram Should Exist` | — | Assert histogram is not None |
-| | `Measurement Should Exist` | name | Assert measurement key present |
+| Library | Sample Keywords | Description |
+|---|---|---|
+| IlluminationLibrary | `Create Laser`, `Create LED`, `Generate Light Field`, `Field Should Have Shape`, `Direction Vector Should Be Normalized` | Core source types, light field generation, field validation |
+| SurfaceLibrary | `Create Flat Surface`, `Create Rough Surface`, `Create Dent Surface`, `Height Should Be All Close To`, `Roughness Should Be Greater Than` | Surface generators (flat, rough, scratched, particle, dent, pit, crack, stain), geometry assertions |
+| ScatteringLibrary | `Create Lambertian Model`, `Evaluate Scattering`, `Radiance Should Be All Close To`, `Radiance Should Be Non Negative` | Lambertian, Phong, Oren-Nayar, Cook-Torrance, Beckmann, GGX, Rayleigh, Mie models |
+| OpticsLibrary | `Create Optical System`, `Propagate Field`, `Sensor Field Should Have Shape` | Optical system config, propagation, sensor field validation |
+| DetectorLibrary | `Create Default Detector`, `Capture With Detector`, `Pixel Range Should Be Within`, `Metadata Should Contain Key` | CMOSDetector pipeline, noise model chaining, digital image validation |
+| AnalysisLibrary | `Create Histogram Analyzer`, `Analyze Known Image`, `Histogram Should Exist`, `Measurement Should Exist` | Histogram, contrast, saturation, ImageAnalyzer orchestration |
+| DefectInspectionLibrary | `Create Bright Field Source`, `Create Dent Surface`, `Detect Defects`, `Pass Fail Should Be` | UC1 directional lighting, defect generators, DefectAnalyzer, pass/fail |
+| MultiSpectralLibrary | `Create Multi Spectral Source`, `Add Channel`, `Capture Channels`, `Spectral Angle Should Be` | UC2 filter wheel sweeps, multi-channel capture, SAM classification |
+| SensorCharLibrary | `Create Flat Field Source`, `Step Exposure`, `Compute PTC`, `Dynamic Range Should Be` | UC3 flat-field sweeps, PTC/DR/linearity analysis, test charts |
+| StructuredLightLibrary | `Create Fringe Projector`, `Capture Phase Shifts`, `Extract Phase`, `Unwrap Phase`, `Reconstruct Height` | UC5 fringe projection, N-step phase extraction, unwrapping, height map |
+| LiDARLibrary | `Create Laser Pulse`, `Set Target Range`, `Compute Received Power`, `Detect SPAD`, `Generate Point Cloud` | UC6 pulsed laser, ToF, SPAD detection, waveform analysis, point cloud |
+| WaferLibrary | `Create Wafer Surface`, `Apply Misalignment`, `Match Template`, `Compute Registration`, `Cpk Should Be` | UC7 wafer generators, template matching, registration, SPC |
 
 ### Comparing Robot Tests with Pytest
 

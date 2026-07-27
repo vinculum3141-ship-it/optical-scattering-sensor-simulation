@@ -17,15 +17,15 @@ computes the radiance scattered toward the observer. It produces a
 The framework currently provides eight scattering models:
 
 | Model | Type | Parameters | Use Case |
-|---|---|---|---|
+|---|---|---|---|---|
 | `LambertianScattering` | Diffuse | albedo | Matte surfaces, baseline reference |
 | `PhongScattering` | Diffuse + specular | diffuse_albedo, specular_albedo, shininess | Glossy surfaces, plastics, painted finishes |
 | `OrenNayarScattering` | Rough diffuse | albedo, roughness | Clay, paper, rough plastics, non-Lambertian matte |
 | `CookTorranceScattering` | Specular microfacet | roughness, fresnel_reflectance, albedo | Physically based specular (metals, plastics, glass) |
-| `BeckmannScattering` | Specular microfacet (skeleton) | roughness, albedo | UC4 — angle-resolved BRDF fitting candidate |
-| `GGXScattering` | Specular microfacet (skeleton) | roughness, fresnel_reflectance, albedo | UC4 — modern PBR reference model |
-| `RayleighScattering` | Particle volume (skeleton) | particle_density, depolarisation | UC6 — molecular / contaminant scattering |
-| `MieScattering` | Particle volume (skeleton) | particle_radius, refractive_index | UC1/UC6 — aerosol / droplet scattering |
+| `BeckmannScattering` | Specular microfacet | roughness, albedo | UC4 — angle-resolved BRDF fitting candidate |
+| `GGXScattering` | Specular microfacet | roughness, fresnel_reflectance, albedo | UC4 — modern PBR reference model |
+| `RayleighScattering` | Particle volume | particle_density, depolarisation | UC6 — molecular / contaminant scattering |
+| `MieScattering` | Particle volume | particle_radius, refractive_index | UC1/UC6 — aerosol / droplet scattering |
 
 ## Lambertian Scattering Model
 
@@ -176,19 +176,91 @@ result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
 
 ## Beckmann Scattering Model
 
-**Skeleton** — Beckmann is a microfacet BRDF using the Beckmann normal distribution function. Required before UC4 (Angle-Resolved Scattering) as one of the candidate models for BRDF fitting. See `scattering/beckmann.py` for implementation guidance.
+The Beckmann model is a physically based microfacet BRDF using the
+Beckmann normal distribution function:
+
+    D(h) = exp(-tan²(α) / m²) / (π × m² × cos⁴(α))
+
+where `α` is the angle between the half-vector h and the surface
+normal, and `m = roughness` controls the RMS microfacet slope.
+Combined with the Schlick Fresnel approximation and Smith geometry
+attenuation factor for a full energy-conserving BRDF.
+
+```python
+from optical_metrology.scattering import BeckmannScattering
+
+model = BeckmannScattering(roughness=0.15, albedo=0.7)
+result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
+```
+
+Used in UC4 as the candidate model for least-squares BRDF fitting
+via `BRDFFitter`. Well-suited for moderately rough surfaces
+(machined metals, ground glass, painted coatings).
 
 ## GGX Scattering Model
 
-**Skeleton** — GGX (Trowbridge–Reitz) is the modern PBR microfacet standard with a longer tail than Beckmann, producing more realistic highlights for rough surfaces and metals. See `scattering/ggx.py` for implementation guidance.
+GGX (Trowbridge–Reitz) is the modern PBR microfacet standard. Its
+normal distribution function has a longer tail than Beckmann:
+
+    D(h) = α² / (π × cos⁴(α) × (α² + tan²(α))²)
+
+where `α = roughness²`. The longer tail produces more realistic
+highlights for rough surfaces and metals, with a softer falloff.
+
+```python
+from optical_metrology.scattering import GGXScattering
+
+model = GGXScattering(roughness=0.1, fresnel_reflectance=0.04, albedo=0.5)
+result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
+```
+
+Combined with the Schlick Fresnel approximation and Smith geometry
+attenuation factor for a full energy-conserving BRDF (same structure
+as Cook-Torrance but with the GGX NDF).
 
 ## Rayleigh Scattering Model
 
-**Skeleton** — Rayleigh scattering operates on particles much smaller than the wavelength (d ≪ λ). It is strongly wavelength-dependent (∝ 1/λ⁴). Used for molecular scattering in the atmosphere and small contaminants. See `scattering/particle.py` for implementation guidance.
+Rayleigh scattering models elastic scattering by particles much
+smaller than the wavelength (d ≪ λ). The scattered intensity is
+strongly wavelength-dependent:
+
+    I(λ) ∝ 1 / λ⁴
+
+The model uses a Rayleigh phase function (dipole pattern) with an
+optional depolarisation ratio. Primarily used for molecular
+scattering in the atmosphere and small contaminant particles.
+
+```python
+from optical_metrology.scattering import RayleighScattering
+
+model = RayleighScattering(particle_density=1e5, depolarisation=0.03)
+result = model.evaluate(lf, surface=None, view_direction=np.array([0.0, 0.0, 1.0]))
+```
+
+**Note:** `surface` can be `None` — Rayleigh operates on the
+volume above the surface, not on surface geometry.
 
 ## Mie Scattering Model
 
-**Skeleton** — Mie scattering operates on particles comparable to the wavelength (d ≈ λ). It is weakly wavelength-dependent. Used for aerosol scattering, droplets, and engineered particles. See `scattering/particle.py` for implementation guidance.
+Mie scattering models scattering by particles comparable to the
+wavelength (d ≈ λ). It uses the Henyey-Greenstein phase function as
+an analytical approximation:
+
+    P(θ) = (1 - g²) / (4π × (1 + g² - 2g × cos(θ))^(3/2))
+
+where `g` is the asymmetry parameter derived from particle size and
+refractive index. Forward scattering (g → 1) for large particles,
+isotropic (g → 0) for small particles.
+
+```python
+from optical_metrology.scattering import MieScattering
+
+model = MieScattering(particle_radius=1e-6, refractive_index=1.5)
+result = model.evaluate(lf, surface=None, view_direction=np.array([0.0, 0.0, 1.0]))
+```
+
+Used for aerosol scattering, fog, droplets, and engineered particles
+in UC1 (defect scattering) and UC6 (LiDAR atmospheric scattering).
 
 ## Implementation Notes
 

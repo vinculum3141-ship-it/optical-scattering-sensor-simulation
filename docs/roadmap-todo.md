@@ -180,86 +180,57 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2a — Surface Defect Inspection (UC1)
 
-- [x] **RayleighScattering / MieScattering** (skeletons in `scattering/particle.py`) — implemented with H-G phase function approximation
-- [x] Directional illumination models — `bright_field()`, `dark_field()`, `ring_light()` factory functions
-- [x] Defect-specific surface generators — `DentSurface`, `PitSurface`, `CrackSurface`, `StainSurface`
-- [x] Defect detection analysis module — `DefectAnalyzer` with blob finding (CCA), scratch classification, pass/fail
-- [x] Pass/fail decision logic — `DefectAnalyzer.pass_fail()` with configurable limits
-- [x] Tiled acquisition / multi-FOV stitching helper — `TiledAcquisition`
-- [x] Robot Framework tests for defect inspection workflow
-- [x] Integration test: end-to-end defect inspection simulation
+- [x] All modules complete — see [UC1](use-cases.md#use-case-1-surface-defect-inspection-workcell) for details
+  - `DentSurface`, `PitSurface`, `CrackSurface`, `StainSurface`
+  - `bright_field()`, `dark_field()`, `ring_light()`
+  - `DefectAnalyzer`, `TiledAcquisition`
+  - 6 integration tests + 5 Robot tests
 
 ## Phase 2b — Sensor Performance Characterization (UC3)
 
-- [x] Photon transfer curve analysis module (variance vs. mean) — `PTCAnalyzer`
-- [x] SNR analysis module (signal / noise vs. intensity) — `SNRAnalyzer`
-- [x] Dynamic range calculation — `DynamicRangeAnalyzer`
-- [x] Linearity test module (% deviation from ideal) — `LinearityTestAnalyzer`
-- [x] Standard test chart generators (Siemens star, slanted edge, greyscale wedge) — `siemens_star()`, `slanted_edge()`, `greyscale_wedge()`
-- [x] Robot Framework tests for sensor characterisation
-- [x] Integration test: PTC + SNR end-to-end
+- [x] All modules complete — see [UC3](use-cases.md#use-case-3-sensor-performance-characterization) for details
+  - `PTCAnalyzer`, `DynamicRangeAnalyzer`, `LinearityTestAnalyzer`
+  - `siemens_star()`, `slanted_edge()`, `greyscale_wedge()`
+  - 28 integration tests + 8 Robot tests
 
 ## Phase 2c — Wafer Chip Misalignment Detection (UC7)
 
-- [x] Wafer-specific surface generators (fiducial marks, chip arrays)
-- [x] Misalignment models (translation, rotation, scale errors)
-- [x] Template matching analysis module (normalised cross-correlation)
-- [x] Edge detection / fiducial finding (sub-pixel, Hough transform)
-- [x] Registration / overlay analysis (nominal vs. measured positions)
-- [x] Statistical process control output (Cpk, mean shift, trend)
-- [ ] Real-time performance model (latency budget, throughput) — deferred (non-functional)
-- [x] Robot Framework tests for wafer inspection workflow
-- [x] Integration test: misaligned chip detection end-to-end
+- [x] All modules complete — see [UC7](use-cases.md#use-case-7-wafer-chip-misalignment-detection) for details
+  - `WaferSurface`, `MisalignedSurface`, `TemplateMatcher`, `RegistrationAnalyzer`, `SPCAnalyzer`
+  - 22 integration tests + 4 Robot tests
+- [ ] Real-time performance model — deferred (non-functional)
 
 ## Phase 2d — Multi-Spectral Material Identification (UC2)
 
-- [x] Multi-channel light field (wavelength stack, shape H×W×N_λ)
-- [x] Multi-wavelength source (programmable filter wheel / AOTF)
-- [x] Spectral analysis module (ratio metrics, spectral angle mapper)
-- [x] Colour filter array model (Bayer pattern + demosaicing)
-- [x] Material classification output (label + confidence)
-- [x] Robot Framework tests for spectral identification workflow
-- [x] Integration test: multi-spectral material ID end-to-end
+- [x] All modules complete — see [UC2](use-cases.md#use-case-2-multi-spectral-material-identification) for details
+  - `MultiChannelLightField`, `MultiSpectralSource`, `FilterWheelSource`
+  - `SpectralAnalyzer`, `CFAConfig`, `CFADetector`
+  - 24 integration tests + 6 Robot tests
 
 ## Phase 2e — Angle-Resolved Scattering Measurement (UC4)
 
-- [x] **BeckmannScattering** — implemented with full microfacet BRDF
-- [x] **GGXScattering** — implemented with full microfacet BRDF
-- [x] Goniometric sweep workflow — `GoniometricSweep` in `analysis/goniometry.py`
-- [x] BRDF fitting analysis — `BRDFFitter` in `analysis/brdf_fit.py` (least-squares fitting)
-- [ ] Polarised BRDF (Fresnel coefficients, Mueller matrix propagation) — deferred
-- [ ] Standard reference materials (Spectralon, mirror) — deferred
-- [ ] BSDF (transmissive scattering) model — deferred
-- [ ] Angle-resolved output format (BRDF table, polar plot) — deferred
-- [ ] Robot Framework tests for goniometric workflow — deferred
-- [ ] Integration test: BRDF characterisation end-to-end — deferred
+- [x] Core modules complete — see [UC4](use-cases.md#use-case-4-angle-resolved-scattering-measurement) for details
+  - `BeckmannScattering`, `GGXScattering`, `GoniometricSweep`, `BRDFFitter`
+- [ ] Polarised BRDF (Mueller matrix) — deferred
+- [ ] Standard reference materials — deferred
+- [ ] BSDF (transmissive scattering) — deferred
 
 ## Phase 2f — Structured Light 3D Scanning (UC5)
 
-- [x] Structured illumination source (fringe projection, phase-shifted patterns) — `FringeProjector` in `illumination/structured.py`
-- [ ] Divergent projection model (projector fan-out geometry) — deferred
-- [x] Phase extraction analysis (phase-shifting algorithm) — `PhaseExtractor` in `analysis/phase.py`
-- [x] Phase unwrapping (spatial flood-fill) — `PhaseUnwrapper` in `analysis/phase.py`
-- [x] Height reconstruction from phase → disparity map — `HeightReconstructor` in `analysis/reconstruction.py`
-- [ ] Projector-camera calibration model (intrinsic/extrinsic parameters) — deferred
-- [x] Surface comparison (RMS error map between reconstruction and ground truth) — `SurfaceComparator` in `analysis/reconstruction.py`
-- [x] Robot Framework tests for structured light workflow — `StructuredLightLibrary.py` + `structured_light.robot`
-- [x] Integration test: sinusoidal surface scan end-to-end — `test_uc5_integration.py`
+- [x] Core modules complete — see [UC5](use-cases.md#use-case-5-structured-light-3d-scanning) for details
+  - `FringeProjector`, `PhaseExtractor`, `PhaseUnwrapper`, `HeightReconstructor`, `SurfaceComparator`
+  - 16 integration tests + 4 Robot tests
+- [ ] Divergent projection model — deferred
+- [ ] Projector-camera calibration — deferred
 
 ## Phase 2g — LiDAR Range Finding (UC6)
 
-- [x] **RayleighScattering** — implemented with ∝ 1/λ⁴ wavelength dependence
-- [x] **MieScattering** — implemented with Henyey-Greenstein phase function approximation
-- [x] Pulsed laser source — `TemporalEnvelope` (Gaussian/rectangular, pulse energy, PRR) — done pre-deployment
-- [x] Scanning mechanism — `ScanningMechanism` (raster/spiral patterns)
-- [x] LiDAR range equation — `LiDARRangeEquation` with inverse-square law
-- [x] Time-of-flight propagation — `TimeOfFlightPropagator` with tilt broadening
-- [x] SPAD / Geiger-mode detector — `SPADDetector` (dead time, PDE, dark counts, jitter)
-- [x] Waveform analysis — `WaveformAnalyzer` (peak detection, CFD)
-- [x] Point cloud output — `generate_point_cloud()` (range, azimuth, elevation → xyz + intensity)
-- [ ] Atmospheric effects (extinction, backscatter, turbulence) — deferred (model uses η_atm in range equation)
-- [x] Robot Framework tests for LiDAR workflow
-- [x] Integration test: LiDAR range measurement end-to-end
+- [x] Core modules complete — see [UC6](use-cases.md#use-case-6-lidar-range-finding) for details
+  - `RayleighScattering`, `MieScattering`, `ScanningMechanism`
+  - `LiDARRangeEquation`, `TimeOfFlightPropagator`, `SPADDetector`, `WaveformAnalyzer`
+  - `TemporalEnvelope` (pre-deployment), `generate_point_cloud()`
+  - 22 integration tests + 5 Robot tests
+- [ ] Atmospheric effects — deferred
 
 ## Before Phase 2 — final architecture review pass
 
@@ -273,13 +244,14 @@ case implementation**.
       analysis three-group classification, etc.) — **done in session**
 - [x] Review and update all package `__init__.py` exports for consistency
       — **all 7 packages verified, all `__all__` match imports**
-- [ ] Run full test suite and update any stale line/class references
+- [x] Run full test suite and update any stale line/class references
       in docstrings
 
 ## Phase 3 — Consolidation
 
-- [ ] End-to-end demo scripts for each use case
-- [ ] Jupyter notebooks for each use case
+Detailed notebook/script specs for each UC: see [Learning & Playability Roadmap](use-cases.md#learning--playability-roadmap) in `use-cases.md`.
+
+- [ ] End-to-end demo scripts + Jupyter notebooks for each use case
 - [ ] Integration tests covering multi-step workflows
 - [ ] Performance benchmarks (grid scaling, convolution speed)
 - [ ] User documentation for each use case in `docs/`

@@ -31,6 +31,62 @@ direction, wavelength, and polarisation over a 2D grid.
 - Flat spectrum over a configurable range (default 400-700 nm).
 - Moderate divergence (default 0.5 rad).
 
+### Flat-Field Source (`FlatFieldSource`)
+- Uniform square source used for calibration (UC3).
+- Configurable `intensity` and `size`; `generate_intensity_sweep()`
+  returns a list of sources at stepped intensity levels.
+
+### Multi-Spectral Source (`MultiSpectralSource`)
+- Multiple discrete spectral bands, each with independent power (UC2).
+- `channels` attribute holds a list of (wavelength, power, label) tuples.
+- `MultiChannelLightField` stacks per-channel fields into an
+  `(H, W, N_channels)` array.
+
+### Filter Wheel Source (`FilterWheelSource`)
+- Sequentially selects one channel per frame (UC2).
+- Iterable — `for source in wheel: ... capture(source, ...)`.
+- Programmable filter sequence via `channel_order`.
+
+### Temporal Envelope (`TemporalEnvelope`)
+- Pulsed / modulated power envelope for LiDAR (UC6).
+- Supports Gaussian and rectangular pulse shapes.
+- Properties: `pulse_energy`, `peak_power`, `repetition_rate`,
+  `duty_cycle`, `average_power`.
+
+### Source Extent (`SourceExtent`)
+- Extended aperture model (UC5).
+- Configurable aperture shapes: `uniform_disk`, `gaussian`, `rectangle`.
+- `coherence_factor` controls partial coherence.
+- `aperture_function(shape, spacing)` returns the 2D aperture mask.
+
+### Fringe Projector (`FringeProjector`)
+- Phase-shifted sinusoidal fringe patterns for structured light (UC5).
+- `generate_patterns(shape, spacing)` returns a list of `LightField` s
+  at N phase shifts.
+- Configurable fringe period, phase shift count, and modulation.
+
+### Scanning Mechanism (`ScanningMechanism`)
+- Raster / spiral / Lissajous scanning patterns for LiDAR (UC6).
+- `scan_positions` yields a generator of (azimuth, elevation) tuples.
+- Configurable field of view, angular resolution, and pattern type.
+
+### Directional Lighting Helpers
+
+Three factory functions for common AOI illumination geometries (UC1):
+
+```python
+from optical_metrology.illumination import bright_field, dark_field, ring_light
+
+# On-axis collimated illumination (normal incidence)
+bf = bright_field(wavelength=532e-9, power=5e-3)
+
+# Off-axis grazing incidence (highlights scratches/particles)
+df = dark_field(wavelength=532e-9, power=10e-3, angle=70.0)  # degrees
+
+# Multi-angle ring configuration
+rl = ring_light(wavelength=532e-9, power_per_segment=1e-3, n_segments=8)
+```
+
 ## Beam Profiles
 
 | Profile | Class | Equation | Use case |

@@ -39,7 +39,7 @@ and `generate_light_field()`. You only provide the spectral model.
 **Interface:** Subclass `BeamProfile` and implement `evaluate(shape, spacing)`.
 
 ```python
-from illumination.profiles import BeamProfile
+from optical_metrology.illumination.profiles import BeamProfile
 import numpy as np
 
 class DonutBeamProfile(BeamProfile):
