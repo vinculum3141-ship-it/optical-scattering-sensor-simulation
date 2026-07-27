@@ -191,35 +191,35 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2b — Sensor Performance Characterization (UC3)
 
-- [ ] Photon transfer curve analysis module (variance vs. mean)
+- [x] Photon transfer curve analysis module (variance vs. mean) — `PTCAnalyzer`
 - [x] SNR analysis module (signal / noise vs. intensity) — `SNRAnalyzer`
-- [ ] Dynamic range calculation
-- [ ] Linearity test module (% deviation from ideal)
-- [ ] Standard test chart generators (Siemens star, slanted edge, greyscale wedge)
-- [ ] Robot Framework tests for sensor characterisation
-- [ ] Integration test: PTC + SNR end-to-end
+- [x] Dynamic range calculation — `DynamicRangeAnalyzer`
+- [x] Linearity test module (% deviation from ideal) — `LinearityTestAnalyzer`
+- [x] Standard test chart generators (Siemens star, slanted edge, greyscale wedge) — `siemens_star()`, `slanted_edge()`, `greyscale_wedge()`
+- [x] Robot Framework tests for sensor characterisation
+- [x] Integration test: PTC + SNR end-to-end
 
 ## Phase 2c — Wafer Chip Misalignment Detection (UC7)
 
-- [ ] Wafer-specific surface generators (fiducial marks, chip arrays)
-- [ ] Misalignment models (translation, rotation, scale errors)
-- [ ] Template matching analysis module (normalised cross-correlation)
-- [ ] Edge detection / fiducial finding (sub-pixel, Hough transform)
-- [ ] Registration / overlay analysis (nominal vs. measured positions)
-- [ ] Statistical process control output (Cpk, mean shift, trend)
+- [x] Wafer-specific surface generators (fiducial marks, chip arrays)
+- [x] Misalignment models (translation, rotation, scale errors)
+- [x] Template matching analysis module (normalised cross-correlation)
+- [x] Edge detection / fiducial finding (sub-pixel, Hough transform)
+- [x] Registration / overlay analysis (nominal vs. measured positions)
+- [x] Statistical process control output (Cpk, mean shift, trend)
 - [ ] Real-time performance model (latency budget, throughput)
-- [ ] Robot Framework tests for wafer inspection workflow
-- [ ] Integration test: misaligned chip detection end-to-end
+- [x] Robot Framework tests for wafer inspection workflow
+- [x] Integration test: misaligned chip detection end-to-end
 
 ## Phase 2d — Multi-Spectral Material Identification (UC2)
 
-- [ ] Multi-channel light field (wavelength stack, shape H×W×N_λ)
-- [ ] Multi-wavelength source (programmable filter wheel / AOTF)
-- [ ] Spectral analysis module (ratio metrics, spectral angle mapper)
-- [ ] Colour filter array model (Bayer pattern + demosaicing)
-- [ ] Material classification output (label + confidence)
-- [ ] Robot Framework tests for spectral identification workflow
-- [ ] Integration test: multi-spectral material ID end-to-end
+- [x] Multi-channel light field (wavelength stack, shape H×W×N_λ)
+- [x] Multi-wavelength source (programmable filter wheel / AOTF)
+- [x] Spectral analysis module (ratio metrics, spectral angle mapper)
+- [x] Colour filter array model (Bayer pattern + demosaicing)
+- [x] Material classification output (label + confidence)
+- [x] Robot Framework tests for spectral identification workflow
+- [x] Integration test: multi-spectral material ID end-to-end
 
 ## Phase 2e — Angle-Resolved Scattering Measurement (UC4)
 
@@ -236,15 +236,15 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2f — Structured Light 3D Scanning (UC5)
 
-- [ ] Structured illumination source (fringe projection, phase-shifted patterns)
+- [x] Structured illumination source (fringe projection, phase-shifted patterns) — `FringeProjector` in `illumination/structured.py`
 - [ ] Divergent projection model (projector fan-out geometry)
-- [ ] Phase extraction analysis (phase-shifting algorithm, Fourier transform)
-- [ ] Phase unwrapping (spatial flood-fill, multi-frequency temporal)
-- [ ] Height reconstruction from phase → disparity map
+- [x] Phase extraction analysis (phase-shifting algorithm) — `PhaseExtractor` in `analysis/phase.py`
+- [x] Phase unwrapping (spatial flood-fill) — `PhaseUnwrapper` in `analysis/phase.py`
+- [x] Height reconstruction from phase → disparity map — `HeightReconstructor` in `analysis/reconstruction.py`
 - [ ] Projector-camera calibration model (intrinsic/extrinsic parameters)
-- [ ] Surface comparison (RMS error map between reconstruction and ground truth)
-- [ ] Robot Framework tests for structured light workflow
-- [ ] Integration test: sinusoidal surface scan end-to-end
+- [x] Surface comparison (RMS error map between reconstruction and ground truth) — `SurfaceComparator` in `analysis/reconstruction.py`
+- [x] Robot Framework tests for structured light workflow — `StructuredLightLibrary.py` + `structured_light.robot`
+- [x] Integration test: sinusoidal surface scan end-to-end — `test_uc5_integration.py`
 
 ## Phase 2g — LiDAR Range Finding (UC6)
 

@@ -48,17 +48,28 @@ sketches and trigger use cases.
 """
 
 from .base import AnalysisModule, AnalysisReport, ImageAnalyzer
+from .brdf_fit import BRDFFitter
 from .contrast import ContrastAnalyzer, SaturationAnalyzer
 from .defects import DefectAnalyzer
+from .dynamic_range import DynamicRangeAnalyzer
 from .edge_detection import EdgeDetectionAnalyzer
 from .error_map import ErrorMapAnalyzer
 from .fft_analyzer import FFTAnalyzer
 from .focus import FocusAnalyzer
+from .goniometry import GoniometricSweep
 from .histogram import HistogramAnalyzer
 from .intensity_profile import IntensityProfileAnalyzer
+from .linearity import LinearityTestAnalyzer
 from .mtf import MTFAnalyzer
+from .phase import PhaseExtractor, PhaseUnwrapper
+from .ptc import PTCAnalyzer
+from .reconstruction import HeightReconstructor, SurfaceComparator
+from .registration import RegistrationAnalyzer, TemplateMatcher
+from .spc import SPCAnalyzer
 from .snr import SNRAnalyzer
+from .spectral import ReferenceSpectrum, SpectralAnalyzer
 from .speckle_roughness import SpeckleRoughnessEstimator
+from .test_charts import greyscale_wedge, siemens_star, slanted_edge
 from .tiled import TiledAcquisition
 
 __all__ = [
@@ -66,18 +77,36 @@ __all__ = [
     "AnalysisModule",
     "AnalysisReport",
     "ImageAnalyzer",
+    # BRDF fitting
+    "BRDFFitter",
     # Quality Assessment
     "ContrastAnalyzer",
     "DefectAnalyzer",
+    "DynamicRangeAnalyzer",
     "EdgeDetectionAnalyzer",
     "ErrorMapAnalyzer",
     "FFTAnalyzer",
     "FocusAnalyzer",
+    "GoniometricSweep",
+    "greyscale_wedge",
     "HistogramAnalyzer",
     "IntensityProfileAnalyzer",
+    "LinearityTestAnalyzer",
+    "HeightReconstructor",
     "MTFAnalyzer",
+    "PhaseExtractor",
+    "PhaseUnwrapper",
+    "PTCAnalyzer",
+    "SurfaceComparator",
     "SNRAnalyzer",
+    "ReferenceSpectrum",
+    "RegistrationAnalyzer",
     "SaturationAnalyzer",
+    "siemens_star",
+    "slanted_edge",
+    "SPCAnalyzer",
+    "SpectralAnalyzer",
     "SpeckleRoughnessEstimator",
+    "TemplateMatcher",
     "TiledAcquisition",
 ]

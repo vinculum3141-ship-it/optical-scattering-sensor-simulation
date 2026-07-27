@@ -31,6 +31,12 @@ def distribution_beckmann(n_dot_h: np.ndarray, roughness: float) -> np.ndarray:
     return np.exp(-tan2 / roughness ** 2) / (np.pi * roughness ** 2 * cos2 ** 2)
 
 
+def distribution_ggx(n_dot_h: np.ndarray, roughness: float) -> np.ndarray:
+    a2 = roughness ** 2
+    denom = np.pi * ((n_dot_h ** 2) * (a2 - 1.0) + 1.0) ** 2
+    return a2 / denom
+
+
 def geometry_smith(n_dot_l: np.ndarray, n_dot_v: np.ndarray, roughness: float) -> np.ndarray:
     a_l = n_dot_l / np.sqrt(roughness ** 2 + (1.0 - roughness ** 2) * n_dot_l ** 2)
     a_v = n_dot_v / np.sqrt(roughness ** 2 + (1.0 - roughness ** 2) * n_dot_v ** 2)

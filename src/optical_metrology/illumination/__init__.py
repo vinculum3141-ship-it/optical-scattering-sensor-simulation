@@ -33,11 +33,13 @@ from .flatfield import FlatFieldSource
 from .laser import Laser
 from .led import LED
 from .lightfield import LightField
+from .multispectral import ChannelConfig, FilterWheelSource, MultiChannelLightField, MultiSpectralSource
 from .polarization import PolarizationState
 from .profiles import BeamProfile, GaussianBeamProfile, TopHatBeamProfile, UniformBeamProfile
 from .source import LightSource
 from .spectrum import BroadbandSpectrum, BlackbodySpectrum, GaussianSpectrum, MonochromaticSpectrum, SpectralDistribution
 from .sunlight import Sunlight
+from .structured import FringeProjector
 from .temporal import TemporalEnvelope
 
 __all__ = [
@@ -48,12 +50,17 @@ __all__ = [
     "BlackbodySpectrum",
     "dark_field",
     "FlatFieldSource",
+    "ChannelConfig",
+    "FilterWheelSource",
+    "FringeProjector",
     "GaussianBeamProfile",
     "GaussianSpectrum",
     "LED",
     "Laser",
     "LightField",
     "LightSource",
+    "MultiChannelLightField",
+    "MultiSpectralSource",
     "MonochromaticSpectrum",
     "PolarizationState",
     "ring_light",

@@ -601,3 +601,144 @@ class ImportedSurface(Surface):
             2D height array.
         """
         return self.height
+
+
+class WaferSurface(Surface):
+    """A rectangular wafer surface with a grid of chip dies and fiducial marks.
+
+    Dies are arranged in a regular grid separated by scribe streets.
+    Fiducial crosses (+) are placed at the four corners of the wafer.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Grid dimensions ``(height, width)``.
+    die_rows : int
+        Number of die rows in the grid.
+    die_cols : int
+        Number of die columns in the grid.
+    street_width : int
+        Width of scribe streets between dies in pixels.
+    fiducial_size : int
+        Half-arm length of each fiducial cross in pixels.
+    fiducial_height : float
+        Height of fiducial marks (relative to die surface).
+    die_height_val : float
+        Height of each die surface.
+    material : Material or None
+        Material to attach to the surface.
+    """
+
+    def __init__(
+        self,
+        shape,
+        die_rows=4,
+        die_cols=4,
+        street_width=4,
+        fiducial_size=3,
+        fiducial_height=2.0,
+        die_height_val=1.0,
+        material=None,
+    ):
+        self.die_rows = die_rows
+        self.die_cols = die_cols
+        self.street_width = street_width
+        self.fiducial_size = fiducial_size
+        self.fiducial_height = fiducial_height
+        self.die_height_val = die_height_val
+        self.shape = shape
+        height = self.generate(shape)
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.__dict__.update(surface.__dict__)
+
+    def generate(self, shape):
+        h, w = shape
+        height = np.zeros((h, w), dtype=float)
+
+        usable_h = h - (self.die_rows + 1) * self.street_width
+        usable_w = w - (self.die_cols + 1) * self.street_width
+        die_h = max(1, usable_h // self.die_rows)
+        die_w = max(1, usable_w // self.die_cols)
+
+        self._die_height_px = die_h
+        self._die_width_px = die_w
+
+        for row in range(self.die_rows):
+            for col in range(self.die_cols):
+                y0 = self.street_width + row * (die_h + self.street_width)
+                x0 = self.street_width + col * (die_w + self.street_width)
+                y1 = min(y0 + die_h, h)
+                x1 = min(x0 + die_w, w)
+                height[y0:y1, x0:x1] = self.die_height_val
+
+        fs = self.fiducial_size
+        corners = [(0, 0), (0, w - 1), (h - 1, 0), (h - 1, w - 1)]
+        for cy, cx in corners:
+            for dy in range(-fs, fs + 1):
+                for dx in range(-1, 2):
+                    py, px = cy + dy, cx + dx
+                    if 0 <= py < h and 0 <= px < w:
+                        height[py, px] = self.fiducial_height
+            for dy in range(-1, 2):
+                for dx in range(-fs, fs + 1):
+                    py, px = cy + dy, cx + dx
+                    if 0 <= py < h and 0 <= px < w:
+                        height[py, px] = self.fiducial_height
+
+        return height
+
+
+class MisalignedSurface(Surface):
+    """A wafer surface with configurable translation, rotation, and scale errors.
+
+    Wraps :class:`WaferSurface` and applies an affine transformation to
+    simulate chip misalignment.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Grid dimensions ``(height, width)``.
+    dx : float
+        Horizontal translation offset in pixels.
+    dy : float
+        Vertical translation offset in pixels.
+    rotation_deg : float
+        Rotation angle in degrees (counter-clockwise).
+    scale : float
+        Uniform scale factor.
+    kwds
+        Additional keyword arguments forwarded to :class:`WaferSurface`
+        (die_rows, die_cols, street_width, fiducial_size, etc.).
+    """
+
+    def __init__(
+        self,
+        shape,
+        dx=0.0,
+        dy=0.0,
+        rotation_deg=0.0,
+        scale=1.0,
+        material=None,
+        **kwds,
+    ):
+        self.dx = dx
+        self.dy = dy
+        self.rotation_deg = rotation_deg
+        self.scale = scale
+        self._wafer_kwds = kwds
+        self.shape = shape
+        height = self.generate(shape)
+        surface = GeometryAnalyzer.analyze(height, material=material)
+        self.__dict__.update(surface.__dict__)
+
+    def generate(self, shape):
+        base = WaferSurface(shape, **self._wafer_kwds)
+        height = base.height.copy()
+
+        theta = np.radians(self.rotation_deg)
+        cos_t, sin_t = np.cos(theta), np.sin(theta)
+        transform = np.array([[cos_t * self.scale, -sin_t * self.scale, self.dx],
+                               [sin_t * self.scale, cos_t * self.scale, self.dy]])
+
+        from scipy.ndimage import affine_transform
+        return affine_transform(height, transform, order=1, mode='constant', cval=0.0)
