@@ -39,9 +39,10 @@ OpticalSystem(
 ### PSF Models
 
 | Model | Class | Parameters | Use Case |
-|---|---|---|---|
+|---|---|---|---|---|
 | Gaussian | `GaussianPSF` | sigma (pixels) | Simple blur, fast convolution |
 | Airy disk | `AiryPSF` | wavelength, numerical_aperture, pixel_size | Diffraction-limited imaging |
+| Zernike | `ZernikePSF` | wavelength, numerical_aperture, pixel_size, coefficients | Aberrated PSF via Zernike wavefront |
 
 ### Gaussian PSF
 
@@ -65,7 +66,7 @@ wavenumber, NA is the numerical aperture, and r is the radial
 coordinate in the image plane.
 
 ```python
-from optics import AiryPSF
+from optical_metrology.optics import AiryPSF
 
 psf = AiryPSF(wavelength=532e-9, numerical_aperture=0.25, pixel_size=5e-6)
 kernel = psf.kernel(size=31)  # normalised 31×31 kernel
@@ -73,6 +74,32 @@ kernel = psf.kernel(size=31)  # normalised 31×31 kernel
 
 The Bessel function J1 is computed via a series expansion — no SciPy
 dependency required.
+
+### Zernike PSF
+
+The `ZernikePSF` model produces an aberrated PSF via the generalised
+pupil function. A wavefront phase map is constructed from Zernike
+coefficients (Noll indexing), and the PSF is the squared magnitude
+of the FFT of the complex pupil.
+
+```python
+from optical_metrology.optics import ZernikePSF
+
+# Defocus (Z4 = 0.5 waves) + spherical aberration (Z11 = 0.2 waves)
+psf = ZernikePSF(
+    wavelength=532e-9,
+    numerical_aperture=0.25,
+    pixel_size=5e-6,
+    coefficients={4: 0.5, 11: 0.2},
+)
+kernel = psf.kernel(size=63)
+```
+
+Helper classes:
+- `ZernikePolynomials` — standard Zernike basis (Noll indexing),
+  evaluates individual polynomials or the full wavefront.
+- `Wavefront` — 2D wavefront phase map container, with methods for
+  visualisation and Zernike decomposition.
 
 ## Propagation
 
@@ -97,7 +124,7 @@ If no PSF model is provided, a 3×3 box filter (uniform average) is used:
 ## Key API
 
 ```python
-from optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
 
 # Configure the imaging system
 optics = OpticalSystem(
@@ -145,17 +172,28 @@ class SensorField:
 
 This is the output data contract consumed by the detector layer.
 
-### Limitation: No Coordinate Transform
+### Optical Throughput
 
-The current implementation does **not** apply magnification, image
-inversion, or coordinate transformations. The grid dimensions of the
-`SensorField` are the same as the input `ScatteredField`. Magnification
-is stored in `OpticalSystem` but is not yet used for grid resampling.
+When `throughput_enabled=True` (default), the propagator scales the
+convolved irradiance by ``π · NA²`` (the solid angle subtended by the
+exit pupil). This ensures physically correct radiometric scaling:
+
+```python
+irradiance = convolved * (np.pi * na ** 2)
+```
+
+### Magnification Resampling
+
+When `magnification_enabled=True` and the system magnification differs
+from 1.0, the propagator resamples the scattered radiance via bilinear
+interpolation before convolution. Magnification < 1 (demagnification)
+minifies the field; > 1 (magnifying) enlarges it. Total energy
+(irradiance × area) is conserved across the resampling.
 
 ## Complete Example
 
 ```python
-from optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
 
 optics = OpticalSystem(
     focal_length=0.1,

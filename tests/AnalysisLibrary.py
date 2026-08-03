@@ -1,22 +1,15 @@
 """Robot Framework test library for the analysis package."""
 
-import sys
-from pathlib import Path
-
-_project_root = str(Path(__file__).resolve().parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
 import numpy as np
 
-from analysis import (
+from optical_metrology.analysis import (
     AnalysisReport,
     ContrastAnalyzer,
     HistogramAnalyzer,
     ImageAnalyzer,
     SaturationAnalyzer,
 )
-from detector import DigitalImage
+from optical_metrology.detector import DigitalImage
 
 
 class AnalysisLibrary:

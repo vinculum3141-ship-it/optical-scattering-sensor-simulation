@@ -78,6 +78,11 @@ Configure illumination (ring light / dark-field / bright-field)
 - **Use-case-specific**: Defect generators (low), defect analysis (medium),
   pass/fail logic (low)
 
+### Status
+
+✅ **Phase 2 complete** — `DentSurface`, `PitSurface`, `CrackSurface`, `StainSurface`; directional factory functions (`bright_field`, `dark_field`, `ring_light`); `DefectAnalyzer` (CCA blob/scratch + pass/fail); `TiledAcquisition`. 6 integration tests + 5 Robot tests pass.
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc1--surface-defect-inspection))
+
 ---
 
 ## Use Case 2: Multi-Spectral Material Identification
@@ -124,6 +129,11 @@ Configure multi-wavelength source (N discrete channels)
 
 - **Shared prerequisites**: Spectral stacks (medium), spectral materials (low)
 - **Use-case-specific**: Spectral analysis (medium), CFA/demosaicing (medium)
+
+### Status
+
+✅ **Phase 2 complete** — `MultiChannelLightField`, `MultiSpectralSource`, `FilterWheelSource`; `SpectralAnalyzer` (SAM, band ratios, classification); `CFAConfig`/`CFADetector` (Bayer + demosaic). 24 integration tests + 6 Robot tests pass.
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc2--multi-spectral-material-identification))
 
 ---
 
@@ -172,6 +182,11 @@ Configure detector under test
 
 - **Shared prerequisites**: Flat-field source (low)
 - **Use-case-specific**: PTC/SNR analysers (medium), test charts (medium)
+
+### Status
+
+✅ **Phase 2 complete** — `PTCAnalyzer`, `DynamicRangeAnalyzer`, `LinearityTestAnalyzer`; `siemens_star()`, `slanted_edge()`, `greyscale_wedge()`. 28 integration tests + 8 Robot tests pass.
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc3--sensor-performance-characterisation))
 
 ---
 
@@ -232,6 +247,11 @@ Configure source + surface + detector
 - **Shared prerequisites**: Divergent sources (medium), coordinate transforms (medium)
 - **Use-case-specific**: Sweep workflow (low), BRDF fitting (medium), polarized BRDF (high)
 
+### Status
+
+✅ **Phase 2 complete** — `BeckmannScattering`, `GGXScattering` (full microfacet); `GoniometricSweep`; `BRDFFitter` (least-squares). Deferred: polarised BRDF, BSDF, reference materials (see `docs/roadmap-todo.md`).
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc4--angle-resolved-scattering))
+
 ---
 
 ## Use Case 5: Structured Light 3D Scanning
@@ -282,6 +302,11 @@ Configure projector + camera system (baseline, angles)
 - **Shared prerequisites**: Divergent sources (medium), coordinate transforms (medium)
 - **Use-case-specific**: Phase algorithms (high), calibration model (medium),
   height reconstruction (medium)
+
+### Status
+
+✅ **Phase 2 complete** — `FringeProjector` (phase-shifted sinusoids); `PhaseExtractor` (N-step); `PhaseUnwrapper` (flood-fill); `HeightReconstructor` (triangulation); `SurfaceComparator` (RMS error). Deferred: divergent projection model, projector-camera calibration (see `docs/roadmap-todo.md`).
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc5--structured-light-3d-scanning))
 
 ---
 
@@ -334,6 +359,11 @@ Configure laser source (pulse energy, width, repetition rate)
 - **Shared prerequisites**: Divergent sources (medium)
 - **Use-case-specific**: Pulsed laser (medium), scanning (high), SPAD detector (high),
   ToF propagation (medium), waveform analysis (medium), point cloud (low)
+
+### Status
+
+✅ **Phase 2 complete** — `RayleighScattering`, `MieScattering`; `ScanningMechanism` (raster/spiral); `LiDARRangeEquation`; `TimeOfFlightPropagator`; `SPADDetector`; `WaveformAnalyzer` (peak+CFD); `generate_point_cloud()`. Deferred: atmospheric effects (see `docs/roadmap-todo.md`).
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc6--lidar-range-finding))
 
 ---
 
@@ -388,6 +418,11 @@ Define nominal pattern (fiducial marks, track layout, chip outline)
 - **Shared prerequisites**: Coordinate transforms (medium), template matching (medium)
 - **Use-case-specific**: Wafer generators (medium), registration analysis (medium),
   SPC output (low), real-time model (low)
+
+### Status
+
+✅ **Phase 2 complete** — `WaferSurface` (fiducial crosses, die grid), `MisalignedSurface` (affine warp); `TemplateMatcher` (NCC); `RegistrationAnalyzer` (FFT cross-correlation); `SPCAnalyzer` (Cpk, trend). Deferred: real-time performance model (see `docs/roadmap-todo.md`).
+👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc7--wafer-chip-misalignment-detection))
 
 ---
 
@@ -476,3 +511,78 @@ Suggested order based on complexity:
 - Integration tests covering multi-step workflows
 - Performance benchmarks
 - User documentation for each use case
+
+---
+
+## Learning & Playability Roadmap
+
+This framework is built for **learning** — understanding how optical
+metrology pipelines work by running and modifying real simulations.
+Every use case should ship with **modular, fully playable notebooks and
+Python scripts** that use ``optical_metrology`` as an **imported library**
+(``pip install -e .`` in an environment).
+
+### UC1 — Surface Defect Inspection
+- **Notebook:** Walk through bright-field vs. dark-field vs. ring-light
+  inspection of a scratched wafer.  Let the user toggle defect type
+  (dent, pit, crack, stain), illumination geometry, and threshold to
+  see pass/fail flip in real time.
+- **Script:** ``python -m examples.run_uc1_inspection --defect scratch --illumination darkfield``
+- **Interactive:** Sliders for scratch depth, incidence angle, detector
+  noise level.
+
+### UC2 — Multi-Spectral Material ID
+- **Notebook:** Load a multi-spectral light field, sweep wavelengths,
+  compute SAM per pixel, classify materials.  Let the user add reference
+  spectra and see classification confidence maps update.
+- **Script:** ``python -m examples.run_uc2_material_id --materials silicon,sio2,al``
+- **Interactive:** Click on the image to add a reference spectrum.
+
+### UC3 — Sensor Characterisation
+- **Notebook:** Generate flat-field images at increasing exposures,
+  compute PTC, fit gain, plot variance vs. mean.  Show dynamic range
+  and linearity error as adjustable exposure sweeps run.
+- **Script:** ``python -m examples.run_uc3_sensor_char --exposure-range 1e-6 1e-3 --steps 20``
+- **Interactive:** Slider for exposure time updates PTC plot live.
+
+### UC4 — Angle-Resolved Scattering
+- **Notebook:** Sweep incidence / reflection angles, collect BRDF
+  table, fit Beckmann vs. GGX models, compare goodness-of-fit.
+- **Script:** ``python -m examples.run_uc4_brdf --model beckmann --roughness 0.15``
+- **Interactive:** 2D polar plot of BRDF that updates as roughness changes.
+
+### UC5 — Structured Light 3D Scanning
+- **Notebook:** Project fringe patterns onto a sinusoidal surface,
+  extract phase, unwrap, reconstruct height, compare to ground truth.
+- **Script:** ``python -m examples.run_uc5_structured_light --period 16 --phase-shifts 4``
+- **Interactive:** Animate fringe projection and show phase map, height map,
+  error map side-by-side.
+
+### UC6 — LiDAR Range Finding
+- **Notebook:** Simulate a LiDAR pulse, propagate to target at 50 m,
+  detect return with SPAD, compute ToF, convert to point cloud.
+- **Script:** ``python -m examples.run_uc6_lidar --range 50 --aerosol-density 1e5``
+- **Interactive:** Drag the target distance slider and see received
+  power, ToF histogram, and point cloud update in real time.
+
+### UC7 — Wafer Alignment
+- **Notebook:** Create a wafer with fiducial marks, apply misalignment,
+  run template matching, measure dx/dy/rotation, compute Cpk.
+- **Script:** ``python -m examples.run_uc7_alignment --dx 3 --dy -1 --rotation 0.5``
+- **Interactive:** Drag misalignment sliders and watch the overlay
+  error heatmap update.
+
+### Deliverable Format
+Each use case ships three things:
+
+| Artifact | Description |
+|----------|-------------|
+| ``examples/uc<N>_playground.ipynb`` | Jupyter notebook with markdown narrative, side-by-side plots, interactive widgets |
+| ``examples/run_uc<N>_pipeline.py`` | CLI script with argparse (``--help`` lists all knobs) |
+| ``tests/test_uc<N>_integration.py`` | Existing pytest integration test (already done for all 7 UCs) |
+
+The notebooks should be **self-contained** — they install nothing beyond
+``pip install -e .`` in the venv, import ``optical_metrology``, and work.
+Widget sliders (``ipywidgets``) are preferred for interactivity; if that
+adds a dependency, use ``¶``-driven code cells the user can re-run with
+different parameters.

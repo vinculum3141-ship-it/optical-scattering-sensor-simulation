@@ -32,11 +32,82 @@ AnalysisReport
 
 ## Built-in Analysis Modules
 
-| Module | Class | Measurements | Use Case |
+Modules are organised by function:
+
+### Quality Assessment
+
+| Module | Class | Key Measurements | Use Case |
 |---|---|---|---|
 | Histogram | `HistogramAnalyzer` | mean_intensity, max_intensity, min_intensity | Basic statistics |
-| Contrast | `ContrastAnalyzer` | rms_contrast, michelson_contrast, weber_contrast, mean_intensity, std_intensity | Image quality, pattern detection |
-| Saturation | `SaturationAnalyzer` | saturated_pixels, saturation_fraction, max_digital_value, pixel_max | Overexposure detection |
+| Contrast | `ContrastAnalyzer` | rms_contrast, michelson_contrast, weber_contrast | Image quality, pattern detection |
+| Saturation | `SaturationAnalyzer` | saturated_pixels, saturation_fraction | Overexposure detection |
+| Focus | `FocusAnalyzer` | laplacian_variance, tenengrad, brenner | Auto-focus, sharpness metric |
+| SNR | `SNRAnalyzer` | snr_db, signal_mean, noise_std | Sensor characterisation (UC3) |
+
+### Optical Characterisation
+
+| Module | Class | Key Measurements | Use Case |
+|---|---|---|---|
+| MTF | `MTFAnalyzer` | mtf_curve, mtf50, mtf50p | Resolution testing (UC3) |
+| FFT | `FFTAnalyzer` | peak_spatial_frequency, radial_profile, dc_fraction | Frequency analysis (UC4/UC5) |
+| Edge Detection | `EdgeDetectionAnalyzer` | edge_count, edge_density, mean_edge_strength | Feature location (UC7) |
+
+### Metrology — Defect & Surface
+
+| Module | Class | Key Measurements | Use Case |
+|---|---|---|---|
+| Defect Detection | `DefectAnalyzer` | defect_count, max_defect_area, pass_fail | Surface AOI (UC1) |
+| Roughness from Speckle | `SpeckleRoughnessEstimator` | speckle_contrast, estimated_roughness | Roughness characterisation (UC1) |
+| Intensity Profile | `IntensityProfileAnalyzer` | line_cross_section, contrast | Line width, feature size (UC1/UC5) |
+| Error Map | `ErrorMapAnalyzer` | rmse, mae, max_error, psnr | Ground-truth comparison (UC5/UC7) |
+| Tiled Acquisition | `TiledAcquisition` | tile_positions, stitched_image | Multi-FOV scanning (UC1) |
+
+### Metrology — Sensor Characterisation (UC3)
+
+| Module | Class | Key Measurements | Use Case |
+|---|---|---|---|
+| Photon Transfer Curve | `PTCAnalyzer` | gain_e_per_adu, read_noise_e, full_well_e | Camera characterisation |
+| Dynamic Range | `DynamicRangeAnalyzer` | dynamic_range_db, saturation_level, noise_floor | Sensor performance |
+| Linearity | `LinearityTestAnalyzer` | linearity_error_pct, r_squared | Exposure linearity |
+
+### Metrology — Spectral (UC2)
+
+| Module | Class | Key Measurements | Use Case |
+|---|---|---|---|
+| Spectral Analysis | `SpectralAnalyzer` | band_ratios, sam_map, classification_map | Material identification |
+
+### Metrology — Goniometric (UC4)
+
+| Module | Class | Key Measurements | Use Case |
+|---|---|---|---|
+| Goniometric Sweep | `GoniometricSweep` | theta_i_array, theta_r_array, brdf_table | Angle-resolved BRDF |
+| BRDF Fitting | `BRDFFitter` | fitted_params, r_squared, residual_norm | Model parameter estimation |
+
+### Metrology — Structured Light (UC5)
+
+| Module | Class | Key Measurements | Use Case |
+|---|---|---|---|
+| Phase Extraction | `PhaseExtractor` | wrapped_phase, modulation | N-step phase shifting |
+| Phase Unwrapping | `PhaseUnwrapper` | unwrapped_phase | Spatial flood-fill unwrapping |
+| Height Reconstruction | `HeightReconstructor` | height_map | Phase → height triangulation |
+| Surface Comparison | `SurfaceComparator` | rms_error, error_map | Reconstructed vs. ground truth |
+
+### Metrology — Registration & SPC (UC7)
+
+| Module | Class | Key Measurements | Use Case |
+|---|---|---|---|
+| Template Matching | `TemplateMatcher` | match_score, match_location | Normalised cross-correlation |
+| Registration | `RegistrationAnalyzer` | dx, dy, rotation, scale | Translation/rotation alignment |
+| SPC | `SPCAnalyzer` | cpk, mean_shift, trend_slope | Statistical process control |
+
+### Metrology — LiDAR (UC6)
+
+| Module | Class | Key Measurements | Use Case |
+|---|---|---|---|
+| LiDAR Range Equation | `LiDARRangeEquation` | received_power_w | Link budget calculation |
+| Time-of-Flight | `TimeOfFlightPropagator` | tof_s, pulse_width_s | Pulse delay and broadening |
+| Waveform Analysis | `WaveformAnalyzer` | peak_location, peak_amplitude, cfd_location | Pulse detection |
+| Point Cloud | `generate_point_cloud()` | xyz, intensity, timestamp | Range data → 3D points |
 
 ### HistogramAnalyzer
 
@@ -63,7 +134,7 @@ width approximation.
 ### HistogramAnalyzer
 
 ```python
-from analysis import HistogramAnalyzer
+from optical_metrology.analysis import HistogramAnalyzer
 
 analyzer = HistogramAnalyzer()
 report = analyzer.analyze(image)
@@ -75,7 +146,7 @@ report.measurements["mean_intensity"]  # float
 ### ImageAnalyzer
 
 ```python
-from analysis import ImageAnalyzer, HistogramAnalyzer
+from optical_metrology.analysis import ImageAnalyzer, HistogramAnalyzer
 
 analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
 report = analyzer.analyze(image)
@@ -133,7 +204,7 @@ Computes three standard contrast metrics:
   background level (defaults to the image mean).
 
 ```python
-from analysis import ContrastAnalyzer
+from optical_metrology.analysis import ContrastAnalyzer
 
 analyzer = ContrastAnalyzer(background=None)
 report = analyzer.analyze(image)
@@ -145,7 +216,7 @@ print(report.measurements["rms_contrast"])
 Detects pixels at or near the maximum digital value.
 
 ```python
-from analysis import SaturationAnalyzer
+from optical_metrology.analysis import SaturationAnalyzer
 
 analyzer = SaturationAnalyzer(threshold=0.99)  # ≥ 99% of max
 report = analyzer.analyze(image)
@@ -156,13 +227,13 @@ print(f"Saturation fraction: {report.measurements['saturation_fraction']:.2%}")
 ## Complete Example
 
 ```python
-from analysis import (
+from optical_metrology.analysis import (
     ContrastAnalyzer,
     HistogramAnalyzer,
     ImageAnalyzer,
     SaturationAnalyzer,
 )
-from detector import DigitalImage
+from optical_metrology.detector import DigitalImage
 import numpy as np
 
 pixels = np.array(
@@ -190,7 +261,7 @@ print(report.measurements)
 ## Creating a Custom Analysis Module
 
 ```python
-from analysis import AnalysisModule, AnalysisReport
+from optical_metrology.analysis import AnalysisModule, AnalysisReport
 
 class EntropyAnalyzer(AnalysisModule):
     def analyze(self, image):

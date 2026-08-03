@@ -38,14 +38,15 @@ Each section calls out which audience it primarily addresses.
 ## Package Overview
 
 ```
-illumination/     → Light sources and light-field generation
-surface/          → Surface geometry (height maps, normals, roughness)
-scattering/       → Scattering models (BRDF implementations)
-optics/           → Imaging-system propagation (PSF convolution)
-detector/         → Digital sensor pipeline (CMOS model)
-analysis/         → Image analysis (histograms, statistics)
-pipeline.py       → Pipeline orchestrator (single-call simulation)
-utils/            → Shared utilities (heatmap visualisation)
+src/optical_metrology/
+├── illumination/   → Light sources and light-field generation
+├── surface/        → Surface geometry (height maps, normals, roughness)
+├── scattering/     → Scattering models (BRDF implementations)
+├── optics/         → Imaging-system propagation (PSF convolution)
+├── detector/       → Digital sensor pipeline (CMOS model)
+├── analysis/       → Image analysis (histograms, statistics)
+├── pipeline.py     → Pipeline orchestrator (single-call simulation)
+└── utils/          → Shared utilities (heatmap visualisation)
 ```
 
 ## Key Design Principles

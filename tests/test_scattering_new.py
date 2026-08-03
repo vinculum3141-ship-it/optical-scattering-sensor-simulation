@@ -1,13 +1,13 @@
 import numpy as np
 
-from illumination import LightField
-from scattering import (
+from optical_metrology.illumination import LightField
+from optical_metrology.scattering import (
     OrenNayarScattering,
     PhongScattering,
     ScatteredField,
     ScatteringModel,
 )
-from surface import Material, Surface
+from optical_metrology.surface import Material, Surface
 
 
 def _make_lightfield(shape=(4, 4), direction=(0, 0, -1)):

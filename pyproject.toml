@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optical-metrology"
+version = "0.1.0"
+description = "Virtual optical metrology platform — end-to-end simulation of illumination, scattering, optics, detection, and image analysis"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "vinculum3141"},
+]
+keywords = [
+    "optical metrology",
+    "scattering",
+    "brdf",
+    "simulation",
+    "cmos",
+    "computer vision",
+    "inspection",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Manufacturing",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "robotframework>=6",
+]
+analysis = [
+    "scipy",
+]
+visualisation = [
+    "matplotlib>=3.5",
+    "jupyter",
+]
+docs = [
+    "mkdocs>=1.4",
+    "mkdocstrings[python]>=0.22",
+]
+
+[project.urls]
+Homepage = "https://github.com/vinculum3141/optical-scattering-sensor-simulation"
+Documentation = "https://github.com/vinculum3141/optical-scattering-sensor-simulation"
+Source = "https://github.com/vinculum3141/optical-scattering-sensor-simulation"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["optical_metrology*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"

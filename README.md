@@ -1,4 +1,6 @@
-# optical-scattering-sensor-simulation
+# optical-metrology
+
+[![CI](https://github.com/vinculum3141/optical-scattering-sensor-simulation/actions/workflows/ci.yml/badge.svg)](https://github.com/vinculum3141/optical-scattering-sensor-simulation/actions/workflows/ci.yml)
 
 A physics-based virtual optical metrology platform — end-to-end
 simulation of illumination, surface scattering, optical propagation,
@@ -7,12 +9,9 @@ detection, and image analysis.
 ## Quick start
 
 ```bash
-python playground.py --demo
+pip install -e .            # install from source
+python playground.py --demo  # non-interactive tour
 ```
-
-This runs a non-interactive tour through all six layers showing
-terminal heatmaps, the detector pipeline step-by-step, the captured
-digital image, and the analysis report.
 
 ```bash
 python playground.py                         # interactive menu
@@ -20,10 +19,32 @@ python playground.py --detector              # jump to detector demo
 python playground.py --analysis              # jump to analysis demo
 ```
 
+### Repository layout
+
+```
+src/optical_metrology/   → Installable Python package (the library)
+scripts/                 → Not used — entry-point scripts live at repo root
+examples/                → Jupyter notebooks
+tests/                   → Pytest unit tests + Robot Framework acceptance tests
+docs/                    → Markdown documentation
+```
+
+The scripts at the repository root (`playground.py`, `explore.py`,
+`plot_pipeline.py`) are standalone entry points that use the installed
+``optical_metrology`` package. They are kept at root for easy discovery.
+
 ### Requirements
 
 - Python 3.9+
 - [NumPy](https://numpy.org/) (optional: `robotframework` for Robot tests)
+
+Install with extra dependencies:
+
+```bash
+pip install -e ".[dev]"          # + pytest, robotframework
+pip install -e ".[analysis]"     # + scipy
+pip install -e ".[visualisation]" # + matplotlib, jupyter
+```
 
 ---
 
@@ -66,7 +87,7 @@ All modules are independently reusable.
 ### Use the API directly
 
 ```python
-from illumination import Laser, GaussianBeamProfile
+from optical_metrology.illumination import Laser, GaussianBeamProfile
 
 laser = Laser(
     wavelength=532e-9,
@@ -81,7 +102,7 @@ print(field.coherence_length)         # from source temporal coherence
 ```
 
 ```python
-from surface import RoughSurface, Material
+from optical_metrology.surface import RoughSurface, Material
 
 surf = RoughSurface(
     shape=(64, 64), sigma=6.0, amplitude=0.5,
@@ -93,9 +114,9 @@ print(surf.phase_screen(532e-9).shape)  # (64, 64) — 4πh/λ phase delay
 ```
 
 ```python
-from illumination import Laser, GaussianBeamProfile
-from surface import FlatSurface, Material
-from scattering import CookTorranceScattering
+from optical_metrology.illumination import Laser, GaussianBeamProfile
+from optical_metrology.surface import FlatSurface, Material
+from optical_metrology.scattering import CookTorranceScattering
 
 laser = Laser(wavelength=532e-9, power=5e-3,
               beam_profile=GaussianBeamProfile(w0=2.0))
@@ -111,8 +132,8 @@ print(result.outgoing_direction.shape) # (32, 32, 3)
 ```
 
 ```python
-from detector import CMOSDetector, BloomingNoise
-from optics import SensorField
+from optical_metrology.detector import CMOSDetector, BloomingNoise
+from optical_metrology.optics import SensorField
 import numpy as np
 
 sensor_field = SensorField(
@@ -131,7 +152,7 @@ print(image.visualize(max_width=48))   # terminal heatmap
 ```
 
 ```python
-from analysis import HistogramAnalyzer, ContrastAnalyzer, ImageAnalyzer
+from optical_metrology.analysis import HistogramAnalyzer, ContrastAnalyzer, ImageAnalyzer
 
 analyzer = ImageAnalyzer(modules=[HistogramAnalyzer(), ContrastAnalyzer()])
 report = analyzer.analyze(image)
@@ -142,11 +163,11 @@ print(report.histogram.shape)                    # e.g. (4096,)
 
 ```python
 # Full end-to-end pipeline in one shot
-from illumination import Laser, GaussianBeamProfile
-from surface import RoughSurface, Material
-from scattering import LambertianScattering
-from optics import OpticalSystem, GaussianPSF, OpticalPropagator
-from detector import CMOSDetector
+from optical_metrology.illumination import Laser, GaussianBeamProfile
+from optical_metrology.surface import RoughSurface, Material
+from optical_metrology.scattering import LambertianScattering
+from optical_metrology.optics import OpticalSystem, GaussianPSF, OpticalPropagator
+from optical_metrology.detector import CMOSDetector
 
 laser = Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0))
 laser.propagation_direction = [0, 0, -1]
@@ -161,7 +182,11 @@ image = CMOSDetector(exposure_time=1e-5, gain=1.0).capture(sensor)
 print(image.pixels.min(), "-", image.pixels.max(), "ADU")
 ```
 
-### More examples
+### Entry-point scripts
+
+The scripts at the repository root are standalone entry points (not part of
+the installable library). They use the installed ``optical_metrology``
+package and serve as interactive demos/exploration tools:
 
 | Command | What it does |
 |---------|-------------|
@@ -171,8 +196,16 @@ print(image.pixels.min(), "-", image.pixels.max(), "ADU")
 | `python playground.py --analysis` | Analysis demo only |
 | `python playground.py --custom` | Custom pipeline from scratch |
 | `python playground.py --tinker` | Code snippets to copy-paste |
+| `python explore.py` | Interactive explorer (illumination/surface/scattering) |
 | `python plot_pipeline.py` | Matplotlib PNG output (needs `matplotlib`) |
-| `jupyter notebook pipeline.ipynb` | Interactive notebook (needs `jupyter`) |
+
+### Jupyter notebooks
+
+| Notebook | What it shows |
+|----------|---------------|
+| `examples/basic_pipeline.ipynb` | Light → surface → scatter → optics → detector → analysis |
+| `examples/defect_inspection.ipynb` | Scratched surface inspection (UC1 preview) |
+| `pipeline.ipynb` | Root-level notebook with inline matplotlib plots |
 
 ---
 
@@ -180,66 +213,70 @@ print(image.pixels.min(), "-", image.pixels.max(), "ADU")
 
 ### Illumination
 
+All source code lives under `src/optical_metrology/`.
+
 | File | Contents |
 |------|----------|
-| `illumination/source.py` | `LightSource` — base source with wavefront, incidence angle, coherence length |
-| `illumination/laser.py` | `Laser` — monochromatic, configurable divergence |
-| `illumination/led.py` | `LED` — Gaussian spectrum, 0.5 rad divergence |
-| `illumination/sunlight.py` | `Sunlight` — black-body at 5778 K |
-| `illumination/broadband.py` | `BroadbandLamp` — flat spectrum over a range |
-| `illumination/profiles.py` | `GaussianBeamProfile`, `UniformBeamProfile`, `TopHatBeamProfile` |
-| `illumination/spectrum.py` | `MonochromaticSpectrum`, `GaussianSpectrum`, `BlackbodySpectrum`, `BroadbandSpectrum` |
-| `illumination/polarization.py` | `PolarizationState` — unpolarised, linear, circular, elliptical |
-| `illumination/lightfield.py` | `LightField` with per-pixel intensity, direction, coherence, power, terminal heatmap |
+| `src/optical_metrology/illumination/source.py` | `LightSource` — base source with wavefront, incidence angle, coherence length |
+| `src/optical_metrology/illumination/laser.py` | `Laser` — monochromatic, configurable divergence |
+| `src/optical_metrology/illumination/led.py` | `LED` — Gaussian spectrum, 0.5 rad divergence |
+| `src/optical_metrology/illumination/sunlight.py` | `Sunlight` — black-body at 5778 K |
+| `src/optical_metrology/illumination/broadband.py` | `BroadbandLamp` — flat spectrum over a range |
+| `src/optical_metrology/illumination/flatfield.py` | `FlatFieldSource` — programmable uniform source with intensity sweep |
+| `src/optical_metrology/illumination/profiles.py` | `GaussianBeamProfile`, `UniformBeamProfile`, `TopHatBeamProfile` |
+| `src/optical_metrology/illumination/spectrum.py` | `MonochromaticSpectrum`, `GaussianSpectrum`, `BlackbodySpectrum`, `BroadbandSpectrum` |
+| `src/optical_metrology/illumination/polarization.py` | `PolarizationState` — unpolarised, linear, circular, elliptical |
+| `src/optical_metrology/illumination/lightfield.py` | `LightField` with per-pixel intensity, direction, coherence, power, terminal heatmap |
 
 ### Surface geometry
 
 | File | Contents |
 |------|----------|
-| `surface/base.py` | `Surface`, `Material`, `GeometryAnalyzer`, `SurfaceGenerator`, `phase_screen()`, `visualize()` |
-| `surface/generators.py` | `FlatSurface`, `RoughSurface`, `ScratchedSurface`, `ParticleSurface`, `SinusoidalSurface`, `AnisotropicRoughSurface`, `ImportedSurface` |
+| `src/optical_metrology/surface/base.py` | `Surface`, `Material` (with `SellmeierCoefficients`, `n(λ)`, `F0(λ)`), `GeometryAnalyzer`, `SurfaceGenerator`, `phase_screen()`, `visualize()` |
+| `src/optical_metrology/surface/generators.py` | `FlatSurface`, `RoughSurface`, `ScratchedSurface`, `ParticleSurface`, `SinusoidalSurface`, `AnisotropicRoughSurface`, `ImportedSurface` |
+| `src/optical_metrology/surface/thinfilm.py` | `ThinFilmStack` — transfer-matrix thin-film reflectance/transmittance |
 
 ### Scattering
 
 | File | Contents |
 |------|----------|
-| `scattering/base.py` | `ScatteringModel` base, `ScatteredField` container |
-| `scattering/lambertian.py` | `LambertianScattering` — ideal diffuse |
-| `scattering/orennayar.py` | `OrenNayarScattering` — rough diffuse |
-| `scattering/phong.py` | `PhongScattering` — diffuse + empirical specular |
-| `scattering/cooktorrance.py` | `CookTorranceScattering` — physically based specular (Beckmann D, Schlick F, Smith G) |
-| `scattering/beckmann.py` | `BeckmannScattering` (skeleton — implement before UC4) |
-| `scattering/ggx.py` | `GGXScattering` (skeleton — implement before UC4) |
-| `scattering/particle.py` | `RayleighScattering`, `MieScattering` (skeletons — implement before UC6) |
+| `src/optical_metrology/scattering/base.py` | `ScatteringModel` base, `ScatteredField` container |
+| `src/optical_metrology/scattering/lambertian.py` | `LambertianScattering` — ideal diffuse |
+| `src/optical_metrology/scattering/orennayar.py` | `OrenNayarScattering` — rough diffuse |
+| `src/optical_metrology/scattering/phong.py` | `PhongScattering` — diffuse + empirical specular |
+| `src/optical_metrology/scattering/cooktorrance.py` | `CookTorranceScattering` — physically based specular (Beckmann D, Schlick F, Smith G) |
+| `src/optical_metrology/scattering/beckmann.py` | `BeckmannScattering` (skeleton — implement before UC4) |
+| `src/optical_metrology/scattering/ggx.py` | `GGXScattering` (skeleton — implement before UC4) |
+| `src/optical_metrology/scattering/particle.py` | `RayleighScattering`, `MieScattering` (skeletons — implement before UC6) |
 
 ### Optics
 
 | File | Contents |
 |------|----------|
-| `optics/base.py` | `OpticalSystem`, `SensorField` |
-| `optics/psf.py` | `GaussianPSF` — isotropic Gaussian blur |
-| `optics/airy.py` | `AiryPSF` — diffraction-limited Airy disk (self-contained Bessel, no scipy dep) |
-| `optics/propagator.py` | `OpticalPropagator` — PSF convolution, radiance → irradiance |
+| `src/optical_metrology/optics/base.py` | `OpticalSystem`, `SensorField` |
+| `src/optical_metrology/optics/psf.py` | `GaussianPSF` — isotropic Gaussian blur |
+| `src/optical_metrology/optics/airy.py` | `AiryPSF` — diffraction-limited Airy disk (self-contained Bessel, no scipy dep) |
+| `src/optical_metrology/optics/zernike.py` | `ZernikePolynomials`, `Wavefront`, `ZernikePSF` — Zernike-aberrated PSF via FFT |
+| `src/optical_metrology/optics/propagator.py` | `OpticalPropagator` — PSF convolution, radiance → irradiance |
 
 ### Detector
 
 | File | Contents |
 |------|----------|
-| `detector/base.py` | `CMOSDetector` (7-step pipeline), `DigitalImage` (terminal heatmap), `DetectorNoiseModel` base |
-| `detector/noise_models.py` | `FixedPatternNoise`, `PhotoResponseNonUniformity`, `HotPixelNoise`, `ColumnDefectNoise`, `DeadPixelNoise`, `SpeckleNoise`, `BloomingNoise` |
+| `src/optical_metrology/detector/base.py` | `CMOSDetector` (7-step pipeline), `DigitalImage` (terminal heatmap), `DetectorNoiseModel` base |
+| `src/optical_metrology/detector/noise_models.py` | `FixedPatternNoise`, `PhotoResponseNonUniformity`, `HotPixelNoise`, `ColumnDefectNoise`, `DeadPixelNoise`, `SpeckleNoise`, `BloomingNoise` |
 
 ### Analysis
 
 | File | Contents | Group |
 |------|----------|-------|
-| `analysis/base.py` | `AnalysisModule`, `AnalysisReport`, `ImageAnalyzer` | Orchestration |
-| `analysis/histogram.py` | `HistogramAnalyzer` — pixel histogram, mean/min/max | Quality Assessment |
-| `analysis/contrast.py` | `ContrastAnalyzer` (RMS, Michelson, Weber), `SaturationAnalyzer` | Quality Assessment |
-
-Additional analysis modules documented in `docs/roadmap-todo.md` (pre-deployment gaps):
-Quality Assessment — `FocusAnalyzer`, `SNRAnalyzer`.
-Optical Characterisation — `MTFAnalyzer`, `FFTAnalyzer`.
-Metrology — `IntensityProfileAnalyzer`, `EdgeDetectionAnalyzer`, `SpeckleRoughnessEstimator`.
+| `src/optical_metrology/analysis/base.py` | `AnalysisModule`, `AnalysisReport`, `ImageAnalyzer` | Orchestration |
+| `src/optical_metrology/analysis/histogram.py` | `HistogramAnalyzer` — pixel histogram, mean/min/max | Quality Assessment |
+| `src/optical_metrology/analysis/contrast.py` | `ContrastAnalyzer` (RMS, Michelson, Weber), `SaturationAnalyzer` | Quality Assessment |
+| `src/optical_metrology/analysis/focus.py` | `FocusAnalyzer` — laplacian-variance, tenengrad, brenner | Quality Assessment |
+| `src/optical_metrology/analysis/intensity_profile.py` | `IntensityProfileAnalyzer` — 1D line profile with bilinear interpolation | Metrology |
+| `src/optical_metrology/analysis/error_map.py` | `ErrorMapAnalyzer` — RMSE, MAE, max error, PSNR vs ground truth | Metrology |
+| `src/optical_metrology/analysis/speckle_roughness.py` | `SpeckleRoughnessEstimator` — roughness from speckle contrast | Metrology |
 
 ### Scripts and tests
 
@@ -248,18 +285,19 @@ Metrology — `IntensityProfileAnalyzer`, `EdgeDetectionAnalyzer`, `SpeckleRough
 | `explore.py` | Interactive CLI — illumination / surface / scattering modes |
 | `playground.py` | Interactive playground with demos, custom pipeline, code snippets |
 | `plot_pipeline.py` | Standalone — runs pipeline, saves matplotlib PNGs |
-| `pipeline.ipynb` | Jupyter notebook — inline plots per layer |
-| `tests/test_illumination.py` | Pytest (11 tests) |
+| `examples/basic_pipeline.ipynb` | Jupyter notebook — basic pipeline example |
+| `examples/defect_inspection.ipynb` | Jupyter notebook — UC1 defect inspection |
+| `tests/test_illumination.py` | Pytest (24 tests) |
 | `tests/test_surface.py` | Pytest (4 tests) |
-| `tests/test_surface_new.py` | Pytest (9 tests) |
+| `tests/test_surface_new.py` | Pytest (31 tests) |
 | `tests/test_scattering.py` | Pytest (11 tests) |
 | `tests/test_scattering_new.py` | Pytest (6 tests) |
 | `tests/test_optics.py` | Pytest (1 test) |
-| `tests/test_optics_new.py` | Pytest (5 tests) |
+| `tests/test_optics_new.py` | Pytest (13 tests) |
 | `tests/test_detector.py` | Pytest (1 test) |
 | `tests/test_detector_new.py` | Pytest (16 tests) |
 | `tests/test_analysis.py` | Pytest (1 test) |
-| `tests/test_analysis_new.py` | Pytest (6 tests) |
+| `tests/test_analysis_new.py` | Pytest (23 tests) |
 | `tests/test_pipeline.py` | Pytest (5 tests) |
 | `tests/test_utils.py` | Pytest (4 tests) |
 | `tests/*.robot` | Robot Framework acceptance tests (43 tests) |
@@ -269,11 +307,10 @@ Metrology — `IntensityProfileAnalyzer`, `EdgeDetectionAnalyzer`, `SpeckleRough
 ## Testing
 
 ```bash
-# Pytest — 81 unit tests across all layers
+# Pytest — 140 unit tests across all layers
 python -m pytest -q
 
-# Robot Framework — 43 acceptance tests
-pip install robotframework
+# Robot Framework — 43 acceptance tests (requires pip install -e ".[dev]")
 python -m robot tests/
 ```
 

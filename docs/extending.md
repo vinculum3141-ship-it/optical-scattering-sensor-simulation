@@ -14,7 +14,7 @@ complete examples.
 **Interface:** Subclass `LightSource` and override `default_spectrum()`.
 
 ```python
-from illumination import LightSource, BlackbodySpectrum
+from optical_metrology.illumination import LightSource, BlackbodySpectrum
 
 class HalogenLamp(LightSource):
     """A halogen lamp modelled as a high-temperature black-body."""
@@ -39,7 +39,7 @@ and `generate_light_field()`. You only provide the spectral model.
 **Interface:** Subclass `BeamProfile` and implement `evaluate(shape, spacing)`.
 
 ```python
-from illumination.profiles import BeamProfile
+from optical_metrology.illumination.profiles import BeamProfile
 import numpy as np
 
 class DonutBeamProfile(BeamProfile):
@@ -63,7 +63,7 @@ class DonutBeamProfile(BeamProfile):
 **Option A:** Subclass `SurfaceGenerator` (implement `generate()` only):
 
 ```python
-from surface import SurfaceGenerator, GeometryAnalyzer, Material
+from optical_metrology.surface import SurfaceGenerator, GeometryAnalyzer, Material
 
 class SinusoidalSurface(SurfaceGenerator):
     def __init__(self, wavelength=16.0, amplitude=0.5):
@@ -86,7 +86,7 @@ surface = gen.create_surface((64, 64), material=Material("glass"))
 (follows the existing pattern):
 
 ```python
-from surface import Surface, SurfaceGenerator, GeometryAnalyzer, Material
+from optical_metrology.surface import Surface, SurfaceGenerator, GeometryAnalyzer, Material
 import numpy as np
 
 class CheckerboardSurface(Surface, SurfaceGenerator):
@@ -112,7 +112,7 @@ print(surf.height.min(), surf.height.max())
 **Interface:** Subclass `ScatteringModel` and implement `evaluate()`.
 
 ```python
-from scattering import ScatteringModel, ScatteredField
+from optical_metrology.scattering import ScatteringModel, ScatteredField
 import numpy as np
 
 class PhongScattering(ScatteringModel):
@@ -197,7 +197,7 @@ propagator = OpticalPropagator(psf_model=AiryPSF(na=0.4))
 **Interface:** Subclass `DetectorNoiseModel` and implement `apply(electrons)`.
 
 ```python
-from detector import DetectorNoiseModel
+from optical_metrology.detector import DetectorNoiseModel
 import numpy as np
 
 class ColumnDefectNoise(DetectorNoiseModel):
@@ -233,7 +233,7 @@ detector = CMOSDetector(
 **Interface:** Subclass `AnalysisModule` and implement `analyze(image)`.
 
 ```python
-from analysis import AnalysisModule, AnalysisReport
+from optical_metrology.analysis import AnalysisModule, AnalysisReport
 from scipy import ndimage  # optional dependency
 
 class ContrastAnalyzer(AnalysisModule):
@@ -261,12 +261,12 @@ analyzer = ImageAnalyzer(modules=[
 ## 8. Full Custom Pipeline
 
 ```python
-from illumination import LightSource, UniformBeamProfile, PolarizationState
-from surface import SurfaceGenerator, GeometryAnalyzer, Material
-from scattering import ScatteringModel, ScatteredField
-from optics import OpticalPropagator, OpticalSystem
-from detector import CMOSDetector, DetectorNoiseModel
-from analysis import ImageAnalyzer, HistogramAnalyzer
+from optical_metrology.illumination import LightSource, UniformBeamProfile, PolarizationState
+from optical_metrology.surface import SurfaceGenerator, GeometryAnalyzer, Material
+from optical_metrology.scattering import ScatteringModel, ScatteredField
+from optical_metrology.optics import OpticalPropagator, OpticalSystem
+from optical_metrology.detector import CMOSDetector, DetectorNoiseModel
+from optical_metrology.analysis import ImageAnalyzer, HistogramAnalyzer
 
 # Create a custom source
 source = LightSource(
@@ -281,8 +281,8 @@ source.propagation_direction = [0.5, 0, -0.87]  # 30° incidence
 lf = source.generate_light_field(shape=(32, 32), spacing=0.5)
 
 # Custom surface + scattering (using built-in for brevity)
-from surface import RoughSurface
-from scattering import LambertianScattering
+from optical_metrology.surface import RoughSurface
+from optical_metrology.scattering import LambertianScattering
 surface = RoughSurface((32, 32), sigma=5.0, amplitude=0.3, material=Material("silicon"))
 scattered = LambertianScattering(albedo=0.7).evaluate(lf, surface, view=[0, 0, 1])
 
@@ -317,13 +317,13 @@ For a cleaner workflow, the `SimulationPipeline` class in
 component is optional — skip any stage by setting it to `None`.
 
 ```python
-from pipeline import SimulationPipeline
-from illumination import Laser, GaussianBeamProfile
-from surface import RoughSurface, Material
-from scattering import PhongScattering
-from optics import OpticalSystem, AiryPSF, OpticalPropagator
-from detector import CMOSDetector, HotPixelNoise
-from analysis import HistogramAnalyzer, ContrastAnalyzer
+from optical_metrology.pipeline import SimulationPipeline
+from optical_metrology.illumination import Laser, GaussianBeamProfile
+from optical_metrology.surface import RoughSurface, Material
+from optical_metrology.scattering import PhongScattering
+from optical_metrology.optics import OpticalSystem, AiryPSF, OpticalPropagator
+from optical_metrology.detector import CMOSDetector, HotPixelNoise
+from optical_metrology.analysis import HistogramAnalyzer, ContrastAnalyzer
 
 pipeline = SimulationPipeline(
     source=Laser(532e-9, power=5e-3, beam_profile=GaussianBeamProfile(w0=2.0)),

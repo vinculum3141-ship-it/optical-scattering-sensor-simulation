@@ -87,11 +87,10 @@ Surface generators like `RoughSurface` serve dual roles:
 
 - **Data container** — they inherit from `Surface` and hold the computed
   geometry directly as attributes.
-- **Factory** — they also inherit from `SurfaceGenerator`, so you can
-  call them to produce a `Surface`.
-
-This means a `RoughSurface` object *is* a surface, not a surface builder.
-The constructor generates the height map and analyses it in one step.
+- **Factory** — the constructor generates and analyses the height map
+  in one step, so the resulting object *is* the surface, not a builder
+  for one. (The `SurfaceGenerator` base class exists for pipeline
+  callable detection but concrete generators do not subclass it.)
 
 ### 4. Immutable / Frozen Configuration
 
@@ -125,11 +124,11 @@ array directly to the detector.
 
 ## Pipeline Orchestrator
 
-`pipeline.py` at the repository root provides a `SimulationPipeline`
+`optical_metrology.pipeline` provides a `SimulationPipeline`
 class that wires the six layers together in a single call:
 
 ```python
-from pipeline import SimulationPipeline
+from optical_metrology.pipeline import SimulationPipeline
 
 pipeline = SimulationPipeline(
     source=laser,

@@ -148,7 +148,7 @@ The framework ships with seven concrete noise models:
 | Blooming | `BloomingNoise` | Charge overflow spill | bloom_factor, iterations, full_well_capacity |
 
 ```python
-from detector import (
+from optical_metrology.detector import (
     CMOSDetector,
     ColumnDefectNoise,
     DeadPixelNoise,
@@ -171,10 +171,62 @@ detector = CMOSDetector(
 )
 ```
 
+## Specialised Detectors
+
+### Colour Filter Array (`CFAConfig` / `CFADetector`)
+
+The `CFADetector` extends `CMOSDetector` with a Bayer-mosaic colour
+filter array. Each pixel sees only one colour channel (R, G1, G2, B);
+demosaicing interpolates the missing channels to produce a full
+RGB image.
+
+```python
+from optical_metrology.detector import CFAConfig, CFADetector
+
+# Standard Bayer RGGB pattern
+config = CFAConfig(pattern="bayer_rggb")
+detector = CFADetector(
+    cfa_config=config,
+    exposure_time=0.01,
+    demosaic_method="bilinear",  # or "malvar"
+)
+
+# Capture produces a DigitalImage with shape (H, W, 3)
+image = detector.capture(sensor_field)
+print(image.pixels.shape)  # (H, W, 3) — RGB
+```
+
+`CFADetector` handles multi-spectral captures (UC2): each channel
+is captured with the appropriate source wavelength, then assembled
+into a spectral stack.
+
+### SPAD Detector (`SPADDetector`)
+
+Single-photon avalanche diode model for time-resolved photon counting
+(UC6 LiDAR). Models dead time, photon detection efficiency (PDE),
+dark count rate, and timing jitter.
+
+```python
+from optical_metrology.detector import SPADDetector
+
+spad = SPADDetector(
+    dead_time=50e-9,          # 50 ns dead time
+    photon_detection_efficiency=0.3,  # 30% PDE
+    dark_count_rate=100,       # 100 cps
+    timing_jitter=50e-12,      # 50 ps FWHM jitter
+    time_bins=1024,            # histogram bins
+    bin_width=100e-12,         # 100 ps per bin
+)
+
+# Returns a time-correlated single-photon counting histogram
+histogram = spad.detect(returning_pulse, start_time=0.0)
+print(histogram.shape)  # (1024,)
+```
+
 ### Custom Noise Models
 
 ```python
-from detector import DetectorNoiseModel
+from optical_metrology.detector import DetectorNoiseModel
 
 class FixedPatternNoise(DetectorNoiseModel):
     def __init__(self, pattern):
@@ -195,8 +247,8 @@ synthetic data without constructing a full `SensorField`.
 ## Complete Example
 
 ```python
-from detector import CMOSDetector
-from optics import SensorField
+from optical_metrology.detector import CMOSDetector
+from optical_metrology.optics import SensorField
 import numpy as np
 
 sensor_field = SensorField(

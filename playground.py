@@ -20,7 +20,7 @@ import textwrap
 
 import numpy as np
 
-from illumination import (
+from optical_metrology.illumination import (
     BroadbandLamp,
     LED,
     Laser,
@@ -32,7 +32,7 @@ from illumination import (
     LightField,
     LightSource,
 )
-from surface import (
+from optical_metrology.surface import (
     FlatSurface,
     RoughSurface,
     ScratchedSurface,
@@ -40,22 +40,22 @@ from surface import (
     Material,
     GeometryAnalyzer,
 )
-from scattering import (
+from optical_metrology.scattering import (
     LambertianScattering,
     ScatteredField,
     ScatteringModel,
 )
-from optics import (
+from optical_metrology.optics import (
     GaussianPSF,
     OpticalPropagator,
     OpticalSystem,
     SensorField,
 )
-from detector import (
+from optical_metrology.detector import (
     CMOSDetector,
     DigitalImage,
 )
-from analysis import (
+from optical_metrology.analysis import (
     HistogramAnalyzer,
     ImageAnalyzer,
     AnalysisReport,
@@ -464,14 +464,14 @@ def demo_tinker():
 
   Capture with a CMOS detector:
 
-    from detector import CMOSDetector
+    from optical_metrology.detector import CMOSDetector
     detector = CMOSDetector(exposure_time=0.1, bit_depth=12)
     image = detector.capture(sensor)
     print("Digital image:", image.pixels.shape, image.pixels.dtype)
 
   Analyse the result:
 
-    from analysis import HistogramAnalyzer, ImageAnalyzer
+    from optical_metrology.analysis import HistogramAnalyzer, ImageAnalyzer
     analyzer = ImageAnalyzer(modules=[HistogramAnalyzer()])
     report = analyzer.analyze(image)
     print(report.measurements)

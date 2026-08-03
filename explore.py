@@ -24,7 +24,7 @@ import textwrap
 
 import numpy as np
 
-from illumination import (
+from optical_metrology.illumination import (
     BroadbandLamp,
     LED,
     Laser,
@@ -35,7 +35,7 @@ from illumination import (
     PolarizationState,
 )
 
-from surface import (
+from optical_metrology.surface import (
     FlatSurface,
     RoughSurface,
     ScratchedSurface,
@@ -43,7 +43,7 @@ from surface import (
     Material,
 )
 
-from scattering import (
+from optical_metrology.scattering import (
     LambertianScattering,
 )
 

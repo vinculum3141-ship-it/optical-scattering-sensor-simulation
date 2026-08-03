@@ -1,6 +1,6 @@
 import numpy as np
 
-from utils import heatmap
+from optical_metrology.utils import heatmap
 
 
 def test_heatmap_returns_string():

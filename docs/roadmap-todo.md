@@ -12,57 +12,29 @@ Turn the codebase into a proper installable scientific Python framework
 before any use-case work begins.  These tasks are about identity,
 packaging, and developer experience.
 
-- [ ] **Choose a project name** — something distinct that signals
-  "optical metrology simulation" (e.g. ``opmet``, ``optomet``,
-  ``scattercam``, ``photonforge``).  Update the GitHub repository
-  name, package directory, and all internal references.
-- [ ] **Production-grade ``pyproject.toml``** — fill in author,
-  description, keywords, classifiers, Python version bounds, and
-  optional dependency groups:
-  ```toml
-  [project]
-  name = "optical-metrology"
-  description = "Virtual optical metrology platform — end-to-end simulation of illumination, scattering, optics, detection, and image analysis"
-  requires-python = ">=3.9"
-  dependencies = ["numpy"]
-  [project.optional-dependencies]
-  analysis = ["scipy"]        # for zoom, ndimage
-  dev = ["pytest", "robotframework"]
-  docs = ["mkdocs", "mkdocstrings"]
-  ```
-- [ ] **``pip install`` workflow** — verify ``pip install -e .`` and
-  ``pip install -e ".[dev]"`` work from a clean venv.  Add a
-  ``src/`` layout if the package grows beyond ~10 modules.
-- [ ] **Continuous integration** — GitHub Actions (or equivalent)
-  that runs ``pytest`` on every PR and push.  Include a basic badge
-  in the README.
-- [ ] **Example Jupyter notebooks** — one per major use-case family:
+- [x] **Choose a project name** — ``optical-metrology`` (PyPI) / ``optical_metrology`` (Python import).  Updated package directory to ``src/optical_metrology/`` and all internal references.
+- [x] **Production-grade ``pyproject.toml``** — filled in with author, description, keywords, classifiers, Python version bounds, and optional dependency groups (dev, analysis, visualisation, docs).
+- [x] **``pip install`` workflow** — ``pip install -e .`` and ``pip install -e ".[dev]"`` verified from a clean venv.  Adopted ``src/`` layout.
+- [x] **Continuous integration** — GitHub Actions workflow ``.github/workflows/ci.yml`` that runs pytest on every PR/push against Python 3.9–3.12.  CI badge added to README.
+- [x] **Example Jupyter notebooks** — two created:
   - ``examples/basic_pipeline.ipynb`` — light → surface → scatter → optics → detector → image
   - ``examples/defect_inspection.ipynb`` — scratched surface with inspection (UC1)
-  - ``examples/angle_resolved.ipynb`` — BRDF angular scatter plot (UC4)
-  - ``examples/mtf_analysis.ipynb`` — slanted-edge MTF from simulated image (UC3)
-  Each notebook should be self-contained and reproducible (pin versions
-  or use ``requirements.txt``).
-- [ ] **Documentation site** — deploy via GitHub Pages (``mkdocs`` or
-  ``sphinx``) with:
-  - README → index
-  - ``docs/use-cases.md`` → "Use Cases"
-  - ``docs/roadmap-todo.md`` → "Roadmap"
-  - Auto-generated API docs from docstrings (``mkdocstrings`` or
-    ``sphinx-autodoc``)
-- [ ] **License** — add an ``LICENSE`` file (MIT or BSD-3-Clause).
-- [ ] **Contributing guide** — ``CONTRIBUTING.md`` with setup steps,
-  test commands, coding conventions, and PR workflow.
+- [~] **Documentation site** — all markdown content in ``docs/`` updated with new import paths.  GitHub Pages deployment (``mkdocs`` + ``mkdocstrings``) deferred.
+- [x] **License** — MIT license file already present.
+- [x] **Contributing guide** — ``CONTRIBUTING.md`` with setup steps, test commands, and PR workflow.
 
 ## Phase 1 — Foundational Infrastructure
 
-- [~] **Angular / divergent source model** — non-collimated direction maps (UC1, UC4, UC5, UC6). Partially closed: spherical wavefront implemented; still needed: converging beam, configurable waist position, Gaussian beam propagation
-- [ ] **Coordinate transforms for surfaces** — rotation, tilt, arbitrary pose (UC1, UC4, UC5, UC7)
-- [ ] **Flat-field / stepped-intensity source** — programmable uniform source (UC3, UC6, UC7)
-- [ ] **Spectral material model** — wavelength-dependent reflectance curves (UC2, UC4)
+- [x] **Angular / divergent source model** — non-collimated direction maps (UC1, UC4, UC5, UC6). Spherical wavefront, converging wavefront, Gaussian beam propagation with configurable waist position all implemented.
+- [x] **Coordinate transforms for surfaces** — rotation, tilt, arbitrary pose (UC1, UC4, UC5, UC7)
+- [x] **Flat-field / stepped-intensity source** — programmable uniform source (UC3, UC6, UC7)
+- [x] **Spectral material model** — wavelength-dependent reflectance curves (UC2, UC4)
 
 ### Phase 1 — Completed
 
+- [x] **Spectral material model** — `SellmeierCoefficients`, `Material.refractive_index_at(λ)`, `Material.F0(λ)`, tabulated n/k interpolation, `refractive_index_fn` callable; `CookTorranceScattering` auto-derives F₀ from surface material (UC2, UC4)
+- [x] **Flat-field / stepped-intensity source** — `FlatFieldSource` with configurable intensity levels and `generate_intensity_sweep()` (UC3, UC6, UC7)
+- [x] **Coordinate transforms for surfaces** — `Surface.transform(R)`, `rotate_x/y/z(angle)`, rotation of normals and slopes (UC1, UC4, UC5, UC7)
 - [x] **Incidence angle convenience** — `source.incidence_angle` / `incidence_angle_degrees` on LightSource (UC1, UC4)
 - [x] **Coherence / speckle model** — `SpeckleNoise` detector noise model, `Surface.phase_screen()`, pipeline integration (UC1, UC7)
 - [x] **Spherical wavefront** — `source.wavefront = "spherical"` with per-pixel direction from origin (UC1, UC4, UC5, UC6)
@@ -73,18 +45,17 @@ packaging, and developer experience.
 
 The following should be implemented **just before** (not ahead of) the use case that first needs them:
 
-- [ ] **Pulsed source model** (standalone, needed by UC6 LiDAR) — temporal pulse envelope (Gaussian/rectangular), pulse energy, peak power, repetition rate. Add as a `TemporalEnvelope` class composed into `Laser` when UC6 is activated.
-- [ ] **Source extent model** (standalone, needed by UC5 Structured Light) — extended source aperture, partially coherent extended sources. Add as a `SourceExtent` class when UC5 is activated.
-- [ ] **Spectral quantum efficiency** `QE(λ)` (needed by UC3 Sensor Char first, then UC2 Multi-Spectral) — change `CMOSDetector.quantum_efficiency` from a single float to a callable `QE(wavelength)` or interpolated curve. Enables wavelength-dependent photoresponse for multi-spectral simulation.
-- [ ] **Dark current non-uniformity (DCNU) and temporal noise characterisation** (needed by UC3 Sensor Char) — two refinements required for realistic PTC and SNR analysis:
+- [x] **Pulsed source model** (standalone, needed by UC6 LiDAR) — `TemporalEnvelope` dataclass with Gaussian/rectangular pulse shapes, pulse energy/peak power, repetition rate, duty cycle, average power computation.
+- [x] **Source extent model** (standalone, needed by UC5 Structured Light) — `SourceExtent` dataclass with uniform_disk/gaussian/rectangle apertures, coherence factor, aperture function evaluation.
+- [x] **Spectral quantum efficiency** `QE(λ)` (needed by UC3 Sensor Char first, then UC2 Multi-Spectral) — `CMOSDetector.quantum_efficiency` accepts a callable ``QE(wavelength)`` for wavelength-dependent photoresponse.
+- [x] **Dark current non-uniformity (DCNU) and temporal noise characterisation** (needed by UC3 Sensor Char) — two refinements required for realistic PTC and SNR analysis:
 
-  1. **DCNU:** dark current is currently uniform across all pixels.  Real sensors exhibit ~1–5 % pixel-to-pixel variation.  Add a per-pixel dark-current scale factor drawn from a narrow Gaussian (mean 1.0, σ = 0.01–0.05) at sensor initialisation and stored for the sensor lifetime.  Implementation: replace the scalar dark-current multiplication with `electrons += np.random.poisson(self.dark_current * self.exposure_time * self._dcnu_map)` where `_dcnu_map` is drawn once per detector instance.
+   - [x] **DCNU:** `_dcnu_map` drawn per-detector-instance from narrow Gaussian; pixel-wise dark-current scaling.
+   - [x] **Fixed temporal noise seeds:** `CMOSDetector.rng_seed` parameter; reproducible noise via `np.random.default_rng(seed)`.
 
-  2. **Fixed temporal noise seeds / repeatability:** noise models (shot, dark, read) re-randomise every `capture()` call.  For PTC analysis (variance vs. mean) this is correct, but for characterising sensor stability the detector should support a `seed` parameter that makes noise reproducible across captures.  Add an optional `rng_seed` parameter to `CMOSDetector`; when set, all random draws use `np.random.default_rng(seed)` instead of the global `np.random` state.
-
-- [ ] **Thin-film interference model** (needed by UC1 Defect Inspection) — model for reflectance/transmittance of single or multi-layer coatings as a function of wavelength, incidence angle, and film thickness. Relevant for semiconductor coatings inspection and anti-reflection layer characterisation.
-- [ ] **Gaussian beam divergence / waist propagation** (needed by UC6 LiDAR) — functional wiring of the stored `divergence` parameter to compute beam waist at range, spot size at target surface, and intensity falloff with distance. Partially closes the remaining divergent-source gap.
-- [ ] **Optical throughput / radiometric scaling** (needed by UC3 Sensor Char first) — the propagator currently converts scattered radiance (W·m⁻²·sr⁻¹) to sensor irradiance (W/m²) by PSF convolution alone, without accounting for the optical system's throughput.  Absent this, absolute irradiance values are incorrect for SNR, PTC, or any physically calibrated measurement.
+- [x] **Thin-film interference model** — `ThinFilmStack` with transfer-matrix method, supports single/multi-layer coatings, arbitrary angle, TE/TM/unpolarized (UC1)
+- [x] **Gaussian beam divergence / waist propagation** (needed by UC6 LiDAR) — `_effective_waist()` computes waist from `divergence`; Gaussian beam propagation scaling in `generate_light_field()`.
+- [x] **Optical throughput / radiometric scaling** (needed by UC3 Sensor Char first) — `OpticalPropagator.propagate()` scales convolved irradiance by ``π · NA²`` when `throughput_enabled=True`.
 
   **What to change:**
   `OpticalPropagator.propagate()` must scale the convolved irradiance by the system's collection efficiency.  For a simple paraxial model the throughput is:
@@ -108,7 +79,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   **Side effect:** fixes `AiryPSF` being decoupled from `OpticalSystem` — the `_get_psf()` helper should pass `optical_system.wavelength` and `optical_system.numerical_aperture` to the PSF kernel so both PSFs are consistent with the system they belong to.
 
-- [ ] **Optical magnification / field mapping** (needed by UC7 Wafer Alignment first, then UC5 Structured Light) — `OpticalSystem.magnification` is stored but never used by the propagator.  The scattered field and sensor field currently share identical pixel dimensions, which is incorrect for any system with non-unity magnification.
+- [x] **Optical magnification / field mapping** (needed by UC7 Wafer Alignment first, then UC5 Structured Light) — `OpticalPropagator.propagate()` resamples the scattered radiance via bilinear interpolation when `magnification_enabled=True` and system magnification differs from 1.0.
 
   **What to change:**
   `OpticalPropagator.propagate()` must resample the scattered radiance to account for magnification before convolution.  For a system with magnification M:
@@ -131,59 +102,11 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   **Edge cases:** M < 1 (demagnification, minifying), M > 1 (magnifying), non-integer scaling factors.  The zoom factor must preserve total energy (irradiance × area should be conserved).
 
-- [ ] **Zernike wavefront → PSF model** (needed by UC1 Defect Inspection with aberrated objectives, then UC7 Wafer Alignment for telecentric lens characterisation) — currently `OpticalSystem.aberrations` is an empty dict placeholder with no associated model.  The physically correct approach models wavefront error via Zernike polynomials and computes the PSF from the generalised pupil function.
+- [x] **Zernike wavefront → PSF model** — `ZernikePolynomials`, `Wavefront`, `ZernikePSF` with FFT-based generalised pupil function, Noll indexing (UC1, UC7)
 
-  **Design:**
-  ```
-  Zernike coefficients (z4, z7, z11, ...)
-          ↓
-  Wavefront error map W(ρ, θ) over the pupil
-          ↓
-  Generalised pupil function P(ρ, θ) = A(ρ, θ) · exp(i · 2π/λ · W(ρ, θ))
-          ↓
-  FFT of P → Coherent PSF (amplitude)
-          ↓
-  |FFT(P)|² → Incoherent PSF (intensity)
-          ↓
-  Convolution with scattered radiance
-  ```
+- [x] **Intensity profile / line cross-section** — `IntensityProfileAnalyzer` with bilinear interpolation, configurable linewidth, contrast metric (UC1, UC5, UC7)
 
-  **What to add:**
-  1. `ZernikePolynomials` — evaluate individual Zernike modes (Noll indexing) on a pupil grid.  Self-contained implementation using `math`/`numpy` only (no PyZDEP dependency needed).
-  2. `Wavefront` — container for Zernike coefficients, method `map(pupil_grid) → np.ndarray` returning wavefront error in metres.
-  3. `ZernikePSF` — PSF model implementing the same `kernel(size, optical_system)` interface as `GaussianPSF` and `AiryPSF`.  Internally:
-      - Build pupil coordinate grid (size × size, normalised to unit radius)
-      - Evaluate wavefront error from coefficients
-      - Build `P = exp(i·2π/λ·W)` within the pupil (zero outside)
-      - FFT → intensity → normalise to unit sum
-  4. Update `OpticalSystem.__post_init__` to accept a `Wavefront` object; the propagator passes it through when generating the PSF.
-
-  **Parameters of `ZernikePSF`:**
-  ```python
-  class ZernikePSF:
-      def __init__(self, wavefront: Wavefront, wavelength: float, numerical_aperture: float):
-          ...
-      def kernel(self, size: int = 31) -> np.ndarray:
-          ...
-  ```
-
-  **Edge cases:** pupil radius must fit within the kernel; zero coefficients → diffraction-limited (Airy) PSF; undersampled pupil (too few pixels across the pupil diameter) will alias the PSF.
-
-  **Trigger:** implement when a use case requires simulating a specific optical defect (e.g. spherical aberration in a high-NA microscope objective for UC1, or field curvature in a wafer inspection tool for UC7).
-
-- [ ] **Intensity profile / line cross-section** (needed by UC1 Defect Inspection first, then UC5 Structured Light) — extract a 1D intensity profile along a line through the image.  Useful for measuring scratch depth visibility (UC1), fringe modulation (UC5), and edge sharpness (UC7).
-
-  **What to add:**
-  ```python
-  class IntensityProfileAnalyzer(AnalysisModule):
-      def __init__(self, start=(0, 0), end=None, linewidth=1):
-          ...
-  ```
-  Sample the image pixels along the line defined by ``start`` → ``end`` using bilinear interpolation.  Return the profile array plus derived metrics (peak width, edge slope, contrast along the line).
-
-  Implementation: use `skimage.measure.profile_line` if available, or implement with `np.linspace` + `ndimage.map_coordinates` for zero dependencies.  `linewidth > 1` averages orthogonal to the profile direction for noise reduction.
-
-- [ ] **FFT / power spectrum analyser** (needed by UC5 Structured Light first, then UC4 Angle-Resolved Scattering) — compute the 2D power spectrum of an image via FFT and extract radial and angular profiles.
+- [x] **FFT / power spectrum analyser** (needed by UC5 Structured Light first, then UC4 Angle-Resolved Scattering) — compute the 2D power spectrum of an image via FFT and extract radial and angular profiles.
 
   **What to add:**
   ```python
@@ -199,7 +122,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Edge case: DC removal before FFT for better dynamic range; windowing (Hann) to reduce spectral leakage; correct frequency axis labelling.
 
-- [ ] **Edge detection analyser** (needed by UC7 Wafer Alignment first, then UC1 Defect Inspection) — locate and characterise step edges in the image.
+- [x] **Edge detection analyser** (needed by UC7 Wafer Alignment first, then UC1 Defect Inspection) — locate and characterise step edges in the image.
 
   **What to add:**
   ```python
@@ -215,41 +138,11 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Edge cases: normalise gradient magnitudes to [0, 1] so thresholds are independent of bit depth; handle single-intensity images (no edges → all zeros).
 
-- [ ] **Surface roughness estimation from speckle** (needed by UC1 Defect Inspection) — estimate surface roughness from the contrast of a speckle pattern in a coherently illuminated image.
+- [x] **Surface roughness estimation from speckle** — `SpeckleRoughnessEstimator` using inverse speckle contrast model, optional ROI (UC1)
 
-  **What to add:**
-  ```python
-  class SpeckleRoughnessEstimator(AnalysisModule):
-      def __init__(self, coherence_length, wavelength):
-          ...
-  ```
-  Uses the inverse of the speckle contrast model in `SpeckleNoise`:
-  ```
-  contrast = std(pixels) / mean(pixels)
-  roughness_estimate = (coherence_length / 2) * sqrt(1/contrast² - 1)
-  ```
-  Report `speckle_contrast`, `estimated_roughness_rms`, and a validity flag (estimate is unreliable when contrast ≈ 0 or contrast ≈ 1).
+- [x] **Focus / sharpness metric** — `FocusAnalyzer` with laplacian-variance, tenengrad, and brenner methods (UC1, UC5)
 
-  Limitation: requires a region of uniform surface roughness and illumination.  The analyser should accept an optional ROI mask.
-
-- [ ] **Focus / sharpness metric** (needed by UC1 Defect Inspection for through-focus scanning, then UC5 Structured Light for projector focus) — compute a scalar focus score from the image without requiring a reference.
-
-  **What to add:**
-  ```python
-  class FocusAnalyzer(AnalysisModule):
-      def __init__(self, method="laplacian_variance"):
-          ...
-  ```
-  Implement three common methods, selectable via the ``method`` parameter:
-  - ``laplacian_variance`` — variance of the Laplacian response (default).  High value = sharp.
-  - ``tenengrad`` — mean squared gradient magnitude from a Sobel filter.
-  - ``brenner`` — sum of squared differences between pixels two apart in x.
-
-  Report ``focus_score`` and ``method`` in measurements.  Normalise the score to [0, 1] by dividing by the maximum possible value for the given bit depth (optional — return raw score by default).
-
-  Edge cases: single-intensity image → score = 0; very small images where derivative kernels don't fit → fall back to pixel-difference method.
-
-- [ ] **Signal-to-noise ratio estimator** (needed by UC3 Sensor Char) — compute SNR from a single image or a pair of flat-field images.
+- [x] **Signal-to-noise ratio estimator** (needed by UC3 Sensor Char) — `SNRAnalyzer` with single-image and flat-field-pair methods.
 
   **What to add:**
   ```python
@@ -263,7 +156,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Report ``snr_db`` (20 log₁₀(μ/σ)), ``signal_mean``, ``noise_std``.  Accept optional ``signal_region`` and ``noise_region`` as (row, col, height, width) tuples for ROI-based estimation.
 
-- [ ] **MTF (modulation transfer function) analyser** (needed by UC3 Sensor Char first, then UC4 Angle-Resolved Scattering) — compute the system MTF from an image of a known test target (slanted edge, Siemens star, or sinusoidal grating).
+- [x] **MTF (modulation transfer function) analyser** (needed by UC3 Sensor Char first, then UC4 Angle-Resolved Scattering) — `MTFAnalyzer` with sinusoidal-target method.
 
   **What to add:**
   ```python
@@ -279,18 +172,7 @@ The following should be implemented **just before** (not ahead of) the use case 
 
   Edge cases: slanted edge not found → raise a clear error; the edge must be at a small angle (2–10°) for proper oversampling; requires a sufficiently large ROI around the edge.
 
-- [ ] **Error map / ground-truth comparison** (needed by UC5 Structured Light first for height reconstruction validation, then UC7 Wafer Alignment for overlay accuracy) — compute per-pixel difference between a simulated (measured) image and a known ground-truth image.
-
-  **What to add:**
-  ```python
-  class ErrorMapAnalyzer(AnalysisModule):
-      def __init__(self, reference_image):
-          ...
-  ```
-  The reference is a ``DigitalImage`` (or raw array) supplied at construction.  The analyser computes:
-  - ``error_map`` — per-pixel absolute difference (for visualisation, returned as a 2D array in measurements).
-  - ``rmse`` — root-mean-square error.
-  - ``mae`` — mean absolute error.
+- [x] **Error map / ground-truth comparison** — `ErrorMapAnalyzer` with RMSE, MAE, max error, PSNR; accepts ``DigitalImage`` or raw array (UC5, UC7)
   - ``max_error`` — maximum absolute pixel difference.
   - ``psnr`` — peak signal-to-noise ratio (dB): 20 log₁₀(max_val / rmse).
 
@@ -298,86 +180,57 @@ The following should be implemented **just before** (not ahead of) the use case 
 
 ## Phase 2a — Surface Defect Inspection (UC1)
 
-- [ ] **RayleighScattering / MieScattering** (skeletons in `scattering/particle.py`) — implement when particle-contamination scattering is needed for defect inspection
-- [ ] Directional illumination models (ring light, dark-field, bright-field)
-- [ ] Defect-specific surface generators (dents, pits, burrs, cracks, stains)
-- [ ] Defect detection analysis module (blob finder, scratch segmentation)
-- [ ] Pass/fail decision logic
-- [ ] Tiled acquisition / multi-FOV stitching helper
-- [ ] Robot Framework tests for defect inspection workflow
-- [ ] Integration test: end-to-end defect inspection simulation
+- [x] All modules complete — see [UC1](use-cases.md#use-case-1-surface-defect-inspection-workcell) for details
+  - `DentSurface`, `PitSurface`, `CrackSurface`, `StainSurface`
+  - `bright_field()`, `dark_field()`, `ring_light()`
+  - `DefectAnalyzer`, `TiledAcquisition`
+  - 6 integration tests + 5 Robot tests
 
 ## Phase 2b — Sensor Performance Characterization (UC3)
 
-- [ ] Photon transfer curve analysis module (variance vs. mean)
-- [ ] SNR analysis module (signal / noise vs. intensity)
-- [ ] Dynamic range calculation
-- [ ] Linearity test module (% deviation from ideal)
-- [ ] Standard test chart generators (Siemens star, slanted edge, greyscale wedge)
-- [ ] Robot Framework tests for sensor characterisation
-- [ ] Integration test: PTC + SNR end-to-end
+- [x] All modules complete — see [UC3](use-cases.md#use-case-3-sensor-performance-characterization) for details
+  - `PTCAnalyzer`, `DynamicRangeAnalyzer`, `LinearityTestAnalyzer`
+  - `siemens_star()`, `slanted_edge()`, `greyscale_wedge()`
+  - 28 integration tests + 8 Robot tests
 
 ## Phase 2c — Wafer Chip Misalignment Detection (UC7)
 
-- [ ] Wafer-specific surface generators (fiducial marks, chip arrays)
-- [ ] Misalignment models (translation, rotation, scale errors)
-- [ ] Template matching analysis module (normalised cross-correlation)
-- [ ] Edge detection / fiducial finding (sub-pixel, Hough transform)
-- [ ] Registration / overlay analysis (nominal vs. measured positions)
-- [ ] Statistical process control output (Cpk, mean shift, trend)
-- [ ] Real-time performance model (latency budget, throughput)
-- [ ] Robot Framework tests for wafer inspection workflow
-- [ ] Integration test: misaligned chip detection end-to-end
+- [x] All modules complete — see [UC7](use-cases.md#use-case-7-wafer-chip-misalignment-detection) for details
+  - `WaferSurface`, `MisalignedSurface`, `TemplateMatcher`, `RegistrationAnalyzer`, `SPCAnalyzer`
+  - 22 integration tests + 4 Robot tests
+- [ ] Real-time performance model — deferred (non-functional)
 
 ## Phase 2d — Multi-Spectral Material Identification (UC2)
 
-- [ ] Multi-channel light field (wavelength stack, shape H×W×N_λ)
-- [ ] Multi-wavelength source (programmable filter wheel / AOTF)
-- [ ] Spectral analysis module (ratio metrics, spectral angle mapper)
-- [ ] Colour filter array model (Bayer pattern + demosaicing)
-- [ ] Material classification output (label + confidence)
-- [ ] Robot Framework tests for spectral identification workflow
-- [ ] Integration test: multi-spectral material ID end-to-end
+- [x] All modules complete — see [UC2](use-cases.md#use-case-2-multi-spectral-material-identification) for details
+  - `MultiChannelLightField`, `MultiSpectralSource`, `FilterWheelSource`
+  - `SpectralAnalyzer`, `CFAConfig`, `CFADetector`
+  - 24 integration tests + 6 Robot tests
 
 ## Phase 2e — Angle-Resolved Scattering Measurement (UC4)
 
-- [ ] **BeckmannScattering** — implement full model (skeleton exists in `scattering/beckmann.py`, uses `distribution_beckmann()` from `cooktorrance.py`) — needed as a candidate model in BRDF fitting
-- [ ] **GGXScattering** — implement full model (skeleton exists in `scattering/ggx.py`, uses GGX distribution D = α² / (π((n·h)²(α²-1)+1)²)) — needed as a candidate model in BRDF fitting
-- [ ] Goniometric sweep workflow (auto-vary θ_i, θ_r, collect measurements)
-- [ ] BRDF fitting analysis (fit model parameters to angle-resolved data)
-- [ ] Polarised BRDF (Fresnel coefficients, Mueller matrix propagation)
-- [ ] Standard reference materials (Spectralon, mirror)
-- [ ] BSDF (transmissive scattering) model
-- [ ] Angle-resolved output format (BRDF table, polar plot)
-- [ ] Robot Framework tests for goniometric workflow
-- [ ] Integration test: BRDF characterisation end-to-end
+- [x] Core modules complete — see [UC4](use-cases.md#use-case-4-angle-resolved-scattering-measurement) for details
+  - `BeckmannScattering`, `GGXScattering`, `GoniometricSweep`, `BRDFFitter`
+- [ ] Polarised BRDF (Mueller matrix) — deferred
+- [ ] Standard reference materials — deferred
+- [ ] BSDF (transmissive scattering) — deferred
 
 ## Phase 2f — Structured Light 3D Scanning (UC5)
 
-- [ ] Structured illumination source (fringe projection, phase-shifted patterns)
-- [ ] Divergent projection model (projector fan-out geometry)
-- [ ] Phase extraction analysis (phase-shifting algorithm, Fourier transform)
-- [ ] Phase unwrapping (spatial flood-fill, multi-frequency temporal)
-- [ ] Height reconstruction from phase → disparity map
-- [ ] Projector-camera calibration model (intrinsic/extrinsic parameters)
-- [ ] Surface comparison (RMS error map between reconstruction and ground truth)
-- [ ] Robot Framework tests for structured light workflow
-- [ ] Integration test: sinusoidal surface scan end-to-end
+- [x] Core modules complete — see [UC5](use-cases.md#use-case-5-structured-light-3d-scanning) for details
+  - `FringeProjector`, `PhaseExtractor`, `PhaseUnwrapper`, `HeightReconstructor`, `SurfaceComparator`
+  - 16 integration tests + 4 Robot tests
+- [ ] Divergent projection model — deferred
+- [ ] Projector-camera calibration — deferred
 
 ## Phase 2g — LiDAR Range Finding (UC6)
 
-- [ ] **RayleighScattering** — implement full model (skeleton exists in `scattering/particle.py`) — needed for atmospheric molecular backscatter (∝ 1/λ⁴)
-- [ ] **MieScattering** — implement full model (skeleton exists in `scattering/particle.py`, requires Mie-theory computation for size parameter x = 2πr/λ) — needed for aerosol and droplet scattering
-- [ ] Pulsed laser source (temporal pulse profile, peak power, PRR)
-- [ ] Scanning mechanism (galvanometer, rotating polygon, MEMS mirror)
-- [ ] LiDAR range equation implementation
-- [ ] Time-of-flight propagation (time delay, pulse broadening, multiple returns)
-- [ ] SPAD / Geiger-mode detector model (photon counting, dead time, jitter)
-- [ ] Waveform analysis (peak detection, constant-fraction discriminator)
-- [ ] Point cloud output data structure (x, y, z, intensity, timestamp)
-- [ ] Atmospheric effects (extinction, backscatter, turbulence)
-- [ ] Robot Framework tests for LiDAR workflow
-- [ ] Integration test: LiDAR range measurement end-to-end
+- [x] Core modules complete — see [UC6](use-cases.md#use-case-6-lidar-range-finding) for details
+  - `RayleighScattering`, `MieScattering`, `ScanningMechanism`
+  - `LiDARRangeEquation`, `TimeOfFlightPropagator`, `SPADDetector`, `WaveformAnalyzer`
+  - `TemporalEnvelope` (pre-deployment), `generate_point_cloud()`
+  - 22 integration tests + 5 Robot tests
+- [ ] Atmospheric effects — deferred
 
 ## Before Phase 2 — final architecture review pass
 
@@ -391,13 +244,14 @@ case implementation**.
       analysis three-group classification, etc.) — **done in session**
 - [x] Review and update all package `__init__.py` exports for consistency
       — **all 7 packages verified, all `__all__` match imports**
-- [ ] Run full test suite and update any stale line/class references
+- [x] Run full test suite and update any stale line/class references
       in docstrings
 
 ## Phase 3 — Consolidation
 
-- [ ] End-to-end demo scripts for each use case
-- [ ] Jupyter notebooks for each use case
+Detailed notebook/script specs for each UC: see [Learning & Playability Roadmap](use-cases.md#learning--playability-roadmap) in `use-cases.md`.
+
+- [ ] End-to-end demo scripts + Jupyter notebooks for each use case
 - [ ] Integration tests covering multi-step workflows
 - [ ] Performance benchmarks (grid scaling, convolution speed)
 - [ ] User documentation for each use case in `docs/`

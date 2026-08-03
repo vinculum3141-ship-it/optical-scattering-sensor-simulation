@@ -1,6 +1,6 @@
 import numpy as np
 
-from surface import FlatSurface, Material, ParticleSurface, RoughSurface, ScratchedSurface, Surface
+from optical_metrology.surface import FlatSurface, Material, ParticleSurface, RoughSurface, ScratchedSurface, Surface
 
 
 def test_flat_surface_has_zero_height_and_zero_derived_geometry():
