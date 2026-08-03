@@ -63,9 +63,12 @@ class MultiSpectralLibrary:
             label = str(args[idx])
             idx += 1
             values = []
-            while idx < len(args) and not isinstance(args[idx], str):
-                values.append(float(args[idx]))
-                idx += 1
+            while idx < len(args):
+                try:
+                    values.append(float(args[idx]))
+                    idx += 1
+                except (ValueError, TypeError):
+                    break
             refs.append(ReferenceSpectrum(label, np.array(values)))
         self._analyzer = SpectralAnalyzer(reference_library=refs)
         return self._analyzer
@@ -76,7 +79,10 @@ class MultiSpectralLibrary:
 
     def generate_light_field(self, height, width, spacing=1.0):
         shape = (int(height), int(width))
-        self._field = self._source.generate_light_field(shape=shape, spacing=float(spacing))
+        if isinstance(self._source, FilterWheelSource):
+            self._field = self._source.generate_all(shape=shape, spacing=float(spacing))
+        else:
+            self._field = self._source.generate_light_field(shape=shape, spacing=float(spacing))
         return self._field
 
     def number_of_channels_should_be(self, expected):
@@ -97,8 +103,12 @@ class MultiSpectralLibrary:
         """Flattened data values as H*W*N array, then reshape."""
         data = np.array([float(v) for v in data_values])
         n = self._analyzer.reference_library[0].values.shape[0] if self._analyzer.reference_library else 1
-        size = int(np.sqrt(len(data) // n))
-        data = data.reshape(size, size, n)
+        n_pixels = len(data) // n
+        size = int(np.sqrt(n_pixels))
+        if size * size == n_pixels:
+            data = data.reshape(size, size, n)
+        else:
+            data = data.reshape(1, n_pixels, n)
         self._labels, self._confidence = self._analyzer.classify(data)
 
     def classification_labels_should_be(self, *expected):

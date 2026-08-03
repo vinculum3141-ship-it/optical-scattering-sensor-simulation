@@ -8,6 +8,7 @@ from optical_metrology.scattering import (
     OrenNayarScattering,
     PhongScattering,
     CookTorranceScattering,
+    ScatteredField,
 )
 from optical_metrology.surface import Material, Surface
 

@@ -6,7 +6,7 @@ Library             MultiSpectralLibrary.py
 Multi-Spectral Source Generates Correct Channels
     [Documentation]    A MultiSpectralSource with 3 channels produces
     ...                a 3-channel light field with correct wavelengths.
-    Create Multi-Spectral Source    450e-9    1.0    550e-9    2.0    650e-9    3.0
+    Create Multispectral Source    450e-9    1.0    550e-9    2.0    650e-9    3.0
     Generate Light Field    height=4    width=4
     Number Of Channels Should Be    3
     Intensities At Channel Should Be    channel=0    expected_val=1.0
