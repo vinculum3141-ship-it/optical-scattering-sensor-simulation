@@ -30,6 +30,7 @@ Each section calls out which audience it primarily addresses.
 | [Use Case 5 — Structured-Light / Triangulation](use-case-uc5-structured-light.md) | Both | Fringe projection, phase extraction, unwrapping, and height reconstruction |
 | [Use Case 6 — LiDAR / Ranging](use-case-uc6-lidar.md) | Both | Range equation, time-of-flight, waveform analysis, and point clouds |
 | [Use Case 7 — Wafer Alignment / Registration](use-case-uc7-wafer-alignment.md) | Both | Template matching, registration, and SPC-style alignment metrics |
+| [Use Case 7 Capstone — ASML-Style Wafer Defect Inspection](use-case-uc7-asml-capstone.md) | Both | Coherent speckle, roughness, defect detection, and SNR optimization |
 | [Architecture](architecture.md) | Engineers | Package structure, design patterns, data flow |
 | [Physics Foundations](physics-foundations.md) | Scientists | Governing equations, units, assumptions |
 | [Illumination Layer](layer-illumination.md) | Both | Source models, beam profiles, spectra |
