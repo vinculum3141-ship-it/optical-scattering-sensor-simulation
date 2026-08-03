@@ -6,6 +6,26 @@
 
 ---
 
+## Recommended next sprint todo list
+
+These are the highest-value items to turn the existing implementation into
+useful, end-to-end use-case demonstrations.
+
+1. [ ] Complete one end-to-end notebook and one runnable script for each use case (UC1–UC7).
+2. [ ] Add concise user-facing documentation pages for each use case, including workflow, expected inputs/outputs, and example commands.
+3. [ ] Define a reusable notebook authoring checklist for all use-case notebooks: setup instructions, editable parameter cells, inline comments, intermediate plots, and a “try next” section.
+4. [ ] For each notebook, make the analysis story explicit: state the primary analysis module, why it matters, and how the user can change the inputs to see the result shift.
+5. [ ] Finish the highest-impact missing capabilities for the most useful workflows:
+   - [ ] UC4: polarized BRDF support, reference materials, and BSDF support.
+   - [ ] UC5: projector-camera calibration and a more realistic divergent projection model.
+   - [ ] UC6: atmospheric effects and long-range lidar realism.
+   - [ ] UC7: a lightweight real-time performance model for alignment assessment.
+4. [ ] Add integration tests that exercise full multi-step workflows end to end for each use case.
+5. [ ] Add simple performance benchmarks for image size scaling, convolution cost, and reconstruction runtime.
+6. [ ] Review and simplify public APIs so each use case can be executed with a small, documented example rather than custom glue code.
+
+---
+
 ## Phase 0 — Framework Finalisation
 
 Turn the codebase into a proper installable scientific Python framework

@@ -85,8 +85,9 @@ class GoniometricSweep(AnalysisModule):
     def sweep(self, model, lightfield, surface, view_direction_base) -> List[GoniometricMeasurement]:
         """Run the sweep and return raw measurements."""
         measurements = []
+        base_field = _prepare_lightfield(lightfield, surface)
         for theta_i in self.theta_i_vals:
-            src = _rotate_source(lightfield, theta_i)
+            src = _rotate_source(base_field, theta_i)
             for theta_r in self.theta_r_vals:
                 for phi in self.phi_vals:
                     vd = _rotate_view(view_direction_base, theta_r, phi)
@@ -103,6 +104,13 @@ class GoniometricSweep(AnalysisModule):
                         )
                     )
         return measurements
+
+
+def _prepare_lightfield(lightfield, surface) -> object:
+    if hasattr(lightfield, "generate_light_field"):
+        shape = getattr(surface, "shape", (16, 16))
+        return lightfield.generate_light_field(shape=shape, spacing=1.0)
+    return lightfield
 
 
 def _rotate_source(lightfield, theta_i: float) -> object:
