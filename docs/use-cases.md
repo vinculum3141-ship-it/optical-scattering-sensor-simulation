@@ -81,7 +81,8 @@ Configure illumination (ring light / dark-field / bright-field)
 ### Status
 
 ✅ **Phase 2 complete** — `DentSurface`, `PitSurface`, `CrackSurface`, `StainSurface`; directional factory functions (`bright_field`, `dark_field`, `ring_light`); `DefectAnalyzer` (CCA blob/scratch + pass/fail); `TiledAcquisition`. 6 integration tests + 5 Robot tests pass.
-👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc1--surface-defect-inspection))
+✅ **Phase 3 starter artifacts added** — runnable UC1 example at `examples/run_uc1_inspection.py` and interactive notebook at `examples/uc1_defect_inspection_playground.ipynb`.
+👉 **Next:** Extend the UC1 notebook and docs with more comparative illumination studies and richer analysis output.
 
 ---
 
@@ -186,7 +187,8 @@ Configure detector under test
 ### Status
 
 ✅ **Phase 2 complete** — `PTCAnalyzer`, `DynamicRangeAnalyzer`, `LinearityTestAnalyzer`; `siemens_star()`, `slanted_edge()`, `greyscale_wedge()`. 28 integration tests + 8 Robot tests pass.
-👉 **Next:** Phase 3 notebook + CLI script (see [Learning & Playability Roadmap](#uc3--sensor-performance-characterisation))
+✅ **Phase 3 starter artifacts added** — runnable UC3 example at `examples/run_uc3_sensor_characterization.py` with a corresponding documentation page.
+👉 **Next:** Add a notebook for UC3 so the flat-field sweep can be explored interactively.
 
 ---
 
@@ -527,40 +529,81 @@ Python scripts** that use ``optical_metrology`` as an **imported library**
   inspection of a scratched wafer.  Let the user toggle defect type
   (dent, pit, crack, stain), illumination geometry, and threshold to
   see pass/fail flip in real time.
+- **Analysis needed:** `DefectAnalyzer` for defect detection and pass/fail
+  classification; `ContrastAnalyzer` / `HistogramAnalyzer` to show how
+  defect visibility changes with illumination; optionally
+  `SpeckleRoughnessEstimator` or `FocusAnalyzer` for realistic noise and
+  sharpness sensitivity.
+- **Why it matters:** The notebook should make it obvious that the analysis
+  is not just "looking at an image"—it is converting a raw optical signal
+  into a decision metric for process control.
 - **Script:** ``python -m examples.run_uc1_inspection --defect scratch --illumination darkfield``
 - **Interactive:** Sliders for scratch depth, incidence angle, detector
-  noise level.
+  noise level, and defect threshold.
 
 ### UC2 — Multi-Spectral Material ID
 - **Notebook:** Load a multi-spectral light field, sweep wavelengths,
   compute SAM per pixel, classify materials.  Let the user add reference
   spectra and see classification confidence maps update.
+- **Analysis needed:** `SpectralAnalyzer` for band ratios, spectral angle
+  mapping, and classification; optionally `ContrastAnalyzer` to show how
+  wavelength contrast changes between materials.
+- **Why it matters:** The notebook should explain that spectral analysis is
+  the core measurement: material identity is inferred from a vector of
+  reflectance values, not from a single grayscale image.
 - **Script:** ``python -m examples.run_uc2_material_id --materials silicon,sio2,al``
-- **Interactive:** Click on the image to add a reference spectrum.
+- **Interactive:** Click on the image to add a reference spectrum and tune
+  the wavelength set or threshold for classification.
 
 ### UC3 — Sensor Characterisation
 - **Notebook:** Generate flat-field images at increasing exposures,
   compute PTC, fit gain, plot variance vs. mean.  Show dynamic range
   and linearity error as adjustable exposure sweeps run.
+- **Analysis needed:** `PTCAnalyzer` for gain and read-noise estimation,
+  `DynamicRangeAnalyzer` for usable signal range, `LinearityTestAnalyzer`
+  for non-linearity, and `SNRAnalyzer` for noise performance.
+- **Why it matters:** The notebook should connect sensor physics to engineering
+  metrics such as full-well capacity, dynamic range, and noise floor so the
+  user sees how imaging performance changes with exposure and detector settings.
 - **Script:** ``python -m examples.run_uc3_sensor_char --exposure-range 1e-6 1e-3 --steps 20``
-- **Interactive:** Slider for exposure time updates PTC plot live.
+- **Interactive:** Slider for exposure time updates the PTC, SNR, and
+  linearity plots live.
 
 ### UC4 — Angle-Resolved Scattering
 - **Notebook:** Sweep incidence / reflection angles, collect BRDF
   table, fit Beckmann vs. GGX models, compare goodness-of-fit.
+- **Analysis needed:** `GoniometricSweep` to collect angle-resolved data and
+  `BRDFFitter` to compare models against the measured scatter response.
+- **Why it matters:** The notebook should show that the analysis is extracting
+  a physically meaningful BRDF from raw scattering data, which is what makes
+  the simulation useful for material characterisation and coating modelling.
 - **Script:** ``python -m examples.run_uc4_brdf --model beckmann --roughness 0.15``
-- **Interactive:** 2D polar plot of BRDF that updates as roughness changes.
+- **Interactive:** 2D polar plot of BRDF that updates as roughness, angle,
+  and wavelength change.
 
 ### UC5 — Structured Light 3D Scanning
 - **Notebook:** Project fringe patterns onto a sinusoidal surface,
   extract phase, unwrap, reconstruct height, compare to ground truth.
+- **Analysis needed:** `PhaseExtractor` and `PhaseUnwrapper` for fringe
+  decoding, `HeightReconstructor` for converting phase to height, and
+  `SurfaceComparator` / `ErrorMapAnalyzer` for comparing the reconstruction
+  to the known surface.
+- **Why it matters:** The notebook should make the analysis chain explicit:
+  pattern deformation is first converted into phase, then into geometry, and
+  finally into an error metric for metrology quality.
 - **Script:** ``python -m examples.run_uc5_structured_light --period 16 --phase-shifts 4``
 - **Interactive:** Animate fringe projection and show phase map, height map,
-  error map side-by-side.
+  and error map side-by-side while the user changes period or phase shift.
 
 ### UC6 — LiDAR Range Finding
 - **Notebook:** Simulate a LiDAR pulse, propagate to target at 50 m,
   detect return with SPAD, compute ToF, convert to point cloud.
+- **Analysis needed:** `LiDARRangeEquation` for received power estimation,
+  `TimeOfFlightPropagator` for range and pulse broadening, and
+  `WaveformAnalyzer` for peak detection and timing.
+- **Why it matters:** The notebook should make it clear that the measurement is
+  not just a distance value—it is derived from a waveform, and the user can
+  explore how target range, reflectance, and noise influence the return.
 - **Script:** ``python -m examples.run_uc6_lidar --range 50 --aerosol-density 1e5``
 - **Interactive:** Drag the target distance slider and see received
   power, ToF histogram, and point cloud update in real time.
@@ -568,12 +611,28 @@ Python scripts** that use ``optical_metrology`` as an **imported library**
 ### UC7 — Wafer Alignment
 - **Notebook:** Create a wafer with fiducial marks, apply misalignment,
   run template matching, measure dx/dy/rotation, compute Cpk.
+- **Analysis needed:** `TemplateMatcher` and `RegistrationAnalyzer` for
+  alignment estimation, `EdgeDetectionAnalyzer` for fiducial localisation,
+  and `SPCAnalyzer` for process capability summarisation.
+- **Why it matters:** The notebook should show that alignment quality is a
+  metrology result derived from image registration and statistical process
+  monitoring, not just a visual overlay.
 - **Script:** ``python -m examples.run_uc7_alignment --dx 3 --dy -1 --rotation 0.5``
-- **Interactive:** Drag misalignment sliders and watch the overlay
-  error heatmap update.
+- **Interactive:** Drag misalignment sliders and watch the overlay,
+  registration error, and SPC metrics update together.
 
 ### Deliverable Format
 Each use case ships three things:
+
+For every notebook, the user-facing walkthrough should clearly answer three
+questions in order:
+
+1. **What is being measured?** — identify the primary analysis module and the
+   physical quantity it extracts.
+2. **Why does it matter?** — connect the measurement to a real engineering
+   decision such as pass/fail, material identification, or process control.
+3. **How can the user change it?** — expose editable parameters so the user
+   can see how the result responds in real time.
 
 | Artifact | Description |
 |----------|-------------|
@@ -583,6 +642,21 @@ Each use case ships three things:
 
 The notebooks should be **self-contained** — they install nothing beyond
 ``pip install -e .`` in the venv, import ``optical_metrology``, and work.
+To make them genuinely playable, every notebook should follow a clear
+interactive structure:
+
+- A short **“How to use this notebook”** markdown cell at the top explaining
+  the goal, the knobs the user can change, and the expected runtime.
+- A dedicated **editable parameters** cell near the top with clearly named
+  variables for illumination, geometry, detector settings, material choice,
+  noise level, and analysis thresholds.
+- Inline comments and short markdown callouts beside the code explaining what
+  each section is doing and why a parameter matters.
+- Small intermediate plots or summaries after each major step so the user can
+  compare options quickly without re-running the whole notebook.
+- A final **“Try next”** section suggesting one-parameter-at-a-time changes
+  that reveal the effect of the configuration.
+
 Widget sliders (``ipywidgets``) are preferred for interactivity; if that
 adds a dependency, use ``¶``-driven code cells the user can re-run with
 different parameters.

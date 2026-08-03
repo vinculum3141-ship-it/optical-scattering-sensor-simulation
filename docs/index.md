@@ -23,6 +23,14 @@ Each section calls out which audience it primarily addresses.
 | Section | Audience | What it covers |
 |---|---|---|
 | [Quickstart](quickstart.md) | Both | Install, run demos, first simulation |
+| [Use Case 1 — Defect Inspection](use-case-uc1-defect-inspection.md) | Both | End-to-end AOI workflow, notebook, and CLI example |
+| [Use Case 2 — Multispectral Material Classification](use-case-uc2-multispectral-classification.md) | Both | Spectral signatures, band-ratio metrics, and simple classification |
+| [Use Case 3 — Sensor Characterization](use-case-uc3-sensor-characterization.md) | Both | Flat-field sweep, PTC, dynamic range, and linearity workflow |
+| [Use Case 4 — Angle-Resolved Scattering](use-case-uc4-brdf-sweep.md) | Both | BRDF sweep, angle-resolved measurements, and simple fitting |
+| [Use Case 5 — Structured-Light / Triangulation](use-case-uc5-structured-light.md) | Both | Fringe projection, phase extraction, unwrapping, and height reconstruction |
+| [Use Case 6 — LiDAR / Ranging](use-case-uc6-lidar.md) | Both | Range equation, time-of-flight, waveform analysis, and point clouds |
+| [Use Case 7 — Wafer Alignment / Registration](use-case-uc7-wafer-alignment.md) | Both | Template matching, registration, and SPC-style alignment metrics |
+| [Use Case 7 Capstone — ASML-Style Wafer Defect Inspection](use-case-uc7-asml-capstone.md) | Both | Coherent speckle, roughness, defect detection, and SNR optimization |
 | [Architecture](architecture.md) | Engineers | Package structure, design patterns, data flow |
 | [Physics Foundations](physics-foundations.md) | Scientists | Governing equations, units, assumptions |
 | [Illumination Layer](layer-illumination.md) | Both | Source models, beam profiles, spectra |
