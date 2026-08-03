@@ -205,6 +205,8 @@ package and serve as interactive demos/exploration tools:
 |----------|---------------|
 | `examples/basic_pipeline.ipynb` | Light → surface → scatter → optics → detector → analysis |
 | `examples/defect_inspection.ipynb` | Scratched surface inspection (UC1 preview) |
+| `examples/uc2_multispectral_classification_playground.ipynb` | Multispectral material classification (UC2) |
+| `examples/uc7_wafer_alignment_playground.ipynb` | Wafer alignment / registration (UC7) |
 | `pipeline.ipynb` | Root-level notebook with inline matplotlib plots |
 
 ---
