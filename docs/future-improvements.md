@@ -5,7 +5,8 @@
 > you pick an item up, implement it on a branch.
 >
 > Completed work is not tracked here — see the layer docs,
-> `docs/architecture.md`, and the test suite in `docs/testing.md`.
+> `docs/engineering/architecture.md`, and the test suite in
+> `docs/quality-assurance/testing.md`.
 
 ---
 
@@ -13,7 +14,7 @@
 
 No benchmark harness exists yet.  The manual O(H·W·K²) sliding-window
 convolution in `OpticalPropagator` is the known hot spot; the FFT-based
-replacement is called out in the code and `docs/layer-optics.md`.
+replacement is called out in the code and `docs/science/layer-optics.md`.
 
 - [ ] Image-size scaling benchmark (propagation / detection / analysis
       throughput as grid size grows)
@@ -41,12 +42,14 @@ replacement is called out in the code and `docs/layer-optics.md`.
 - [ ] **UC7 — Real-time performance model.** Lightweight, non-functional
       model for alignment assessment during wafer processing.
 
-## 3. Documentation Site
+## 3. Interactive Notebook Widgets
 
-All `docs/` content is written; only the site build is missing.
+The tutorial notebooks are static code cells today.  Add Jupyter
+`ipywidgets` sliders/toggles for live parameter exploration (source
+angles, defocus, defect size, sweep ranges) to support self-paced
+training and onboarding.
 
-- [ ] Create `mkdocs.yml` (with `mkdocstrings[python]`) and deploy to
-      GitHub Pages.
+- [ ] Add `ipywidgets` interactivity to tutorial notebooks.
 
 ---
 

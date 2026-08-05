@@ -1,0 +1,84 @@
+site_name: Optical Metrology Simulation Framework
+site_description: Physics-based simulation of optical sensors — illumination, scattering, optics, detection, and analysis
+repo_url: https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation
+site_author: vinculum3141
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: false
+            members_order: source
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Quickstart: getting-started/quickstart.md
+      - Training Modules:
+          - Overview: getting-started/training/index.md
+          - Module 1 — First Pipeline: getting-started/training/module-1-first-pipeline.md
+          - Module 2 — The Six Layers: getting-started/training/module-2-the-six-layers.md
+          - Module 3 — Running the Example Projects: getting-started/training/module-3-running-the-examples.md
+          - Module 4 — Building Your Own Simulation: getting-started/training/module-4-building-your-own-simulation.md
+  - Use Cases:
+      - Overview: use-cases/index.md
+      - UC1 — Surface Defect Inspection: use-cases/uc1-surface-defect-inspection.md
+      - UC2 — Multi-Spectral Material Identification: use-cases/uc2-multispectral-identification.md
+      - UC3 — Sensor Performance Characterization: use-cases/uc3-sensor-characterization.md
+      - UC4 — Angle-Resolved Scattering Measurement: use-cases/uc4-angle-resolved-scattering.md
+      - UC5 — Structured Light 3D Scanning: use-cases/uc5-structured-light-3d.md
+      - UC6 — LiDAR Range Finding: use-cases/uc6-lidar-ranging.md
+      - "UC7 — Wafer Metrology: Die Alignment": use-cases/uc7-alignment.md
+      - "UC7 — Wafer Metrology: ASML-Style Defect Capstone": use-cases/uc7-defect-capstone.md
+  - Science:
+      - Layer Reference: science/index.md
+      - Physics Foundations: science/physics-foundations.md
+      - Illumination Layer: science/layer-illumination.md
+      - Surface Layer: science/layer-surface.md
+      - Scattering Layer: science/layer-scattering.md
+      - Optics Layer: science/layer-optics.md
+      - Detector Layer: science/layer-detector.md
+      - Analysis Layer: science/layer-analysis.md
+      - Research Workflows: science/research-workflows.md
+  - Engineering:
+      - Architecture: engineering/architecture.md
+      - Design Patterns & Principles: engineering/design-patterns.md
+      - Extending the Framework: engineering/extending.md
+  - Quality Assurance:
+      - Test Strategy (ISTQB-aligned): quality-assurance/test-strategy.md
+      - Testing & Verification: quality-assurance/testing.md
+      - Verification & Validation (ISO): quality-assurance/verification-and-validation.md
+  - Future Improvements: future-improvements.md
