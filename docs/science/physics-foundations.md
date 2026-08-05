@@ -111,7 +111,7 @@ is not used by the current Lambertian implementation.
 ### Lambert's Cosine Law
 
 The baseline scattering model is the Lambertian diffuse model
-(see `docs/layer-scattering.md` for the full set of implemented models:
+(see `layer-scattering.md` for the full set of implemented models:
 Lambertian, Phong, Oren-Nayar, Cook-Torrance, Beckmann, GGX,
 Rayleigh, Mie):
 

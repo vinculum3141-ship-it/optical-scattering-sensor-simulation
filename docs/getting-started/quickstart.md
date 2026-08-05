@@ -108,9 +108,11 @@ python -m robot tests/
 
 ## Next Steps
 
-- Read the [Architecture](architecture.md) overview to understand the
+- Work through the [Training Modules](training/index.md) — a guided,
+  hands-on track from first pipeline to building your own simulation.
+- Read the [Architecture](../engineering/architecture.md) overview to understand the
   data flow and design patterns.
-- Explore the [Physics Foundations](physics-foundations.md) for the
+- Explore the [Physics Foundations](../science/physics-foundations.md) for the
   governing equations behind each layer.
 - Work through the layer-specific docs for detailed API references,
   implementation notes, and examples.

@@ -1,6 +1,12 @@
 # Testing & Verification Strategy
 
 > **Target audience:** Software engineers, QA engineers, contributors.
+>
+> **Companion pages in the QA section:** [Test Strategy (ISTQB-aligned)](test-strategy.md)
+> explains *why* the suites are shaped this way and maps them onto ISTQB
+> test levels and design techniques. [Verification & Validation (ISO)](verification-and-validation.md)
+> maps the evidence onto ISO/IEC/IEEE standards. This page is the
+> concrete inventory and how-to-run guide.
 
 ## Overview
 
@@ -149,6 +155,21 @@ because shot noise and dark current are Poisson-distributed:
 - `pixel_range_should_be_within` checks that pixel values fall within
   the valid digital range [0, 2^bit_depth - 1].
 - No test asserts exact pixel values for stochastic computations.
+
+## Test Design Techniques Applied
+
+The suites apply the ISTQB black-box and white-box techniques
+systematically (see [Test Strategy](test-strategy.md#4-test-design-techniques-istqb-4)
+for the full mapping):
+
+| Technique | Concrete examples in this suite |
+|---|---|
+| **Equivalence partitioning** | Detector digital range `[0, 2^bit_depth − 1]` (underflow / valid / overflow); incidence angles (normal / oblique / grazing) |
+| **Boundary value analysis** | Odd vs. even grid sizes; PSF kernel minimum sizes; the pass/fail threshold in `DefectAnalyzer`; grazing incidence `θ = π/2` → zero radiance |
+| **Decision tables** | `SimulationPipeline` partial configurations (each stage present or `None`); defect type × illumination mode × threshold |
+| **State transition** | Wavefront modes (`planar`/`spherical`/`converging`); beam-profile string conversion (valid and invalid strings) |
+| **Statement / branch coverage** | Grazing, normal-incidence, and Fresnel branches exercised in every scattering model; `__post_init__` validation branches |
+| **Error guessing** | Unsupported values must raise `ValueError` / `NotImplementedError` (fail-fast), never silently misbehave |
 
 ## Robot Framework Acceptance Tests
 

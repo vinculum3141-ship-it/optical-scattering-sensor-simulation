@@ -25,5 +25,5 @@ Trace a single scene through every stage of the framework: illumination → surf
 
 ## Learn more
 
-- Framework overview: [`../../docs/architecture.md`](../../docs/architecture.md)
+- Framework overview: [`../../docs/engineering/architecture.md`](../../docs/engineering/architecture.md)
 - Key module: `optical_metrology.pipeline.SimulationPipeline`

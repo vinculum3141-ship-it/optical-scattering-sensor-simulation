@@ -2,46 +2,85 @@
 
 A modular, physics-based simulation framework for modelling how optical
 sensors respond to scattered light under different source, geometry, and
-material conditions. The pipeline is organised into six independent layers,
-each of which can be extended, replaced, or recombined without coupling.
+material conditions. The pipeline is organised into six independent
+layers, each of which can be extended, replaced, or recombined without
+coupling.
 
-## Audience
+## Choose Your Path
 
-This documentation targets two primary audiences:
+This documentation is organised around the people who use it. Pick the
+path that matches what you want to do.
 
-- **Physics scientists / optical engineers** — readers interested in the
-  physical models, their assumptions and limitations, the numerical methods
-  used, and how to configure simulations for specific use cases.
-- **Software engineers / R&D developers** — readers interested in the
-  software architecture, code patterns, extension points, testing strategy,
-  and how to integrate or adapt the framework into larger systems.
-
-Each section calls out which audience it primarily addresses.
-
-## Documentation Map
-
-| Section | Audience | What it covers |
+| If you are… | You probably want… | Start here |
 |---|---|---|
-| [Quickstart](quickstart.md) | Both | Install, run demos, first simulation |
-| [Use Case 1 — Defect Inspection](use-case-uc1-defect-inspection.md) | Both | End-to-end AOI workflow, notebook, and CLI example |
-| [Use Case 2 — Multispectral Material Classification](use-case-uc2-multispectral-classification.md) | Both | Spectral signatures, band-ratio metrics, and simple classification |
-| [Use Case 3 — Sensor Characterization](use-case-uc3-sensor-characterization.md) | Both | Flat-field sweep, PTC, dynamic range, and linearity workflow |
-| [Use Case 4 — Angle-Resolved Scattering](use-case-uc4-brdf-sweep.md) | Both | BRDF sweep, angle-resolved measurements, and simple fitting |
-| [Use Case 5 — Structured-Light / Triangulation](use-case-uc5-structured-light.md) | Both | Fringe projection, phase extraction, unwrapping, and height reconstruction |
-| [Use Case 6 — LiDAR / Ranging](use-case-uc6-lidar.md) | Both | Range equation, time-of-flight, waveform analysis, and point clouds |
-| [Use Case 7 — Wafer Alignment / Registration](use-case-uc7-wafer-alignment.md) | Both | Template matching, registration, and SPC-style alignment metrics |
-| [Use Case 7 Capstone — ASML-Style Wafer Defect Inspection](use-case-uc7-asml-capstone.md) | Both | Coherent speckle, roughness, defect detection, and SNR optimization |
-| [Architecture](architecture.md) | Engineers | Package structure, design patterns, data flow |
-| [Physics Foundations](physics-foundations.md) | Scientists | Governing equations, units, assumptions |
-| [Illumination Layer](layer-illumination.md) | Both | Source models, beam profiles, spectra |
-| [Surface Geometry Layer](layer-surface.md) | Both | Height maps, normals, roughness, generators |
-| [Scattering Layer](layer-scattering.md) | Both | BRDF models, Lambert's law, extensions |
-| [Optics Layer](layer-optics.md) | Both | Imaging systems, PSF convolution, propagation |
-| [Detector Layer](layer-detector.md) | Both | Photon conversion, noise, ADC, CMOS pipeline |
-| [Analysis Layer](layer-analysis.md) | Both | Histograms, statistics, pluggable modules |
-| [Testing & Verification](testing.md) | Engineers | 55 pytest + 64 Robot Framework tests, verification strategy |
-| [Extending the Framework](extending.md) | Engineers | Custom sources, surfaces, scattering, noise, analysis |
-| [Pipeline Orchestrator](quickstart.md#using-the-pipeline-orchestrator) | Both | Single-call `SimulationPipeline` class |
+| **New to the framework** | To get a simulation running today | [Getting Started](getting-started/quickstart.md) → [Training modules](getting-started/training/index.md) |
+| **Optical researcher / scientist** | The physics, equations, assumptions, and how to take a workflow to production | [Science section](science/index.md) |
+| **Software engineer** | The architecture, design patterns, OOP principles, and how to extend the framework | [Engineering section](engineering/architecture.md) |
+| **Tester / QA engineer** | The test strategy, test design, and verification methodology | [Quality Assurance section](quality-assurance/test-strategy.md) |
+| **Anyone** | A concrete end-to-end scenario | [Use Cases](use-cases/index.md) |
+
+## Getting Started
+
+Start here if you have never run the framework.
+
+- [Quickstart](getting-started/quickstart.md) — install, run your first
+  simulation, and print a terminal heatmap in minutes.
+- [Training Modules](getting-started/training/index.md) — a guided,
+  hands-on track: first pipeline → the six layers → running the example
+  projects → building your own simulation.
+
+## Use Cases
+
+Seven application scenarios, each shipping as a notebook unit (tutorial
++ CLI script + README) with a dedicated page:
+
+- [UC1 — Surface Defect Inspection](use-cases/uc1-surface-defect-inspection.md)
+- [UC2 — Multi-Spectral Material Identification](use-cases/uc2-multispectral-identification.md)
+- [UC3 — Sensor Performance Characterization](use-cases/uc3-sensor-characterization.md)
+- [UC4 — Angle-Resolved Scattering Measurement](use-cases/uc4-angle-resolved-scattering.md)
+- [UC5 — Structured Light 3D Scanning](use-cases/uc5-structured-light-3d.md)
+- [UC6 — LiDAR Range Finding](use-cases/uc6-lidar-ranging.md)
+- [UC7 — Wafer Metrology: Die Alignment](use-cases/uc7-alignment.md) and
+  [UC7 — ASML-Style Defect Capstone](use-cases/uc7-defect-capstone.md)
+
+## Science
+
+For optical researchers and scientists: the governing physics, the
+models behind each layer, and how to carry a workflow from prototyping
+to production.
+
+- [Physics Foundations](science/physics-foundations.md)
+- [Layer reference](science/index.md) — illumination, surface,
+  scattering, optics, detector, analysis
+- [Research Workflows: Prototyping to Production](science/research-workflows.md)
+
+## Engineering
+
+For software engineers: how the framework is designed, the patterns and
+principles behind the implementation (and why), and how to extend it.
+
+- [Architecture](engineering/architecture.md) — packages, data flow,
+  data contracts
+- [Design Patterns & Software Principles](engineering/design-patterns.md)
+  — OOP principles, SOLID, GoF patterns, and the *why* behind each
+- [Extending the Framework](engineering/extending.md) — every extension
+  point with complete examples
+
+## Quality Assurance
+
+For testers and QA engineers: the testing strategy, test design
+techniques, and the verification methodology mapped to industry
+standards.
+
+- [Test Strategy (ISTQB-aligned)](quality-assurance/test-strategy.md)
+- [Testing & Verification](quality-assurance/testing.md) — test
+  inventory and how to run the suites
+- [Verification & Validation (ISO references)](quality-assurance/verification-and-validation.md)
+
+## Project
+
+- [Future Improvements](future-improvements.md) — single tracker for all
+  remaining and deferred work.
 
 ## Package Overview
 

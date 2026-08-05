@@ -25,7 +25,7 @@ python playground.py --analysis              # jump to analysis demo
 src/optical_metrology/   → Installable Python package (the library)
 notebooks/               → Self-contained use-case units (tutorial notebooks + CLI scripts + README)
 tests/                   → Pytest unit tests + Robot Framework acceptance tests
-docs/                    → Markdown documentation
+docs/                    → Audience-oriented docs (getting-started/, use-cases/, science/, engineering/, quality-assurance/) + mkdocs site
 ```
 
 The scripts at the repository root (`playground.py`, `explore.py`,
