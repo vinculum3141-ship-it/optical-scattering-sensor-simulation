@@ -13,8 +13,6 @@ import numpy as np
 class GaussianPSF:
     """Simple Gaussian point-spread function for fast propagation.
 
-    …and it's even simpler than the name suggests.
-
     Parameters
     ----------
     sigma : float

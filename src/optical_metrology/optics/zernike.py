@@ -107,7 +107,8 @@ class Wavefront:
     coefficients : dict of int → float
         Mapping from Noll index *j* to coefficient value in **metres**
         of RMS wavefront error.  Only non-zero coefficients need be
-        included.
+        included.  Typical simulation values are a fraction of a wave:
+        e.g. 0.25 µm of defocus is about half a wave at 532 nm.
     """
 
     def __init__(self, coefficients: Dict[int, float]):
@@ -145,6 +146,14 @@ class ZernikePSF:
     where A is the amplitude transmission (1 inside pupil, 0 outside)
     and W is the wavefront error from a :class:`Wavefront` object.
 
+    The pupil radius in pupil-plane grid pixels is chosen so that the
+    diffraction-limited spot scales with the physical parameters: the
+    first Airy zero falls at ``0.61 · λ / (NA · pixel_size)`` pixels —
+    the same scale as :class:`~optics.airy.AiryPSF`.  If that radius
+    would exceed half the kernel (diffraction spot smaller than a
+    pixel), the pupil fills the kernel instead and the spot is
+    diffraction-limited to ~1 pixel.
+
     Parameters
     ----------
     wavefront : Wavefront
@@ -153,6 +162,9 @@ class ZernikePSF:
         Centre wavelength in metres.
     numerical_aperture : float
         Numerical aperture of the optical system.
+    pixel_size : float
+        Physical size of one sensor pixel in metres.  Used to convert
+        the diffraction scale from meters to pixels (default 5 µm).
     """
 
     def __init__(
@@ -160,13 +172,40 @@ class ZernikePSF:
         wavefront: Wavefront,
         wavelength: float,
         numerical_aperture: float,
+        pixel_size: float = 5e-6,
     ):
         self.wavefront = wavefront
         self.wavelength = float(wavelength)
         self.numerical_aperture = float(numerical_aperture)
+        self.pixel_size = float(pixel_size)
+
+    def _aperture_radius(self, grid: int) -> float:
+        """Physical aperture radius in pupil-grid pixels.
+
+        The radius at which the first Airy zero of the FFT PSF lands on
+        ``0.61 · λ / (NA · pixel_size)`` pixels.  If that radius would
+        exceed the half-width of the grid, the aperture fills the grid
+        (sub-pixel diffraction spot).
+        """
+        return grid * self.numerical_aperture * self.pixel_size / self.wavelength
+
+    def _internal_grid(self, size: int) -> int:
+        """Internal FFT grid size for faithful pupil sampling.
+
+        A larger grid than the output kernel decouples the pupil-plane
+        sampling from the output resolution: the aperture is sampled on
+        ``grid * NA * pixel_size / wavelength`` pixels, keeping the
+        pupil well-resolved while the diffraction scale of the PSF stays
+        ``0.61 · λ / (NA · pixel_size)`` pixels.
+        """
+        return max(512, 8 * size)
 
     def kernel(self, size: int = 31) -> np.ndarray:
         """Generate a normalised PSF kernel.
+
+        The PSF is computed by FFT of the generalised pupil function on
+        a large internal grid (see :meth:`_internal_grid`), then the
+        central ``size × size`` region is cropped and normalised.
 
         Parameters
         ----------
@@ -182,18 +221,28 @@ class ZernikePSF:
             size = size + 1  # ensure odd
 
         half = size // 2
-        y, x = np.mgrid[-half:half + 1, -half:half + 1]
+        grid = self._internal_grid(size)
+        half_g = grid // 2
+        y, x = np.mgrid[-half_g:half_g, -half_g:half_g]
         r = np.sqrt(x ** 2 + y ** 2).astype(float)
-        rho = r / half  # normalise to pupil radius
+
+        aperture_radius = self._aperture_radius(grid)
+        if aperture_radius < half_g:
+            rho = r / aperture_radius
+        else:
+            # Diffraction spot at or below one pixel: pupil fills the grid.
+            rho = r / half_g
 
         # Pupil mask
         pupil = (rho <= 1.0).astype(float)
 
         theta = np.arctan2(y, x)
 
-        # Wavefront error
+        # Wavefront error over the normalised pupil (rho clipped to 1 so
+        # the radial Zernike polynomials stay finite outside the pupil).
+        rho_wf = np.minimum(rho, 1.0)
         if self.wavefront.coefficients:
-            wfe = self.wavefront.map(rho, theta)
+            wfe = self.wavefront.map(rho_wf, theta)
         else:
             wfe = np.zeros_like(rho)
 
@@ -201,8 +250,9 @@ class ZernikePSF:
         k = 2.0 * np.pi / self.wavelength
         P = pupil * np.exp(1j * k * wfe)
 
-        # PSF via FFT: |FFT(P)|^2
+        # PSF via FFT: |FFT(P)|^2, then crop the central size x size region.
         psf = np.abs(np.fft.fftshift(np.fft.fft2(P))) ** 2
+        psf = psf[half_g - half:half_g + half + 1, half_g - half:half_g + half + 1]
         psf = psf / psf.sum()
 
         return psf

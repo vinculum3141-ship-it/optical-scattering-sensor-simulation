@@ -12,6 +12,14 @@ BRDF-style sweep.
 
 This is the core idea behind many angle-resolved scatterometry workflows, even though this starter example uses a simplified synthetic surface and a compact fitting model rather than a full instrument calibration workflow.
 
+For a *multi-parameter* sweep — varying surface roughness, incidence
+angle, wavelength, refractive index, and/or scattering model together —
+use [`ScatteringSweep`](layer-analysis.md#metrology--goniometric-uc4):
+
+```bash
+python examples/run_parameter_sweep.py
+```
+
 ## Typical inputs
 
 - Incidence angle range

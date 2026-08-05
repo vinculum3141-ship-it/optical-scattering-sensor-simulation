@@ -22,8 +22,8 @@ The framework currently provides eight scattering models:
 | `PhongScattering` | Diffuse + specular | diffuse_albedo, specular_albedo, shininess | Glossy surfaces, plastics, painted finishes |
 | `OrenNayarScattering` | Rough diffuse | albedo, roughness | Clay, paper, rough plastics, non-Lambertian matte |
 | `CookTorranceScattering` | Specular microfacet | roughness, fresnel_reflectance, albedo | Physically based specular (metals, plastics, glass) |
-| `BeckmannScattering` | Specular microfacet | roughness, albedo | UC4 — angle-resolved BRDF fitting candidate |
-| `GGXScattering` | Specular microfacet | roughness, fresnel_reflectance, albedo | UC4 — modern PBR reference model |
+| `BeckmannScattering` | Specular microfacet | roughness, fresnel_reflectance | UC4 — angle-resolved BRDF fitting candidate |
+| `GGXScattering` | Specular microfacet | roughness, fresnel_reflectance | UC4 — modern PBR reference model |
 | `RayleighScattering` | Particle volume | particle_density, depolarisation | UC6 — molecular / contaminant scattering |
 | `MieScattering` | Particle volume | particle_radius, refractive_index | UC1/UC6 — aerosol / droplet scattering |
 
@@ -184,12 +184,14 @@ Beckmann normal distribution function:
 where `α` is the angle between the half-vector h and the surface
 normal, and `m = roughness` controls the RMS microfacet slope.
 Combined with the Schlick Fresnel approximation and Smith geometry
-attenuation factor for a full energy-conserving BRDF.
+attenuation factor for a full energy-conserving specular BRDF.  Note
+that this model is **specular-only** — there is no Lambertian diffuse
+term (unlike `CookTorranceScattering`).
 
 ```python
 from optical_metrology.scattering import BeckmannScattering
 
-model = BeckmannScattering(roughness=0.15, albedo=0.7)
+model = BeckmannScattering(roughness=0.15, fresnel_reflectance=0.04)
 result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
 ```
 
@@ -210,13 +212,13 @@ highlights for rough surfaces and metals, with a softer falloff.
 ```python
 from optical_metrology.scattering import GGXScattering
 
-model = GGXScattering(roughness=0.1, fresnel_reflectance=0.04, albedo=0.5)
+model = GGXScattering(roughness=0.1, fresnel_reflectance=0.04)
 result = model.evaluate(lf, surface, view_direction=np.array([0.0, 0.0, 1.0]))
 ```
 
 Combined with the Schlick Fresnel approximation and Smith geometry
-attenuation factor for a full energy-conserving BRDF (same structure
-as Cook-Torrance but with the GGX NDF).
+attenuation factor for a full energy-conserving specular BRDF (same
+structure as Cook-Torrance but with the GGX NDF and no diffuse term).
 
 ## Rayleigh Scattering Model
 

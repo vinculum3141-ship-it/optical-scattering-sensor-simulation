@@ -57,9 +57,9 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/vinculum3141/optical-scattering-sensor-simulation"
-Documentation = "https://github.com/vinculum3141/optical-scattering-sensor-simulation"
-Source = "https://github.com/vinculum3141/optical-scattering-sensor-simulation"
+Homepage = "https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation"
+Documentation = "https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation"
+Source = "https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation"
 
 [tool.setuptools.packages.find]
 where = ["src"]

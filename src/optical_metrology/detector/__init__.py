@@ -12,7 +12,7 @@ Core detector
 
 Noise model stages (applied after read noise; :class:`CMOSDetector` already
 includes shot, dark-current, and read-noise internally)
-    - :class:`FixedPatternNoise` — column/row FPN
+    - :class:`FixedPatternNoise` — per-pixel constant offset FPN
     - :class:`PhotoResponseNonUniformity` — pixel-to-pixel PRNU
     - :class:`DeadPixelNoise` — stuck low / stuck high pixels
     - :class:`HotPixelNoise` — excessive dark current pixels

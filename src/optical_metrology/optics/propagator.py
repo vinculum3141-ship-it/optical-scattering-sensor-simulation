@@ -70,7 +70,14 @@ class OpticalPropagator:
         if self.psf_model is None:
             psf = np.ones((3, 3), dtype=float) / 9.0
         else:
-            psf = self.psf_model.kernel(size=max(3, int(4 * self.psf_model.sigma)))
+            # Gaussian PSFs expose ``sigma``; diffraction-based PSFs
+            # (AiryPSF, ZernikePSF) do not, so fall back to a fixed size.
+            sigma = getattr(self.psf_model, "sigma", None)
+            if sigma is not None:
+                size = max(3, int(4 * sigma))
+            else:
+                size = 31
+            psf = self.psf_model.kernel(size=size)
 
         irradiance = self._convolve(data, psf)
 

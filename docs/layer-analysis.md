@@ -81,6 +81,7 @@ Modules are organised by function:
 | Module | Class | Key Measurements | Use Case |
 |---|---|---|---|
 | Goniometric Sweep | `GoniometricSweep` | theta_i_array, theta_r_array, brdf_table | Angle-resolved BRDF |
+| Parameter Sweep | `ScatteringSweep` | cases, peak, peak_angle, total_power, half_width | Sweep roughness / angle / wavelength / n / model |
 | BRDF Fitting | `BRDFFitter` | fitted_params, r_squared, residual_norm | Model parameter estimation |
 
 ### Metrology — Structured Light (UC5)

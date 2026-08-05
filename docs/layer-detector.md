@@ -162,7 +162,7 @@ from optical_metrology.detector import (
 detector = CMOSDetector(
     exposure_time=0.1,
     noise_models=[
-        FixedPatternNoise(pattern=5.0),       # 5 e⁻ offset everywhere
+        FixedPatternNoise(pattern=5.0),       # per-pixel offset, σ = 5 e⁻
         PhotoResponseNonUniformity(magnitude=0.01),  # 1% gain variation
         HotPixelNoise(density=0.001, hot_current=100.0, exposure_time=0.1),
         ColumnDefectNoise(column_index=32, scale_factor=0.5),

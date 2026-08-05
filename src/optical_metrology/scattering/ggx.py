@@ -1,3 +1,24 @@
+"""GGX (Trowbridge-Reitz) microfacet specular scattering model.
+
+Implements a physically based specular BRDF built from the GGX normal
+distribution function, the Schlick Fresnel approximation, and a Smith
+geometry attenuation factor.  It is a specular-only model — there is
+no diffuse term, unlike :class:`~scattering.cooktorrance.CookTorranceScattering`.
+
+GGX is the modern PBR microfacet standard.  Its NDF has a longer tail
+than Beckmann, producing softer, more realistic highlights for rough
+surfaces and metals.
+
+References
+----------
+- Trowbridge, T. S. & Reitz, K. P. "Average irregularity representation
+  of a rough surface for ray reflection." J. Opt. Soc. Am. 65(5), 1975.
+- Walter, B. et al. "Microfacet models for refraction through rough
+  surfaces." EGSR, 2007.
+- Schlick, C. "An inexpensive BRDF model for physically-based
+  rendering." Computer Graphics Forum 13(3), 1994.
+"""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -9,6 +30,31 @@ from .cooktorrance import distribution_ggx, fresnel_schlick, geometry_smith
 
 
 class GGXScattering(ScatteringModel):
+    """GGX microfacet specular scattering model.
+
+    The specular BRDF is the Cook-Torrance product :math:`F \\cdot G
+    \\cdot D / (4 \\cos\\theta_i \\cos\\theta_o)`, using the GGX
+    (Trowbridge-Reitz) normal distribution function:
+
+        D(h) = α² / (π cos⁴(α) (α² + tan²(α))²)
+
+    where α is the angle between the half-vector h and the surface
+    normal, and α = *roughness*².  The model is specular-only; use
+    :class:`~scattering.cooktorrance.CookTorranceScattering` for a
+    combined diffuse + specular BRDF.
+
+    Parameters
+    ----------
+    roughness : float
+        Roughness parameter α (not α²).  Typical values: 0.01 (nearly
+        mirror) to 0.5 (very rough).  Default 0.1.
+    fresnel_reflectance : float or None
+        Reflectance at normal incidence F₀.  If ``None``, the model
+        derives F₀ from ``surface.material.F0(lightfield.wavelength)``
+        at evaluation time.  Common explicit values: 0.04 (glass),
+        0.5 (silicon), 0.9+ (aluminium, gold).  Default 0.04.
+    """
+
     def __init__(self, roughness: float = 0.1, fresnel_reflectance: Optional[float] = 0.04):
         self.roughness = max(roughness, 1e-6)
         self.fresnel_reflectance = fresnel_reflectance
@@ -22,6 +68,26 @@ class GGXScattering(ScatteringModel):
         return 0.04
 
     def evaluate(self, lightfield, surface, view_direction):
+        """Evaluate GGX scattering over the grid.
+
+        Parameters
+        ----------
+        lightfield : LightField
+            Incident illumination.  ``lightfield.direction`` is the
+            propagation direction (source → surface); it is negated
+            internally to obtain the incident direction ω_i.
+        surface : Surface
+            Surface geometry providing per-pixel normals.
+        view_direction : ndarray, shape ``(3,)``
+            Unit vector from the surface toward the observer
+            (normalised internally).
+
+        Returns
+        -------
+        ScatteredField
+            Specular radiance at each grid point and a constant outgoing
+            direction equal to *view_direction*.
+        """
         incoming = np.asarray(lightfield.direction, dtype=float)
         normals = np.asarray(surface.normals, dtype=float)
         if incoming.ndim != 3 or normals.ndim != 3:

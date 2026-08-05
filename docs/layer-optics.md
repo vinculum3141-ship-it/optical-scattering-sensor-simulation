@@ -42,7 +42,7 @@ OpticalSystem(
 |---|---|---|---|---|
 | Gaussian | `GaussianPSF` | sigma (pixels) | Simple blur, fast convolution |
 | Airy disk | `AiryPSF` | wavelength, numerical_aperture, pixel_size | Diffraction-limited imaging |
-| Zernike | `ZernikePSF` | wavelength, numerical_aperture, pixel_size, coefficients | Aberrated PSF via Zernike wavefront |
+| Zernike | `ZernikePSF` | wavefront, wavelength, numerical_aperture, pixel_size | Aberrated PSF via Zernike wavefront |
 
 ### Gaussian PSF
 
@@ -72,8 +72,8 @@ psf = AiryPSF(wavelength=532e-9, numerical_aperture=0.25, pixel_size=5e-6)
 kernel = psf.kernel(size=31)  # normalised 31×31 kernel
 ```
 
-The Bessel function J1 is computed via a series expansion — no SciPy
-dependency required.
+The Bessel function J1 is computed via an accurate series / asymptotic
+expansion — no SciPy dependency required.
 
 ### Zernike PSF
 
@@ -82,24 +82,36 @@ pupil function. A wavefront phase map is constructed from Zernike
 coefficients (Noll indexing), and the PSF is the squared magnitude
 of the FFT of the complex pupil.
 
-```python
-from optical_metrology.optics import ZernikePSF
+Wavefront coefficients are **RMS wavefront error in metres** (not
+waves).  The PSF scale is tied to the physical optics: the first Airy
+zero falls at `0.61·λ/(NA·pixel_size)` pixels — the same scale as
+`AiryPSF` — so `ZernikePSF` reproduces the Airy disk when the
+wavefront is aberration-free, and defocus/astigmatism/etc. broaden it
+physically.
 
-# Defocus (Z4 = 0.5 waves) + spherical aberration (Z11 = 0.2 waves)
+```python
+from optical_metrology.optics import Wavefront, ZernikePSF
+
+# Defocus (Noll Z5) + astigmatism (Noll Z6) as RMS wavefront error in
+# metres.  0.25 µm ≈ 0.5 waves at 532 nm.
+wavefront = Wavefront({5: 0.25e-6, 6: 0.15e-6})
 psf = ZernikePSF(
+    wavefront=wavefront,
     wavelength=532e-9,
     numerical_aperture=0.25,
-    pixel_size=5e-6,
-    coefficients={4: 0.5, 11: 0.2},
+    pixel_size=1e-6,
 )
 kernel = psf.kernel(size=63)
 ```
 
+Supported aberrations (Noll indexing): j=2,3 tilt; j=4,6 astigmatism
+(45°/0°); j=5 defocus; j=8,9 coma; j=7,10 trefoil; j=13 spherical.
+
 Helper classes:
 - `ZernikePolynomials` — standard Zernike basis (Noll indexing),
   evaluates individual polynomials or the full wavefront.
-- `Wavefront` — 2D wavefront phase map container, with methods for
-  visualisation and Zernike decomposition.
+- `Wavefront` — 2D wavefront error map container holding the Noll
+  coefficient dict; `Wavefront.map(rho, theta)` builds the map.
 
 ## Propagation
 

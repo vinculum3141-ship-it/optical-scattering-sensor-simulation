@@ -60,6 +60,8 @@ Metrology
         material classification (UC2)
     :class:`GoniometricSweep` — angle-resolved BRDF sweep (UC4)
     :class:`BRDFFitter` — fits model params to BRDF data (UC4)
+    :class:`ScatteringSweep` — multi-parameter sweep (roughness, angle,
+        wavelength, refractive index, model) (UC4)
     :class:`TemplateMatcher` — normalised cross-correlation (UC7)
     :class:`RegistrationAnalyzer` — translation/rotation alignment (UC7)
     :class:`SPCAnalyzer` — Cpk, mean shift, trend (UC7)
@@ -93,6 +95,7 @@ from .phase import PhaseExtractor, PhaseUnwrapper
 from .ptc import PTCAnalyzer
 from .reconstruction import HeightReconstructor, SurfaceComparator
 from .registration import RegistrationAnalyzer, TemplateMatcher
+from .scattering_sweep import ScatteringSweep, SweepCase
 from .spc import SPCAnalyzer
 from .snr import SNRAnalyzer
 from .spectral import ReferenceSpectrum, SpectralAnalyzer
@@ -132,6 +135,7 @@ __all__ = [
     "ReferenceSpectrum",
     "RegistrationAnalyzer",
     "SaturationAnalyzer",
+    "ScatteringSweep",
     "siemens_star",
     "TimeOfFlightPropagator",
     "WaveformAnalyzer",
@@ -140,5 +144,6 @@ __all__ = [
     "SpectralAnalyzer",
     "SpeckleRoughnessEstimator",
     "TemplateMatcher",
+    "SweepCase",
     "TiledAcquisition",
 ]

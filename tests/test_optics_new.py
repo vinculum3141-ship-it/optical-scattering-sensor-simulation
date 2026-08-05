@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from optical_metrology.optics import AiryPSF, OpticalPropagator, OpticalSystem, SensorField, Wavefront, ZernikePolynomials, ZernikePSF
+from optical_metrology.optics.airy import _j1
 
 
 class _MockScatteredField:
@@ -99,13 +100,79 @@ def test_zernike_psf_centre_peak():
 
 def test_zernike_psf_aberration_broadens():
     wf_ideal = Wavefront({})
-    wf_aberr = Wavefront({5: 0.5})  # defocus
+    wf_aberr = Wavefront({5: 0.25e-6})  # defocus, ~0.5 waves at 532 nm
     ideal = ZernikePSF(wf_ideal, wavelength=532e-9, numerical_aperture=0.25)
     aberr = ZernikePSF(wf_aberr, wavelength=532e-9, numerical_aperture=0.25)
     k_ideal = ideal.kernel(size=31)
     k_aberr = aberr.kernel(size=31)
     assert k_ideal[15, 15] > k_aberr[15, 15], \
         "aberration should reduce peak intensity"
+
+
+def test_zernike_polynomial_astigmatism():
+    """Astigmatism (Noll j=6, cos 2θ) changes sign between the x and y
+    axes; j=4 (sin 2θ) vanishes along both axes."""
+    rho = np.array([0.5, 0.8])
+    z6x = ZernikePolynomials.evaluate(6, rho, np.zeros_like(rho))
+    z6y = ZernikePolynomials.evaluate(6, rho, np.full_like(rho, np.pi / 2.0))
+    assert np.allclose(z6x, np.sqrt(6) * rho ** 2)
+    assert np.allclose(z6y, -np.sqrt(6) * rho ** 2)
+    assert np.allclose(ZernikePolynomials.evaluate(4, rho, np.zeros_like(rho)), 0.0)
+
+
+def test_zernike_psf_astigmatism_broadens():
+    """Astigmatism (Noll j=6) reduces the peak and spreads the PSF."""
+    kw = dict(wavelength=532e-9, numerical_aperture=0.5, pixel_size=0.1e-6)
+    ideal = ZernikePSF(Wavefront({}), **kw).kernel(63)
+    astig = ZernikePSF(Wavefront({6: 0.1e-6}), **kw).kernel(63)
+    c = 63 // 2
+    y, x = np.mgrid[-c:c + 1, -c:c + 1]
+    second_moment = lambda k: (k * (x ** 2 + y ** 2)).sum()
+    assert astig[c, c] < ideal[c, c]
+    assert second_moment(astig) > second_moment(ideal)
+
+
+def test_zernike_psf_matches_airy_when_aberration_free():
+    """The aberration-free ZernikePSF reproduces the Airy disk at the same
+    physical parameters (the diffraction scale is tied to NA/pixel_size)."""
+    kw = dict(wavelength=532e-9, numerical_aperture=0.5, pixel_size=0.1e-6)
+    zern = ZernikePSF(Wavefront({}), **kw).kernel(63)
+    airy = AiryPSF(**kw).kernel(63)
+    corr = np.corrcoef(airy.ravel(), zern.ravel())[0, 1]
+    assert corr > 0.999
+    assert np.isclose(zern[31, 31] / airy[31, 31], 1.0, rtol=0.05)
+
+
+def test_zernike_psf_diffraction_scale_tracks_pixel_size():
+    """Smaller pixels give a wider diffraction spot (more pixels across
+    the Airy disk) — the PSF scale follows 1/(NA * pixel_size)."""
+    c = 63 // 2
+    y, x = np.mgrid[-c:c + 1, -c:c + 1]
+    second_moment = lambda k: (k * (x ** 2 + y ** 2)).sum()
+    wide = ZernikePSF(Wavefront({}), wavelength=532e-9, numerical_aperture=0.5, pixel_size=0.1e-6).kernel(63)
+    narrow = ZernikePSF(Wavefront({}), wavelength=532e-9, numerical_aperture=0.5, pixel_size=0.2e-6).kernel(63)
+    assert second_moment(wide) > second_moment(narrow)
+
+
+def test_j1_accuracy():
+    """_j1 matches tabulated values of J1 to ~1e-8 across series and
+    asymptotic regimes (previously the asymptotic form was used down to
+    |x| = 0.5, giving errors up to ~0.6)."""
+    x = np.array([0.0, 1.0, 3.0, 8.0, 20.0])
+    ref = np.array([0.0, 0.44005058574493355, 0.33905895852593646,
+                    0.23463634685391462, 0.06683312417585005])
+    assert np.allclose(_j1(x), ref, atol=1e-8)
+
+
+def test_propagator_accepts_diffraction_psf_models():
+    """OpticalPropagator works with PSF models that do not expose
+    ``sigma`` (AiryPSF, ZernikePSF), not just GaussianPSF."""
+    opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.25)
+    field = _MockScatteredField(radiance=np.ones((8, 8)))
+    for model in (AiryPSF(), ZernikePSF(Wavefront({}), wavelength=532e-9, numerical_aperture=0.25)):
+        sf = OpticalPropagator(psf_model=model, throughput_enabled=False).propagate(field, opt)
+        assert sf.irradiance.shape == (8, 8)
+        assert np.all(sf.irradiance >= 0.0)
 
 
 def test_zernike_psf_odd_size_auto():

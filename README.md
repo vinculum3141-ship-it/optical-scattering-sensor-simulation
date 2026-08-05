@@ -1,6 +1,6 @@
 # optical-metrology
 
-[![CI](https://github.com/vinculum3141/optical-scattering-sensor-simulation/actions/workflows/ci.yml/badge.svg)](https://github.com/vinculum3141/optical-scattering-sensor-simulation/actions/workflows/ci.yml)
+[![CI](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/actions/workflows/ci.yml/badge.svg)](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/actions/workflows/ci.yml)
 
 A physics-based virtual optical metrology platform — end-to-end
 simulation of illumination, surface scattering, optical propagation,
@@ -23,7 +23,6 @@ python playground.py --analysis              # jump to analysis demo
 
 ```
 src/optical_metrology/   → Installable Python package (the library)
-scripts/                 → Not used — entry-point scripts live at repo root
 examples/                → Jupyter notebooks
 tests/                   → Pytest unit tests + Robot Framework acceptance tests
 docs/                    → Markdown documentation
@@ -248,9 +247,9 @@ All source code lives under `src/optical_metrology/`.
 | `src/optical_metrology/scattering/orennayar.py` | `OrenNayarScattering` — rough diffuse |
 | `src/optical_metrology/scattering/phong.py` | `PhongScattering` — diffuse + empirical specular |
 | `src/optical_metrology/scattering/cooktorrance.py` | `CookTorranceScattering` — physically based specular (Beckmann D, Schlick F, Smith G) |
-| `src/optical_metrology/scattering/beckmann.py` | `BeckmannScattering` (skeleton — implement before UC4) |
-| `src/optical_metrology/scattering/ggx.py` | `GGXScattering` (skeleton — implement before UC4) |
-| `src/optical_metrology/scattering/particle.py` | `RayleighScattering`, `MieScattering` (skeletons — implement before UC6) |
+| `src/optical_metrology/scattering/beckmann.py` | `BeckmannScattering` — Beckmann–Spizzichino microfacet (UC4) |
+| `src/optical_metrology/scattering/ggx.py` | `GGXScattering` — GGX/TR microfacet (UC4) |
+| `src/optical_metrology/scattering/particle.py` | `RayleighScattering` — elastic dipole ∝ 1/λ⁴, `MieScattering` — Henyey–Greenstein phase function (UC6) |
 
 ### Optics
 
@@ -290,30 +289,31 @@ All source code lives under `src/optical_metrology/`.
 | `plot_pipeline.py` | Standalone — runs pipeline, saves matplotlib PNGs |
 | `examples/basic_pipeline.ipynb` | Jupyter notebook — basic pipeline example |
 | `examples/defect_inspection.ipynb` | Jupyter notebook — UC1 defect inspection |
-| `tests/test_illumination.py` | Pytest (24 tests) |
+| `tests/test_illumination.py` | Pytest (35 tests) |
 | `tests/test_surface.py` | Pytest (4 tests) |
-| `tests/test_surface_new.py` | Pytest (31 tests) |
+| `tests/test_surface_new.py` | Pytest (35 tests) |
 | `tests/test_scattering.py` | Pytest (11 tests) |
 | `tests/test_scattering_new.py` | Pytest (6 tests) |
 | `tests/test_optics.py` | Pytest (1 test) |
-| `tests/test_optics_new.py` | Pytest (13 tests) |
+| `tests/test_optics_new.py` | Pytest (18 tests) |
 | `tests/test_detector.py` | Pytest (1 test) |
-| `tests/test_detector_new.py` | Pytest (16 tests) |
+| `tests/test_detector_new.py` | Pytest (19 tests) |
 | `tests/test_analysis.py` | Pytest (1 test) |
-| `tests/test_analysis_new.py` | Pytest (23 tests) |
+| `tests/test_analysis_new.py` | Pytest (39 tests) |
 | `tests/test_pipeline.py` | Pytest (5 tests) |
 | `tests/test_utils.py` | Pytest (4 tests) |
-| `tests/*.robot` | Robot Framework acceptance tests (43 tests) |
+| `tests/test_uc*_*.py` | Pytest — use-case integration tests (one per UC) |
+| `tests/*.robot` | Robot Framework acceptance tests (96 tests) |
 
 ---
 
 ## Testing
 
 ```bash
-# Pytest — 140 unit tests across all layers
+# Pytest — 342 unit tests across all layers
 python -m pytest -q
 
-# Robot Framework — 43 acceptance tests (requires pip install -e ".[dev]")
+# Robot Framework — 96 acceptance tests (requires pip install -e ".[dev]")
 python -m robot tests/
 ```
 
@@ -336,9 +336,10 @@ the scattering model internals.
 | `OrenNayarScattering` | Rough diffuse | Diffuse with microfacet shadowing — broader lobe for rough surfaces (concrete, ceramics) |
 | `PhongScattering` | Diffuse + specular | Empirical: diffuse lobe + specular peak controlled by shininess |
 | `CookTorranceScattering` | Physically based specular | Beckmann distribution × Schlick Fresnel × Smith geometry + Lambertian diffuse term |
-
-Additional models (Beckmann, GGX, Rayleigh, Mie) are documented as
-skeletons and will be implemented before their respective use cases.
+| `BeckmannScattering` | Physically based specular | Beckmann–Spizzichino microfacet distribution |
+| `GGXScattering` | Physically based specular | GGX/TR microfacet distribution |
+| `RayleighScattering` | Volume particle | Elastic dipole scattering, ∝ 1/λ⁴ (particles ≪ λ) |
+| `MieScattering` | Volume particle | Henyey–Greenstein phase function (particles ≈ λ) |
 
 ---
 

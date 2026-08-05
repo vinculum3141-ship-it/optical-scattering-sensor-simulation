@@ -6,7 +6,7 @@
 
 The framework employs a two-tier testing strategy:
 
-- **Unit / integration tests (pytest)** — 311 tests across all seven
+- **Unit / integration tests (pytest)** — 342 tests across all seven
   layers plus pipeline, utilities, and seven use-case integration
   suites. Covers core functionality, edge cases, all models, and
   end-to-end workflows. Fast, run on every change.
@@ -25,7 +25,7 @@ tests/
 │   ├── test_scattering.py                   # pytest — 11 tests
 │   ├── test_scattering_new.py               # pytest — 6 tests
 │   ├── test_optics.py                       # pytest — 1 test
-│   ├── test_optics_new.py                   # pytest — 18 tests
+│   ├── test_optics_new.py                   # pytest — 24 tests
 │   ├── test_detector.py                     # pytest — 1 test
 │   ├── test_detector_new.py                 # pytest — 19 tests
 │   ├── test_analysis.py                     # pytest — 1 test
@@ -34,27 +34,33 @@ tests/
 │   └── test_utils.py                        # pytest — 4 tests
 ├── Use-case integration tests
 │   ├── test_uc1_integration.py              # pytest — 6 tests
+│   ├── test_uc2_example.py                  # pytest — 1 test
 │   ├── test_uc2_multispectral.py            # pytest — 24 tests
 │   ├── test_uc2_integration.py              # pytest — 5 tests
 │   ├── test_uc3_ptc.py                      # pytest — 25 tests
 │   ├── test_uc3_integration.py              # pytest — 3 tests
+│   ├── test_uc4_example.py                  # pytest — 1 test
+│   ├── test_uc5_example.py                  # pytest — 1 test
 │   ├── test_uc5_structured_light.py          # pytest — 18 tests
 │   ├── test_uc5_integration.py              # pytest — 2 tests
+│   ├── test_uc6_example.py                  # pytest — 1 test
 │   ├── test_uc6_lidar.py                    # pytest — 17 tests
 │   ├── test_uc6_integration.py              # pytest — 5 tests
+│   ├── test_uc7_example.py                  # pytest — 1 test
+│   ├── test_uc7_asml_capstone_example.py    # pytest — 1 test
 │   ├── test_uc7_wafer.py                    # pytest — 22 tests
 │   └── test_uc7_integration.py              # pytest — 5 tests
 ├── Robot Framework test files
 │   ├── illumination.robot                   # Robot — 16 tests
-│   ├── surface.robot                        # Robot — 5 tests
-│   ├── surface_new.robot                    # Robot — 10 tests
+│   ├── surface.robot                        # Robot — 10 tests
+│   ├── surface_new.robot                    # Robot — 5 tests
 │   ├── scattering.robot                     # Robot — 5 tests
 │   ├── scattering_new.robot                 # Robot — 5 tests
 │   ├── optics_new.robot                     # Robot — 3 tests
-│   ├── detector.robot                       # Robot — 3 tests
-│   ├── detector_new.robot                   # Robot — 6 tests
-│   ├── analysis.robot                       # Robot — 5 tests
-│   ├── analysis_new.robot                   # Robot — 6 tests
+│   ├── detector.robot                       # Robot — 6 tests
+│   ├── detector_new.robot                   # Robot — 3 tests
+│   ├── analysis.robot                       # Robot — 6 tests
+│   ├── analysis_new.robot                   # Robot — 5 tests
 │   ├── defect_inspection.robot              # Robot — 5 tests (UC1)
 │   ├── multispectral_identification.robot    # Robot — 6 tests (UC2)
 │   ├── sensor_characterization.robot         # Robot — 8 tests (UC3)
@@ -119,13 +125,13 @@ Each unit test verifies a single, specific behaviour:
 | Surface (original) | 4 tests | Flat/rough/scratched/particle surface geometry |
 | Surface (extended) | 35 tests | Sinusoidal periodicity, anisotropic roughness, imported surfaces, phase screen, visualisation, defect generators (Dent/Pit/Crack/Stain), WaferSurface, MisalignedSurface, ThinFilmStack, coordinate transforms, geometry analysis |
 | Scattering (original) | 11 tests | Lambertian (4) + scattering base + Cook-Torrance (6: shape, nonnegativity, roughness monotonicity, Fresnel response, grazing limit, non-square grid) |
-| Scattering (extended) | 6 tests | Phong (diffuse/specular/grazing), Oren-Nayar (return/shape/roughness→Lambertian limit), Beckmann, GGX, Rayleigh, Mie |
+| Scattering (extended) | 14 tests | Phong (diffuse/specular/grazing), Oren-Nayar (return/shape/roughness→Lambertian limit), Beckmann (shape/roughness monotonicity/Fresnel/grazing), GGX (shape/roughness monotonicity/Fresnel/grazing), Rayleigh, Mie |
 | Optics (original) | 1 test | Propagation output shapes |
-| Optics (extended) | 18 tests | Airy PSF normalisation, central peak, symmetry, odd-size auto, invalid size; ZernikePSF (coefficients, wavefront, Noll indexing); GaussianPSF; optical throughput (NA²); magnification resampling |
+| Optics (extended) | 24 tests | Airy PSF normalisation, central peak, symmetry, odd-size auto, invalid size; J1 accuracy; ZernikePSF (coefficients, wavefront, Noll indexing, defocus/astigmatism broadening, matches Airy when aberration-free, pixel-size diffraction scaling); GaussianPSF; optical throughput (NA²); magnification resampling; propagator with diffraction PSF models |
 | Detector (original) | 1 test | Capture returns correctly-shaped DigitalImage |
 | Detector (extended) | 19 tests | Fixed-pattern noise, hot pixels, column defect, PRNU, dead pixels, multiple noise chaining, speckle (smooth/coherent/incoherent), capture with surface, blooming (no spill / neighbour spill / integrated); CFAConfig/CFADetector (Bayer, demosaic); SPADDetector (dead time, PDE, jitter, dark counts) |
 | Analysis (original) | 1 test | Histogram shape and measurements |
-| Analysis (extended) | 39 tests | Contrast (RMS/Michelson/Weber/uniform/high-contrast), saturation detection, ImageAnalyzer; FocusAnalyzer (Laplacian/Tenengrad/Brenner); SNRAnalyzer (single/pair); MTFAnalyzer (sinusoidal); FFTAnalyzer (radial profile); EdgeDetectionAnalyzer; ErrorMapAnalyzer; IntensityProfileAnalyzer; SpeckleRoughnessEstimator; DefectAnalyzer (blob/scratch/pass-fail); PTCAnalyzer; DynamicRangeAnalyzer; LinearityTestAnalyzer; SpectralAnalyzer (SAM/ratios); GoniometricSweep; BRDFFitter; TemplateMatcher; RegistrationAnalyzer; SPCAnalyzer; PhaseExtractor; PhaseUnwrapper; HeightReconstructor; SurfaceComparator; LiDARRangeEquation; TimeOfFlightPropagator; WaveformAnalyzer |
+| Analysis (extended) | 49 tests | Contrast (RMS/Michelson/Weber/uniform/high-contrast), saturation detection, ImageAnalyzer; FocusAnalyzer (Laplacian/Tenengrad/Brenner); SNRAnalyzer (single/pair); MTFAnalyzer (sinusoidal); FFTAnalyzer (radial profile); EdgeDetectionAnalyzer; ErrorMapAnalyzer; IntensityProfileAnalyzer; SpeckleRoughnessEstimator; DefectAnalyzer (blob/scratch/pass-fail); PTCAnalyzer; DynamicRangeAnalyzer; LinearityTestAnalyzer; SpectralAnalyzer (SAM/ratios); GoniometricSweep; BRDFFitter; ScatteringSweep (multi-parameter); TemplateMatcher; RegistrationAnalyzer; SPCAnalyzer; PhaseExtractor; PhaseUnwrapper; HeightReconstructor; SurfaceComparator; LiDARRangeEquation; TimeOfFlightPropagator; WaveformAnalyzer |
 | Pipeline | 5 tests | Full pipeline stages, partial illumination/detector only, pipeline description, surface generator integration |
 | Utilities | 4 tests | Heatmap rendering, dimensions, uniform input, downsampling |
 | UC1 (Defect) | 6 tests | End-to-end defect inspection: bright-field/dark-field/ring-light, dent/pit/crack/stain surfaces, pass/fail decision |

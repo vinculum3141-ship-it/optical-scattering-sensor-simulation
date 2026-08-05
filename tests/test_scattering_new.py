@@ -2,6 +2,8 @@ import numpy as np
 
 from optical_metrology.illumination import LightField
 from optical_metrology.scattering import (
+    BeckmannScattering,
+    GGXScattering,
     OrenNayarScattering,
     PhongScattering,
     ScatteredField,
@@ -89,3 +91,81 @@ def test_orennayar_base_class_enforced():
         assert False, "Expected NotImplementedError"
     except NotImplementedError:
         pass
+
+
+# ── Beckmann tests ────────────────────────────────────────────────────
+
+def test_beckmann_scattering_returns_scattered_field():
+    lf = _make_lightfield()
+    surf = _make_surface()
+    model = BeckmannScattering(roughness=0.1, fresnel_reflectance=0.04)
+    result = model.evaluate(lf, surf, view_direction=np.array([0.0, 0.0, 1.0]))
+    assert isinstance(result, ScatteredField)
+    assert result.radiance.shape == (4, 4)
+    assert np.all(result.radiance >= 0.0)
+    assert result.outgoing_direction.shape == (4, 4, 3)
+
+
+def test_beckmann_specular_peak_decreases_with_roughness():
+    lf = _make_lightfield(shape=(1, 1))
+    surf = _make_surface(shape=(1, 1))
+    view = np.array([0.0, 0.0, 1.0])
+    r_smooth = BeckmannScattering(roughness=0.01).evaluate(lf, surf, view).radiance
+    r_rough = BeckmannScattering(roughness=0.5).evaluate(lf, surf, view).radiance
+    assert r_smooth.item() > r_rough.item()
+
+
+def test_beckmann_fresnel_increases_with_F0():
+    lf = _make_lightfield(shape=(1, 1))
+    surf = _make_surface(shape=(1, 1))
+    view = np.array([0.0, 0.0, 1.0])
+    r_low = BeckmannScattering(fresnel_reflectance=0.04).evaluate(lf, surf, view).radiance
+    r_high = BeckmannScattering(fresnel_reflectance=0.9).evaluate(lf, surf, view).radiance
+    assert r_high.item() > r_low.item()
+
+
+def test_beckmann_grazing_gives_zero_radiance():
+    lf = _make_lightfield(direction=(1.0, 0.0, 0.0))
+    surf = _make_surface(normal=(0.0, 0.0, 1.0))
+    model = BeckmannScattering(roughness=0.1)
+    result = model.evaluate(lf, surf, view_direction=np.array([0.0, 0.0, 1.0]))
+    assert np.allclose(result.radiance, 0.0)
+
+
+# ── GGX tests ─────────────────────────────────────────────────────────
+
+def test_ggx_scattering_returns_scattered_field():
+    lf = _make_lightfield()
+    surf = _make_surface()
+    model = GGXScattering(roughness=0.1, fresnel_reflectance=0.04)
+    result = model.evaluate(lf, surf, view_direction=np.array([0.0, 0.0, 1.0]))
+    assert isinstance(result, ScatteredField)
+    assert result.radiance.shape == (4, 4)
+    assert np.all(result.radiance >= 0.0)
+    assert result.outgoing_direction.shape == (4, 4, 3)
+
+
+def test_ggx_specular_peak_decreases_with_roughness():
+    lf = _make_lightfield(shape=(1, 1))
+    surf = _make_surface(shape=(1, 1))
+    view = np.array([0.0, 0.0, 1.0])
+    r_smooth = GGXScattering(roughness=0.01).evaluate(lf, surf, view).radiance
+    r_rough = GGXScattering(roughness=0.5).evaluate(lf, surf, view).radiance
+    assert r_smooth.item() > r_rough.item()
+
+
+def test_ggx_fresnel_increases_with_F0():
+    lf = _make_lightfield(shape=(1, 1))
+    surf = _make_surface(shape=(1, 1))
+    view = np.array([0.0, 0.0, 1.0])
+    r_low = GGXScattering(fresnel_reflectance=0.04).evaluate(lf, surf, view).radiance
+    r_high = GGXScattering(fresnel_reflectance=0.9).evaluate(lf, surf, view).radiance
+    assert r_high.item() > r_low.item()
+
+
+def test_ggx_grazing_gives_zero_radiance():
+    lf = _make_lightfield(direction=(1.0, 0.0, 0.0))
+    surf = _make_surface(normal=(0.0, 0.0, 1.0))
+    model = GGXScattering(roughness=0.1)
+    result = model.evaluate(lf, surf, view_direction=np.array([0.0, 0.0, 1.0]))
+    assert np.allclose(result.radiance, 0.0)

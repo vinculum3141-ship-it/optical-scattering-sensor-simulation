@@ -116,7 +116,12 @@ def _prepare_lightfield(lightfield, surface) -> object:
 def _rotate_source(lightfield, theta_i: float) -> object:
     import copy
     lf = copy.copy(lightfield)
-    direction = np.array([np.sin(theta_i), 0.0, np.cos(theta_i)], dtype=float)
+    # The lightfield's .direction is the *propagation* direction
+    # (source -> surface), i.e. the negative of the incident direction.
+    # Rotating the incident direction by theta_i about the y-axis gives
+    # omega_i = [sin(theta_i), 0, cos(theta_i)], so the propagation
+    # direction becomes its negative.
+    direction = np.array([-np.sin(theta_i), 0.0, -np.cos(theta_i)], dtype=float)
     norm = np.linalg.norm(direction)
     if norm > 0:
         direction = direction / norm

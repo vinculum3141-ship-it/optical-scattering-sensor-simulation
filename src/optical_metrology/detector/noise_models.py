@@ -25,8 +25,9 @@ class FixedPatternNoise(DetectorNoiseModel):
     ----------
     pattern : np.ndarray or float
         If an array, used directly as the per-pixel offset in electrons.
-        If a float, the pattern is generated as Gaussian noise with
-        that standard deviation (in electrons).
+        If a float, the pattern is generated once as Gaussian noise with
+        that standard deviation (in electrons) and kept constant across
+        frames, as a true fixed-pattern offset.
     """
 
     def __init__(self, pattern=1.0):
@@ -35,10 +36,15 @@ class FixedPatternNoise(DetectorNoiseModel):
         else:
             self._sigma = float(pattern)
             self.pattern = None
+        self._generated: Optional[np.ndarray] = None
+        self._generated_shape: Optional[tuple] = None
 
     def apply(self, electrons):
         if self.pattern is None:
-            return electrons + np.random.normal(0.0, self._sigma, size=electrons.shape)
+            if self._generated is None or self._generated_shape != electrons.shape:
+                self._generated = np.random.normal(0.0, self._sigma, size=electrons.shape)
+                self._generated_shape = electrons.shape
+            return electrons + self._generated
         if self.pattern.shape != electrons.shape:
             raise ValueError(
                 f"FPN pattern shape {self.pattern.shape} does not match "

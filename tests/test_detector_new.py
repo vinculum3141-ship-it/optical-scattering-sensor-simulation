@@ -232,10 +232,10 @@ def test_blooming_integrated_with_detector():
 
 def test_detector_qe_callable():
     qe_fn = lambda wl: 0.3 if wl > 600e-9 else 0.9
-    det = CMOSDetector(quantum_efficiency=qe_fn)
-    sf = _sensor_field(irradiance=1e-6, wavelength=532e-9)
+    det = CMOSDetector(quantum_efficiency=qe_fn, rng_seed=42)
+    sf = _sensor_field(irradiance=1e-4, wavelength=532e-9)
     img1 = det.capture(sf)
-    sf2 = _sensor_field(irradiance=1e-6, wavelength=700e-9)
+    sf2 = _sensor_field(irradiance=1e-4, wavelength=700e-9)
     img2 = det.capture(sf2)
     assert np.mean(img1.pixels) > np.mean(img2.pixels), \
         "higher QE at 532nm should produce more electrons"

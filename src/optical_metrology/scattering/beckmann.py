@@ -1,3 +1,22 @@
+"""Beckmann microfacet specular scattering model.
+
+Implements a physically based specular BRDF built from the Beckmann
+normal distribution function, the Schlick Fresnel approximation, and a
+Smith geometry attenuation factor.  It is a specular-only model — there
+is no diffuse term, unlike :class:`~scattering.cooktorrance.CookTorranceScattering`.
+
+This is the classic microfacet model for machined metals, ground glass,
+and painted coatings, and is used in UC4 as a candidate for least-squares
+BRDF fitting via :class:`~analysis.brdf_fit.BRDFFitter`.
+
+References
+----------
+- Cook, R. L. & Torrance, K. E. "A reflectance model for computer
+  graphics." ACM Trans. Graph. 1(1), 1982.
+- Beckmann, P. & Spizzichino, A. "The Scattering of Electromagnetic
+  Waves from Rough Surfaces." Pergamon, 1963.
+"""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -9,6 +28,31 @@ from .cooktorrance import distribution_beckmann, fresnel_schlick, geometry_smith
 
 
 class BeckmannScattering(ScatteringModel):
+    """Beckmann microfacet specular scattering model.
+
+    The specular BRDF is the Cook-Torrance product :math:`F \\cdot G
+    \\cdot D / (4 \\cos\\theta_i \\cos\\theta_o)`, using the Beckmann
+    normal distribution function:
+
+        D(h) = exp(-tan²(α) / m²) / (π m² cos⁴(α))
+
+    where α is the angle between the half-vector h and the surface
+    normal, and m = *roughness* is the RMS microfacet slope.  The model
+    is specular-only; use :class:`~scattering.cooktorrance.CookTorranceScattering`
+    for a combined diffuse + specular BRDF.
+
+    Parameters
+    ----------
+    roughness : float
+        RMS microfacet slope m.  Typical values: 0.01 (nearly mirror)
+        to 0.5 (very rough).  Default 0.1.
+    fresnel_reflectance : float or None
+        Reflectance at normal incidence F₀.  If ``None``, the model
+        derives F₀ from ``surface.material.F0(lightfield.wavelength)``
+        at evaluation time.  Common explicit values: 0.04 (glass),
+        0.5 (silicon), 0.9+ (aluminium, gold).  Default 0.04.
+    """
+
     def __init__(self, roughness: float = 0.1, fresnel_reflectance: Optional[float] = 0.04):
         self.roughness = max(roughness, 1e-6)
         self.fresnel_reflectance = fresnel_reflectance
@@ -22,6 +66,26 @@ class BeckmannScattering(ScatteringModel):
         return 0.04
 
     def evaluate(self, lightfield, surface, view_direction):
+        """Evaluate Beckmann scattering over the grid.
+
+        Parameters
+        ----------
+        lightfield : LightField
+            Incident illumination.  ``lightfield.direction`` is the
+            propagation direction (source → surface); it is negated
+            internally to obtain the incident direction ω_i.
+        surface : Surface
+            Surface geometry providing per-pixel normals.
+        view_direction : ndarray, shape ``(3,)``
+            Unit vector from the surface toward the observer
+            (normalised internally).
+
+        Returns
+        -------
+        ScatteredField
+            Specular radiance at each grid point and a constant outgoing
+            direction equal to *view_direction*.
+        """
         incoming = np.asarray(lightfield.direction, dtype=float)
         normals = np.asarray(surface.normals, dtype=float)
         if incoming.ndim != 3 or normals.ndim != 3:
