@@ -14,7 +14,7 @@ def test_uc7_asml_capstone_example_runs() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "examples/run_uc7_asml_capstone.py",
+            "notebooks/07_wafer_metrology/defect_capstone/run_asml_capstone.py",
             "--coherence",
             "1e-4",
             "--exposure",

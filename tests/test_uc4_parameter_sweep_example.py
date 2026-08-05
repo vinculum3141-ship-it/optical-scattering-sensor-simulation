@@ -14,7 +14,7 @@ def test_parameter_sweep_example_runs() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "examples/run_parameter_sweep.py",
+            "notebooks/04_angle_resolved_scattering/run_parameter_sweep.py",
             "--roughness",
             "0.05",
             "0.3",

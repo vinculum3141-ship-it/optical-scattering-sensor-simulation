@@ -14,7 +14,7 @@ def test_uc7_wafer_alignment_example_runs() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "examples/run_uc7_wafer_alignment.py",
+            "notebooks/07_wafer_metrology/alignment/run_alignment.py",
             "--shift",
             "3",
             "--rotation",

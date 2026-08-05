@@ -32,6 +32,7 @@ OpticalSystem(
     magnification=1.0,         # lateral magnification
     wavelength=532e-9,         # design wavelength (m)
     psf=None,                  # PSF model reference
+    defocus=0.0,               # axial sensor displacement (m)
     aberrations=None,          # reserved for future use
 )
 ```
@@ -112,6 +113,56 @@ Helper classes:
   evaluates individual polynomials or the full wavefront.
 - `Wavefront` — 2D wavefront error map container holding the Noll
   coefficient dict; `Wavefront.map(rho, theta)` builds the map.
+- `defocus_coefficient(defocus_m, numerical_aperture)` — converts an
+  axial displacement in metres to a Zernike j=5 coefficient
+  `c5 = defocus · NA² / (4·√3)` metres RMS wavefront error.
+
+### Depth of Field
+
+`OpticalSystem.defocus` models **depth of field**: the axial
+displacement of the sensor from the focal plane, in metres
+(`0.0` = perfectly in focus).  Setting it widens the PSF, so features
+blur as the object moves out of the depth of field.
+
+```python
+from optical_metrology.analysis.focus import FocusAnalyzer
+from optical_metrology.optics import (
+    OpticalSystem,
+    OpticalPropagator,
+    Wavefront,
+    ZernikePSF,
+)
+
+model = ZernikePSF(Wavefront({}), wavelength=532e-9, numerical_aperture=0.25)
+
+# Through-focus scan: sharpness peaks at defocus = 0.
+for defocus_m in (0.0, 0.5e-3, 1.0e-3):
+    optics = OpticalSystem(wavelength=532e-9, numerical_aperture=0.25,
+                           defocus=defocus_m)
+    sensor = OpticalPropagator(psf_model=model).propagate(field, optics)
+    score = FocusAnalyzer().analyze(digital_image).measurements["focus_score"]
+```
+
+How it works:
+
+1. `OpticalPropagator` reads `optical_system.defocus`.
+2. If non-zero, it calls `psf_model.with_defocus(defocus_m)`, which adds
+   the corresponding Noll j=5 coefficient
+   (`c5 = defocus · NA² / (4·√3)` m RMS, from
+   `defocus_coefficient`) to the wavefront — the **paraxial defocus**
+   relation, where the wavefront error at the pupil edge is
+   `defocus · NA² / 2`.
+3. The resulting `ZernikePSF` broadens (peak drops, second moment
+   grows), and the propagator grows the kernel via
+   `defocus_kernel_size` to hold the geometric circle of confusion
+   (`radius = |defocus| · NA / pixel_size`).
+
+Defocus is **symmetric in sign** (the PSF is the squared magnitude of
+the pupil FFT), and it is merged with any other aberrations already in
+the wavefront.  Because it feeds a `ZernikePSF`, it pairs naturally
+with `FocusAnalyzer` sharpness metrics to run through-focus scans.
+Only PSF models exposing `with_defocus` respond to the setting;
+`GaussianPSF` and the default box filter ignore it.
 
 ## Propagation
 
@@ -169,7 +220,9 @@ zero-dependency operation. Key points:
 - **No FFT** — the O(HWK²) approach is intentional for transparency.
   The code comment explicitly identifies this as a point for optimisation.
 - **PSF kernel generation** — `psf_model.kernel(size)` returns a
-  normalised 2D array. The size is `max(3, int(4σ))`.
+  normalised 2D array. The size is `max(3, int(4σ))` for Gaussian
+  models, `31` for diffraction models, and grows to contain the
+  defocus blur when `optical_system.defocus` is non-zero.
 
 ### SensorField Container
 

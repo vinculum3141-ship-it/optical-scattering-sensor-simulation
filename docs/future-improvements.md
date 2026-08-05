@@ -1,13 +1,61 @@
-# Future Improvements — Deferred Architectural Notes
+# Future Improvements — Deferred and Not-Yet-Started Work
 
-> **Purpose:** Track design ideas explicitly **not** in the current
-> roadmap (see `docs/roadmap-todo.md` for planned work).  Items here
-> are deferred because no use case requires them yet, not because they
-> lack priority.
+> **Purpose:** Single tracker for all work that is **not done yet**.
+> Toggle each item between `[ ]` (pending) and `[~]` (in progress); when
+> you pick an item up, implement it on a branch.
+>
+> Completed work is not tracked here — see the layer docs,
+> `docs/architecture.md`, and the test suite in `docs/testing.md`.
 
 ---
 
-## 1. Separate BeamGenerator from LightSource
+## 1. Performance Benchmarks
+
+No benchmark harness exists yet.  The manual O(H·W·K²) sliding-window
+convolution in `OpticalPropagator` is the known hot spot; the FFT-based
+replacement is called out in the code and `docs/layer-optics.md`.
+
+- [ ] Image-size scaling benchmark (propagation / detection / analysis
+      throughput as grid size grows)
+- [ ] Convolution cost benchmark (PSF kernel size vs. image size, current
+      convolution vs. FFT-based approach)
+- [ ] Reconstruction runtime (phase unwrap / height reconstruction for UC5)
+
+## 2. Deferred Use-Case Capabilities
+
+- [ ] **UC4 — Polarised BRDF (Mueller matrix).** Full polarimetric
+      scattering.  Depends on the exact-Fresnel / Cook-Torrance
+      decomposition in §7.
+- [ ] **UC4 — Standard reference materials.** Calibrated reflectance /
+      scattering standards for material-characterisation comparisons.
+- [ ] **UC4 — BSDF (transmissive scattering).** Transmissive analogue of
+      the existing BRDF models.
+- [ ] **UC5 — Projector-camera calibration.** Geometric calibration between
+      projector and camera for structured-light measurement.
+- [ ] **UC5 — Divergent projection model.** More realistic non-parallel
+      projection than the current fringe projector.
+- [ ] **UC6 — Atmospheric effects.** Long-range LiDAR realism.  A scalar
+      `atmospheric_transmission` placeholder already exists in
+      `LiDARRangeEquation`; this item is the full atmospheric scattering /
+      attenuation model.
+- [ ] **UC7 — Real-time performance model.** Lightweight, non-functional
+      model for alignment assessment during wafer processing.
+
+## 3. Documentation Site
+
+All `docs/` content is written; only the site build is missing.
+
+- [ ] Create `mkdocs.yml` (with `mkdocstrings[python]`) and deploy to
+      GitHub Pages.
+
+---
+
+# Deferred Architectural Notes
+
+Items below are deferred because **no use case requires them yet**, not
+because they lack priority.
+
+## 4. Separate BeamGenerator from LightSource
 
 **What:** Split `LightSource.generate_light_field()` into a standalone
 `BeamGenerator` class that samples a physical source onto a grid.
@@ -33,7 +81,7 @@ lf = gen.generate(laser, shape=(32, 32), spacing=0.5)
 
 ---
 
-## 2. Spatially Varying LightField Properties
+## 5. Spatially Varying LightField Properties
 
 **What:** Promote `wavelength`, `polarization`, and `coherence_length`
 from scalar to per-pixel arrays on `LightField`.
@@ -60,7 +108,7 @@ Backwards compatible if scalar inputs are broadcast to full grid.
 
 ---
 
-## 3. Holography / Coherent Imaging
+## 6. Holography / Coherent Imaging
 
 **What:** Full complex-amplitude propagation through the optical chain
 (not just intensity PSF convolution).  Requires coherent illumination
@@ -75,7 +123,7 @@ microscopy or interferometric surface profiling.
 
 ---
 
-## 4. Modular Decomposition of Cook-Torrance (D × F × G)
+## 7. Modular Decomposition of Cook-Torrance (D × F × G)
 
 **What:** Extract the three components of the Cook-Torrance BRDF into
 swappable modules:

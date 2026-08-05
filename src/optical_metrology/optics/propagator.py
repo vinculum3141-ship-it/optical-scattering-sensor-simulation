@@ -67,17 +67,27 @@ class OpticalPropagator:
 
         data = self._apply_magnification(radiance, optical_system)
 
-        if self.psf_model is None:
+        defocus = getattr(optical_system, "defocus", 0.0) or 0.0
+
+        psf_model = self.psf_model
+        if defocus and psf_model is not None and hasattr(psf_model, "with_defocus"):
+            psf_model = psf_model.with_defocus(defocus)
+
+        if psf_model is None:
             psf = np.ones((3, 3), dtype=float) / 9.0
         else:
             # Gaussian PSFs expose ``sigma``; diffraction-based PSFs
             # (AiryPSF, ZernikePSF) do not, so fall back to a fixed size.
-            sigma = getattr(self.psf_model, "sigma", None)
+            sigma = getattr(psf_model, "sigma", None)
             if sigma is not None:
                 size = max(3, int(4 * sigma))
             else:
                 size = 31
-            psf = self.psf_model.kernel(size=size)
+            # A defocused pupil spreads the PSF beyond the diffraction
+            # spot, so grow the kernel to contain the geometric blur.
+            if defocus and hasattr(psf_model, "defocus_kernel_size"):
+                size = psf_model.defocus_kernel_size(defocus, base_size=size)
+            psf = psf_model.kernel(size=size)
 
         irradiance = self._convolve(data, psf)
 

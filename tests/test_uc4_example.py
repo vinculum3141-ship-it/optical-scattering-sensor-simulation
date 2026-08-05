@@ -14,7 +14,7 @@ def test_uc4_brdf_sweep_example_runs() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "examples/run_uc4_brdf_sweep.py",
+            "notebooks/04_angle_resolved_scattering/run_brdf_sweep.py",
             "--theta-i-range",
             "0.0",
             "0.4",

@@ -23,7 +23,7 @@ python playground.py --analysis              # jump to analysis demo
 
 ```
 src/optical_metrology/   → Installable Python package (the library)
-examples/                → Jupyter notebooks
+notebooks/               → Self-contained use-case units (tutorial notebooks + CLI scripts + README)
 tests/                   → Pytest unit tests + Robot Framework acceptance tests
 docs/                    → Markdown documentation
 ```
@@ -202,11 +202,15 @@ package and serve as interactive demos/exploration tools:
 
 | Notebook | What it shows |
 |----------|---------------|
-| `examples/basic_pipeline.ipynb` | Light → surface → scatter → optics → detector → analysis |
-| `examples/defect_inspection.ipynb` | Scratched surface inspection (UC1 preview) |
-| `examples/uc2_multispectral_classification_playground.ipynb` | Multispectral material classification (UC2) |
-| `examples/uc7_wafer_alignment_playground.ipynb` | Wafer alignment / registration (UC7) |
-| `examples/uc7_asml_capstone_playground.ipynb` | ASML-style wafer defect inspection capstone (UC7) |
+| `notebooks/00_getting_started/basic_pipeline.ipynb` | Light → surface → scatter → optics → detector → analysis |
+| `notebooks/01_surface_defect_inspection/inspection_tutorial.ipynb` | AOI defect detection + pass/fail (UC1) |
+| `notebooks/02_multispectral_identification/identification_tutorial.ipynb` | Multispectral material classification (UC2) |
+| `notebooks/03_sensor_characterization/characterization_tutorial.ipynb` | Detector PTC / dynamic range / linearity (UC3) |
+| `notebooks/04_angle_resolved_scattering/brdf_sweep_tutorial.ipynb` | Angle-resolved BRDF sweep (UC4) |
+| `notebooks/05_structured_light_3d/structured_light_tutorial.ipynb` | Structured-light 3D reconstruction (UC5) |
+| `notebooks/06_lidar_ranging/lidar_tutorial.ipynb` | LiDAR ranging + point cloud (UC6) |
+| `notebooks/07_wafer_metrology/alignment/alignment_tutorial.ipynb` | Wafer alignment / registration (UC7) |
+| `notebooks/07_wafer_metrology/defect_capstone/asml_capstone_tutorial.ipynb` | ASML-style wafer defect capstone (UC7) |
 | `pipeline.ipynb` | Root-level notebook with inline matplotlib plots |
 
 ---
@@ -287,8 +291,8 @@ All source code lives under `src/optical_metrology/`.
 | `explore.py` | Interactive CLI — illumination / surface / scattering modes |
 | `playground.py` | Interactive playground with demos, custom pipeline, code snippets |
 | `plot_pipeline.py` | Standalone — runs pipeline, saves matplotlib PNGs |
-| `examples/basic_pipeline.ipynb` | Jupyter notebook — basic pipeline example |
-| `examples/defect_inspection.ipynb` | Jupyter notebook — UC1 defect inspection |
+| `notebooks/00_getting_started/basic_pipeline.ipynb` | Jupyter notebook — basic pipeline example |
+| `notebooks/README.md` | Self-contained use-case unit index |
 | `tests/test_illumination.py` | Pytest (35 tests) |
 | `tests/test_surface.py` | Pytest (4 tests) |
 | `tests/test_surface_new.py` | Pytest (35 tests) |
@@ -388,18 +392,18 @@ Custom noise models available:
 - The seven surface generators all use the pattern
   `self.__dict__.update(surface.__dict__)` — adding a field to
   `Surface` requires no generator changes.
-- See `docs/roadmap-todo.md` for the full use-case-driven development
-  plan and `docs/future-improvements.md` for deferred architectural
-  ideas.
+- See `docs/future-improvements.md` for the single tracker of remaining
+  work (benchmarks, deferred use-case capabilities, docs site) and
+  deferred architectural ideas.
 
 ---
 
 ## Roadmap
 
-The project follows a use-case-driven roadmap with 7 phases (2a–2g)
-covering semiconductor inspection, LiDAR, structured light, sensor
-characterisation, and multi-spectral material identification.  See
-`docs/roadmap-todo.md` for the complete task tracker.
-
-Phase 0 (Framework Finalisation) covers packaging, CI, documentation
-site, and example notebooks before any use-case implementation begins.
+All seven use cases (2a–2g: inspection, sensor characterisation, wafer
+alignment, multi-spectral ID, BRDF measurement, structured light, LiDAR)
+are implemented end to end with notebooks, CLI scripts, and integration
+tests.  See `docs/future-improvements.md` for the remaining open work —
+performance benchmarks, deferred use-case capabilities (polarised BRDF,
+BSDF, projector calibration, atmospheric effects, real-time alignment),
+the mkdocs GitHub Pages site, and deferred architectural ideas.

@@ -17,7 +17,7 @@ angle, wavelength, refractive index, and/or scattering model together —
 use [`ScatteringSweep`](layer-analysis.md#metrology--goniometric-uc4):
 
 ```bash
-python examples/run_parameter_sweep.py
+python notebooks/04_angle_resolved_scattering/run_parameter_sweep.py
 ```
 
 ## Typical inputs
@@ -44,12 +44,12 @@ python examples/run_parameter_sweep.py
 
 ```bash
 source .venv/bin/activate
-python examples/run_uc4_brdf_sweep.py
+python notebooks/04_angle_resolved_scattering/run_brdf_sweep.py
 ```
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [examples/uc4_brdf_sweep_playground.ipynb](../examples/uc4_brdf_sweep_playground.ipynb) to explore the sweep interactively.
+Open the notebook at [notebooks/04_angle_resolved_scattering/brdf_sweep_tutorial.ipynb](../notebooks/04_angle_resolved_scattering/brdf_sweep_tutorial.ipynb) to explore the sweep interactively.
 
 ## Why this use case matters
 

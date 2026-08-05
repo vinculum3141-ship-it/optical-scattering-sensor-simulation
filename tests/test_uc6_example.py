@@ -14,7 +14,7 @@ def test_uc6_lidar_example_runs() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "examples/run_uc6_lidar.py",
+            "notebooks/06_lidar_ranging/run_lidar.py",
             "--range-m",
             "12.0",
             "--backscatter",

@@ -14,7 +14,7 @@ def test_uc2_multispectral_classification_example_runs() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "examples/run_uc2_multispectral_classification.py",
+            "notebooks/02_multispectral_identification/run_classification.py",
         ],
         cwd=repo_root,
         env=env,

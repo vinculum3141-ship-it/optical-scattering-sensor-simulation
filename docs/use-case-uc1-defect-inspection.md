@@ -32,7 +32,7 @@ The simulation follows the full framework pipeline:
 
 ```bash
 source .venv/bin/activate
-python examples/run_uc1_inspection.py --defect dent --illumination darkfield --threshold 0.08
+python notebooks/01_surface_defect_inspection/run_inspection.py --defect dent --illumination darkfield --threshold 0.08
 ```
 
 This produces a short analysis report showing whether defects were found
@@ -40,7 +40,7 @@ and how the chosen settings affect the result.
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [examples/uc1_defect_inspection_playground.ipynb](../examples/uc1_defect_inspection_playground.ipynb)
+Open the notebook at [notebooks/01_surface_defect_inspection/inspection_tutorial.ipynb](../notebooks/01_surface_defect_inspection/inspection_tutorial.ipynb)
 for a parameter-driven walkthrough. The notebook is designed so you can
 change one setting at a time and compare how the inspection result changes.
 

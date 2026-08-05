@@ -86,6 +86,22 @@ def zernike_eval(j: int, rho: np.ndarray, theta: np.ndarray) -> np.ndarray:
     return norm * R * np.cos(m * theta)
 
 
+def defocus_coefficient(defocus_m: float, numerical_aperture: float) -> float:
+    """Convert an axial defocus to a Zernike defocus coefficient (Noll j=5).
+
+    For an axial image/object displacement of ``defocus_m`` metres in a
+    system of numerical aperture ``NA``, the paraxial quadratic wavefront
+    error at the pupil edge is ``W = defocus_m · NA² / 2``.  Equating the
+    ρ² term of that wavefront to the ρ² term of the normalised Zernike
+    defocus ``Z5 = √3·(2ρ² − 1)`` gives the coefficient
+
+        c5 = defocus_m · NA² / (4·√3)
+
+    in metres of RMS wavefront error.
+    """
+    return defocus_m * numerical_aperture ** 2 / (4.0 * math.sqrt(3.0))
+
+
 class ZernikePolynomials:
     """Evaluate Noll-indexed Zernike polynomials on a pupil grid.
 
@@ -165,6 +181,11 @@ class ZernikePSF:
     pixel_size : float
         Physical size of one sensor pixel in metres.  Used to convert
         the diffraction scale from meters to pixels (default 5 µm).
+
+    Defocus
+        Axial defocus (e.g. from :attr:`OpticalSystem.defocus`) is added
+        via :meth:`with_defocus`, which injects the corresponding Noll
+        j=5 coefficient into the wavefront and widens the PSF.
     """
 
     def __init__(
@@ -199,6 +220,37 @@ class ZernikePSF:
         ``0.61 · λ / (NA · pixel_size)`` pixels.
         """
         return max(512, 8 * size)
+
+    def with_defocus(self, defocus_m: float) -> "ZernikePSF":
+        """Return a copy with axial defocus ``defocus_m`` (metres) added.
+
+        The defocus is converted to a Zernike j=5 coefficient via
+        :func:`defocus_coefficient` and merged into the existing
+        wavefront, so any other aberrations are preserved.  A defocus of
+        zero returns a model equivalent to this one.
+        """
+        coefficient = defocus_coefficient(defocus_m, self.numerical_aperture)
+        coefficients = dict(self.wavefront.coefficients)
+        coefficients[5] = coefficients.get(5, 0.0) + coefficient
+        return ZernikePSF(
+            wavefront=Wavefront(coefficients),
+            wavelength=self.wavelength,
+            numerical_aperture=self.numerical_aperture,
+            pixel_size=self.pixel_size,
+        )
+
+    def defocus_kernel_size(self, defocus_m: float, base_size: int = 31) -> int:
+        """Kernel side length large enough to contain the defocus blur.
+
+        The geometric circle of confusion for an axial shift of
+        ``defocus_m`` metres has radius ``|defocus_m| · NA`` in
+        sensor-plane metres, i.e. ``|defocus_m| · NA / pixel_size``
+        pixels.  The returned size is the odd integer at least
+        ``base_size`` that holds that disk.
+        """
+        radius_px = abs(defocus_m) * self.numerical_aperture / self.pixel_size
+        size = 2 * int(math.ceil(radius_px)) + 1
+        return max(int(base_size), size)
 
     def kernel(self, size: int = 31) -> np.ndarray:
         """Generate a normalised PSF kernel.

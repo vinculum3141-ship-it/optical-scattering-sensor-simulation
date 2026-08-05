@@ -24,12 +24,12 @@ It uses a small spectral reference library and a simple spectral-angle-based cla
 
 ```bash
 source .venv/bin/activate
-python examples/run_uc2_multispectral_classification.py
+python notebooks/02_multispectral_identification/run_classification.py
 ```
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [examples/uc2_multispectral_classification_playground.ipynb](../examples/uc2_multispectral_classification_playground.ipynb) to explore the workflow interactively.
+Open the notebook at [notebooks/02_multispectral_identification/identification_tutorial.ipynb](../notebooks/02_multispectral_identification/identification_tutorial.ipynb) to explore the workflow interactively.
 
 ## Why this use case matters
 

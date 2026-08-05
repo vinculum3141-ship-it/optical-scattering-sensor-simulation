@@ -32,12 +32,12 @@ behaviour visible without requiring a full scanner or hardware model.
 
 ```bash
 source .venv/bin/activate
-python examples/run_uc6_lidar.py
+python notebooks/06_lidar_ranging/run_lidar.py
 ```
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [examples/uc6_lidar_playground.ipynb](../examples/uc6_lidar_playground.ipynb) to explore the workflow interactively.
+Open the notebook at [notebooks/06_lidar_ranging/lidar_tutorial.ipynb](../notebooks/06_lidar_ranging/lidar_tutorial.ipynb) to explore the workflow interactively.
 
 ## Why this use case matters
 

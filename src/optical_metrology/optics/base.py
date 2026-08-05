@@ -38,6 +38,10 @@ class OpticalSystem:
         Design wavelength in metres (default 532 nm).
     psf : object or None
         Point-spread function model (e.g. :class:`~optics.psf.GaussianPSF`).
+    defocus : float
+        Axial displacement of the sensor from the focal plane in metres
+        (default 0.0 = perfectly in focus).  Positive/negative values
+        push the sensor behind/in front of focus and widen the PSF.
     aberrations : dict or None
         Optional dictionary of aberration coefficients
         (reserved for future use).
@@ -49,6 +53,7 @@ class OpticalSystem:
     magnification: float = 1.0
     wavelength: float = 532e-9
     psf: Optional[object] = None
+    defocus: float = 0.0
     aberrations: Optional[dict] = None
 
     def __post_init__(self):

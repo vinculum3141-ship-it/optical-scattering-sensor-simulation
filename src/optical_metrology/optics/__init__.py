@@ -22,7 +22,12 @@ from .airy import AiryPSF
 from .base import OpticalSystem, SensorField
 from .propagator import OpticalPropagator
 from .psf import GaussianPSF
-from .zernike import Wavefront, ZernikePolynomials, ZernikePSF
+from .zernike import (
+    Wavefront,
+    ZernikePolynomials,
+    ZernikePSF,
+    defocus_coefficient,
+)
 
 __all__ = [
     "AiryPSF",
@@ -33,4 +38,5 @@ __all__ = [
     "Wavefront",
     "ZernikePolynomials",
     "ZernikePSF",
+    "defocus_coefficient",
 ]

@@ -28,12 +28,12 @@ machine-vision stack.
 
 ```bash
 source .venv/bin/activate
-python examples/run_uc7_wafer_alignment.py
+python notebooks/07_wafer_metrology/alignment/run_alignment.py
 ```
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [examples/uc7_wafer_alignment_playground.ipynb](../examples/uc7_wafer_alignment_playground.ipynb) to explore the workflow interactively.
+Open the notebook at [notebooks/07_wafer_metrology/alignment/alignment_tutorial.ipynb](../notebooks/07_wafer_metrology/alignment/alignment_tutorial.ipynb) to explore the workflow interactively.
 
 ## Why this use case matters
 

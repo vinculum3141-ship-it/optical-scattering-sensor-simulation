@@ -14,7 +14,7 @@ def test_uc5_structured_light_example_runs() -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "examples/run_uc5_structured_light.py",
+            "notebooks/05_structured_light_3d/run_structured_light.py",
             "--period",
             "16.0",
             "--projection-angle",

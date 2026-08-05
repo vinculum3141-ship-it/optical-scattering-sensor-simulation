@@ -27,7 +27,7 @@ performance analysis.
 
 ```bash
 source .venv/bin/activate
-python examples/run_uc3_sensor_characterization.py --levels 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+python notebooks/03_sensor_characterization/run_characterization.py --levels 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
 ```
 
 ## Why this use case matters

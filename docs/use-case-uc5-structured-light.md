@@ -39,12 +39,12 @@ This is the core logic behind many industrial profilometry systems, even though 
 
 ```bash
 source .venv/bin/activate
-python examples/run_uc5_structured_light.py
+python notebooks/05_structured_light_3d/run_structured_light.py
 ```
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [examples/uc5_structured_light_playground.ipynb](../examples/uc5_structured_light_playground.ipynb) to explore the workflow interactively.
+Open the notebook at [notebooks/05_structured_light_3d/structured_light_tutorial.ipynb](../notebooks/05_structured_light_3d/structured_light_tutorial.ipynb) to explore the workflow interactively.
 
 ## Why this use case matters
 

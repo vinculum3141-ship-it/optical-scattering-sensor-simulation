@@ -6,7 +6,7 @@
 
 The framework employs a two-tier testing strategy:
 
-- **Unit / integration tests (pytest)** — 342 tests across all seven
+- **Unit / integration tests (pytest)** — 352 tests across all seven
   layers plus pipeline, utilities, and seven use-case integration
   suites. Covers core functionality, edge cases, all models, and
   end-to-end workflows. Fast, run on every change.
@@ -25,7 +25,7 @@ tests/
 │   ├── test_scattering.py                   # pytest — 11 tests
 │   ├── test_scattering_new.py               # pytest — 6 tests
 │   ├── test_optics.py                       # pytest — 1 test
-│   ├── test_optics_new.py                   # pytest — 24 tests
+│   ├── test_optics_new.py                   # pytest — 34 tests
 │   ├── test_detector.py                     # pytest — 1 test
 │   ├── test_detector_new.py                 # pytest — 19 tests
 │   ├── test_analysis.py                     # pytest — 1 test

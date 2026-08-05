@@ -1,7 +1,16 @@
 import numpy as np
 import pytest
 
-from optical_metrology.optics import AiryPSF, OpticalPropagator, OpticalSystem, SensorField, Wavefront, ZernikePolynomials, ZernikePSF
+from optical_metrology.optics import (
+    AiryPSF,
+    OpticalPropagator,
+    OpticalSystem,
+    SensorField,
+    Wavefront,
+    ZernikePolynomials,
+    ZernikePSF,
+    defocus_coefficient,
+)
 from optical_metrology.optics.airy import _j1
 
 
@@ -9,6 +18,11 @@ class _MockScatteredField:
     def __init__(self, radiance, polarization=None):
         self.radiance = radiance
         self.polarization = polarization or "unpolarized"
+
+
+class _MockImage:
+    def __init__(self, pixels):
+        self.pixels = pixels
 
 
 def test_airy_psf_kernel_normalised():
@@ -224,3 +238,99 @@ def test_propagator_magnification_disabled():
     prop = OpticalPropagator(magnification_enabled=False, throughput_enabled=False)
     sf = prop.propagate(field, opt)
     assert sf.irradiance.shape == (10, 10)
+
+
+def test_defocus_coefficient_formula():
+    """c5 = defocus · NA² / (4·√3) metres of RMS wavefront error."""
+    assert np.isclose(defocus_coefficient(1e-3, 0.5), 1e-3 * 0.25 / (4 * np.sqrt(3)))
+    assert np.isclose(defocus_coefficient(0.0, 0.5), 0.0)
+
+
+def test_defocus_coefficient_sign_and_scaling():
+    assert defocus_coefficient(1e-4, 0.5) > 0.0
+    assert defocus_coefficient(-1e-4, 0.5) < 0.0
+    # Doubling NA quadruples the coefficient (NA² dependence).
+    assert np.isclose(defocus_coefficient(1e-4, 0.5), 4 * defocus_coefficient(1e-4, 0.25))
+
+
+def test_optical_system_defocus_defaults_to_zero():
+    assert OpticalSystem().defocus == 0.0
+
+
+def test_zernike_psf_with_defocus_broadens():
+    """Axial defocus widens the PSF and lowers the peak (via a Zernike
+    j=5 coefficient), closing the loop with sharpness metrics."""
+    kw = dict(wavelength=532e-9, numerical_aperture=0.5, pixel_size=0.1e-6)
+    ideal = ZernikePSF(Wavefront({}), **kw).kernel(63)
+    defoc = ZernikePSF(Wavefront({}), **kw).with_defocus(1.4e-6).kernel(63)
+    c = 63 // 2
+    y, x = np.mgrid[-c:c + 1, -c:c + 1]
+    second_moment = lambda k: (k * (x ** 2 + y ** 2)).sum()
+    assert defoc[c, c] < ideal[c, c]
+    assert second_moment(defoc) > second_moment(ideal)
+
+
+def test_zernike_psf_with_defocus_zero_unchanged():
+    kw = dict(wavelength=532e-9, numerical_aperture=0.5, pixel_size=0.1e-6)
+    psf = ZernikePSF(Wavefront({}), **kw)
+    assert np.allclose(psf.with_defocus(0.0).kernel(63), psf.kernel(63))
+
+
+def test_zernike_psf_with_defocus_preserves_aberrations():
+    kw = dict(wavelength=532e-9, numerical_aperture=0.5, pixel_size=0.1e-6)
+    psf = ZernikePSF(Wavefront({6: 0.1e-6}), **kw).with_defocus(1.4e-6)
+    assert np.isclose(psf.wavefront.coefficients[6], 0.1e-6)
+    assert psf.wavefront.coefficients[5] > 0.0
+
+
+def test_defocus_kernel_size_covers_geometric_blur():
+    """The kernel grows to hold the geometric circle of confusion."""
+    psf = ZernikePSF(Wavefront({}), wavelength=532e-9, numerical_aperture=0.5, pixel_size=5e-6)
+    small = psf.defocus_kernel_size(1e-4, base_size=31)  # radius 10 px
+    large = psf.defocus_kernel_size(5e-4, base_size=31)  # radius 50 px
+    assert small >= 31 and small % 2 == 1
+    assert large >= 101
+    assert large > small
+
+
+def test_propagator_defocus_broadens_point_image():
+    """An OpticalSystem with axial defocus spreads a point source over a
+    wider blur than the same system in focus."""
+    model = ZernikePSF(Wavefront({}), wavelength=532e-9, numerical_aperture=0.25)
+    field = _MockScatteredField(radiance=np.zeros((41, 41)))
+    field.radiance[20, 20] = 1.0
+    opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.25, defocus=0.0)
+    in_focus = OpticalPropagator(psf_model=model, throughput_enabled=False).propagate(field, opt)
+    opt.defocus = 2e-4
+    blurred = OpticalPropagator(psf_model=model, throughput_enabled=False).propagate(field, opt)
+    c = 20
+    y, x = np.mgrid[-c:c + 1, -c:c + 1]
+    second_moment = lambda img: (img * (x ** 2 + y ** 2)).sum()
+    assert blurred.irradiance[c, c] < in_focus.irradiance[c, c]
+    assert second_moment(blurred.irradiance) > second_moment(in_focus.irradiance)
+
+
+def test_propagator_defocus_through_focus_sharpness():
+    """Focus scores fall as defocus grows — in-focus is sharpest, the
+    signature of a through-focus scan closing the defocus -> blur loop."""
+    from optical_metrology.analysis.focus import FocusAnalyzer
+
+    model = ZernikePSF(Wavefront({}), wavelength=532e-9, numerical_aperture=0.25, pixel_size=2e-6)
+    field = _MockScatteredField(radiance=np.zeros((49, 49)))
+    field.radiance[24, 24] = 1.0
+    scores = []
+    for defocus in (0.0, 1e-4, 2e-4, 4e-4):
+        opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.25, defocus=defocus)
+        sf = OpticalPropagator(psf_model=model, throughput_enabled=False).propagate(field, opt)
+        score = FocusAnalyzer(method="laplacian_variance").analyze(_MockImage(sf.irradiance)).measurements["focus_score"]
+        scores.append(score)
+    assert all(scores[i] > scores[i + 1] for i in range(len(scores) - 1))
+
+
+def test_propagator_defocus_ignored_without_defocus_capable_psf():
+    """Systems without a defocus-capable PSF (e.g. no psf_model) ignore
+    the defocus setting without error."""
+    opt = OpticalSystem(wavelength=532e-9, numerical_aperture=0.25, defocus=1e-3)
+    field = _MockScatteredField(radiance=np.ones((5, 5)))
+    sf = OpticalPropagator(psf_model=None, throughput_enabled=False).propagate(field, opt)
+    assert sf.irradiance.shape == (5, 5)

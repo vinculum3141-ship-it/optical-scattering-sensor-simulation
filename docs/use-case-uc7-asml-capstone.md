@@ -27,12 +27,12 @@ This use case demonstrates an advanced semiconductor metrology workflow inspired
 
 ```bash
 source .venv/bin/activate
-python examples/run_uc7_asml_capstone.py
+python notebooks/07_wafer_metrology/defect_capstone/run_asml_capstone.py
 ```
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [examples/uc7_asml_capstone_playground.ipynb](../examples/uc7_asml_capstone_playground.ipynb) to explore the workflow with editable parameters and a coherence-performance scan.
+Open the notebook at [notebooks/07_wafer_metrology/defect_capstone/asml_capstone_tutorial.ipynb](../notebooks/07_wafer_metrology/defect_capstone/asml_capstone_tutorial.ipynb) to explore the workflow with editable parameters and a coherence-performance scan.
 
 ## Why this use case matters
 
