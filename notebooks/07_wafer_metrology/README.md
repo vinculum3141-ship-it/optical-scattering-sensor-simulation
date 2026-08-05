@@ -11,5 +11,5 @@ This unit groups the two UC7 scenarios.  Each sub-folder is self-contained.
 
 ## Learn more
 
-- [Alignment use-case documentation](../../docs/use-case-uc7-wafer-alignment.md)
-- [Capstone use-case documentation](../../docs/use-case-uc7-asml-capstone.md)
+- [Alignment use-case documentation](../../docs/use-cases/uc7-alignment.md)
+- [Capstone use-case documentation](../../docs/use-cases/uc7-defect-capstone.md)

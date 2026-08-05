@@ -25,7 +25,7 @@ Sweep the reflection angle at a fixed incidence, record the scattered radiance, 
 
 ## Learn more
 
-- [Use-case documentation](../../docs/use-case-uc4-brdf-sweep.md)
+- [Use-case documentation](../../docs/use-cases/uc4-angle-resolved-scattering.md)
 - Key modules: `scattering.BeckmannScattering/GGXScattering`, `analysis.GoniometricSweep/BRDFFitter/ScatteringSweep`, `surface.RoughSurface`
 
 > Note: `run_parameter_sweep.py` (the cross-model `ScatteringSweep` tool)

@@ -1,4 +1,4 @@
-# Use Case 7 — Wafer Alignment / Registration
+# Use Case 7 — Wafer Metrology: Die Alignment
 
 This use case demonstrates a simple wafer-alignment workflow.
 The simulation uses template matching, translation/rotation registration,
@@ -33,7 +33,7 @@ python notebooks/07_wafer_metrology/alignment/run_alignment.py
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [notebooks/07_wafer_metrology/alignment/alignment_tutorial.ipynb](../notebooks/07_wafer_metrology/alignment/alignment_tutorial.ipynb) to explore the workflow interactively.
+Open the notebook at [notebooks/07_wafer_metrology/alignment/alignment_tutorial.ipynb](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/blob/main/notebooks/07_wafer_metrology/alignment/alignment_tutorial.ipynb) to explore the workflow interactively.
 
 ## Why this use case matters
 

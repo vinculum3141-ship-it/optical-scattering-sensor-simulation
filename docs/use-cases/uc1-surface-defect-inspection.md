@@ -40,7 +40,7 @@ and how the chosen settings affect the result.
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [notebooks/01_surface_defect_inspection/inspection_tutorial.ipynb](../notebooks/01_surface_defect_inspection/inspection_tutorial.ipynb)
+Open the notebook at [notebooks/01_surface_defect_inspection/inspection_tutorial.ipynb](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/blob/main/notebooks/01_surface_defect_inspection/inspection_tutorial.ipynb)
 for a parameter-driven walkthrough. The notebook is designed so you can
 change one setting at a time and compare how the inspection result changes.
 

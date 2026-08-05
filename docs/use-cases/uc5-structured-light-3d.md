@@ -1,4 +1,4 @@
-# Use Case 5 — Structured-Light / Triangulation
+# Use Case 5 — Structured Light 3D Scanning
 
 This use case demonstrates a simple fringe-projection profilometry workflow.
 The simulation generates phase-shifted fringe patterns, extracts a wrapped
@@ -44,7 +44,7 @@ python notebooks/05_structured_light_3d/run_structured_light.py
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [notebooks/05_structured_light_3d/structured_light_tutorial.ipynb](../notebooks/05_structured_light_3d/structured_light_tutorial.ipynb) to explore the workflow interactively.
+Open the notebook at [notebooks/05_structured_light_3d/structured_light_tutorial.ipynb](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/blob/main/notebooks/05_structured_light_3d/structured_light_tutorial.ipynb) to explore the workflow interactively.
 
 ## Why this use case matters
 

@@ -1,4 +1,4 @@
-# Use Case 7 Capstone — ASML-Style Wafer Defect Inspection
+# Use Case 7 — Wafer Metrology: ASML-Style Defect Capstone
 
 This use case demonstrates an advanced semiconductor metrology workflow inspired by high-end wafer inspection systems. It combines a synthetic wafer pattern, engineered surface roughness, coherent laser-induced speckle, and defect analysis to make critical imaging tradeoffs tangible.
 
@@ -32,7 +32,7 @@ python notebooks/07_wafer_metrology/defect_capstone/run_asml_capstone.py
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [notebooks/07_wafer_metrology/defect_capstone/asml_capstone_tutorial.ipynb](../notebooks/07_wafer_metrology/defect_capstone/asml_capstone_tutorial.ipynb) to explore the workflow with editable parameters and a coherence-performance scan.
+Open the notebook at [notebooks/07_wafer_metrology/defect_capstone/asml_capstone_tutorial.ipynb](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/blob/main/notebooks/07_wafer_metrology/defect_capstone/asml_capstone_tutorial.ipynb) to explore the workflow with editable parameters and a coherence-performance scan.
 
 ## Why this use case matters
 

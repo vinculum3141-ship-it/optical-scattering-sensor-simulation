@@ -26,5 +26,5 @@ Run a flat-field illumination sweep and turn sensor physics into engineering met
 
 ## Learn more
 
-- [Use-case documentation](../../docs/use-case-uc3-sensor-characterization.md)
+- [Use-case documentation](../../docs/use-cases/uc3-sensor-characterization.md)
 - Key modules: `illumination.FlatFieldSource`, `analysis.PTCAnalyzer/DynamicRangeAnalyzer/LinearityTestAnalyzer`, `detector.CMOSDetector`

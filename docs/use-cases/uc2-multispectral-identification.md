@@ -1,4 +1,4 @@
-# Use Case 2 — Multispectral Material Classification
+# Use Case 2 — Multi-Spectral Material Identification
 
 This use case demonstrates a compact multispectral material-identification workflow.
 It uses a small spectral reference library and a simple spectral-angle-based classifier to show how a multi-band image can be interpreted.
@@ -29,7 +29,7 @@ python notebooks/02_multispectral_identification/run_classification.py
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [notebooks/02_multispectral_identification/identification_tutorial.ipynb](../notebooks/02_multispectral_identification/identification_tutorial.ipynb) to explore the workflow interactively.
+Open the notebook at [notebooks/02_multispectral_identification/identification_tutorial.ipynb](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/blob/main/notebooks/02_multispectral_identification/identification_tutorial.ipynb) to explore the workflow interactively.
 
 ## Why this use case matters
 

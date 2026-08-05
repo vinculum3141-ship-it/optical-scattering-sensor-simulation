@@ -1,4 +1,4 @@
-# Use Case 6 — LiDAR / Ranging
+# Use Case 6 — LiDAR Range Finding
 
 This use case demonstrates a simple LiDAR ranging workflow.
 The simulation uses a range equation, a time-of-flight model, a synthetic
@@ -37,7 +37,7 @@ python notebooks/06_lidar_ranging/run_lidar.py
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [notebooks/06_lidar_ranging/lidar_tutorial.ipynb](../notebooks/06_lidar_ranging/lidar_tutorial.ipynb) to explore the workflow interactively.
+Open the notebook at [notebooks/06_lidar_ranging/lidar_tutorial.ipynb](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/blob/main/notebooks/06_lidar_ranging/lidar_tutorial.ipynb) to explore the workflow interactively.
 
 ## Why this use case matters
 

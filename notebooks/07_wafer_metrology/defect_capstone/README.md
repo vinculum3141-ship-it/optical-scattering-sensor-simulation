@@ -25,5 +25,5 @@ Combine wafer pattern, engineered surface roughness, coherent speckle noise, def
 
 ## Learn more
 
-- [Use-case documentation](../../../docs/use-case-uc7-asml-capstone.md)
+- [Use-case documentation](../../../docs/use-cases/uc7-defect-capstone.md)
 - Key modules: `surface.WaferSurface/RoughSurface`, `detector.noise_models.SpeckleNoise`, `analysis.DefectAnalyzer/ErrorMapAnalyzer/SNRAnalyzer/SpeckleRoughnessEstimator`

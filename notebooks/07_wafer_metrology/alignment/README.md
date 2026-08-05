@@ -25,5 +25,5 @@ Register a test image against a reference wafer pattern, estimate translation of
 
 ## Learn more
 
-- [Use-case documentation](../../../docs/use-case-uc7-wafer-alignment.md)
+- [Use-case documentation](../../../docs/use-cases/uc7-alignment.md)
 - Key modules: `analysis.TemplateMatcher/RegistrationAnalyzer/SPCAnalyzer`

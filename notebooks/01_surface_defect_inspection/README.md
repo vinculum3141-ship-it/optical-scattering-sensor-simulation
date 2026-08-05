@@ -26,7 +26,7 @@ Detect defects — dents, pits, cracks, stains — on a surface and decide pass/
 
 ## Learn more
 
-- [Use-case documentation](../../docs/use-case-uc1-defect-inspection.md)
+- [Use-case documentation](../../docs/use-cases/uc1-surface-defect-inspection.md)
 - Key modules: `illumination.bright_field/dark_field`, `surface.Dent/Pit/Crack/StainSurface`, `analysis.DefectAnalyzer`
 
 > Note: this unit consolidates the earlier `defect_inspection.ipynb` and

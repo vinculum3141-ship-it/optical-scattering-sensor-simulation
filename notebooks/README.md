@@ -33,6 +33,6 @@ no extra setup per unit.
 
 ## Documentation
 
-- Full use-case descriptions and status: [`docs/use-cases.md`](../docs/use-cases.md)
-- Per-unit pages: [`docs/use-case-uc*.md`](../docs/)
-- Layer reference docs: [`docs/layer-*.md`](../docs/)
+- Full use-case descriptions: [`docs/use-cases/index.md`](../docs/use-cases/index.md)
+- Per-unit pages: [`docs/use-cases/uc*.md`](../docs/use-cases/)
+- Layer reference docs: [`docs/science/layer-*.md`](../docs/science/)

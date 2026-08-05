@@ -25,5 +25,5 @@ Build a spectral stack, extract per-pixel spectral vectors, and classify each pi
 
 ## Learn more
 
-- [Use-case documentation](../../docs/use-case-uc2-multispectral-classification.md)
+- [Use-case documentation](../../docs/use-cases/uc2-multispectral-identification.md)
 - Key modules: `illumination.MultiSpectralSource/FilterWheelSource`, `analysis.SpectralAnalyzer`, `detector.CFAConfig/CFADetector`

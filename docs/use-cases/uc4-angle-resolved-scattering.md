@@ -1,4 +1,4 @@
-# Use Case 4 — Angle-Resolved Scattering
+# Use Case 4 — Angle-Resolved Scattering Measurement
 
 This use case demonstrates how the framework can model an angle-resolved
 scattering workflow for a rough surface and summarise the result with a
@@ -14,7 +14,7 @@ This is the core idea behind many angle-resolved scatterometry workflows, even t
 
 For a *multi-parameter* sweep — varying surface roughness, incidence
 angle, wavelength, refractive index, and/or scattering model together —
-use [`ScatteringSweep`](layer-analysis.md#metrology--goniometric-uc4):
+use [`ScatteringSweep`](../science/layer-analysis.md#metrology-goniometric-uc4):
 
 ```bash
 python notebooks/04_angle_resolved_scattering/run_parameter_sweep.py
@@ -49,7 +49,7 @@ python notebooks/04_angle_resolved_scattering/run_brdf_sweep.py
 
 ## Explore it interactively in a notebook
 
-Open the notebook at [notebooks/04_angle_resolved_scattering/brdf_sweep_tutorial.ipynb](../notebooks/04_angle_resolved_scattering/brdf_sweep_tutorial.ipynb) to explore the sweep interactively.
+Open the notebook at [notebooks/04_angle_resolved_scattering/brdf_sweep_tutorial.ipynb](https://github.com/vinculum3141-ship-it/optical-scattering-sensor-simulation/blob/main/notebooks/04_angle_resolved_scattering/brdf_sweep_tutorial.ipynb) to explore the sweep interactively.
 
 ## Why this use case matters
 

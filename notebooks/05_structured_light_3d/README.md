@@ -25,5 +25,5 @@ Project phase-shifted sinusoidal fringes, convert the captured fringes to a wrap
 
 ## Learn more
 
-- [Use-case documentation](../../docs/use-case-uc5-structured-light.md)
+- [Use-case documentation](../../docs/use-cases/uc5-structured-light-3d.md)
 - Key modules: `illumination.FringeProjector`, `analysis.PhaseExtractor/PhaseUnwrapper/HeightReconstructor/SurfaceComparator`

@@ -26,5 +26,5 @@ Walk the full ranging chain: received power from the LiDAR range equation, round
 
 ## Learn more
 
-- [Use-case documentation](../../docs/use-case-uc6-lidar.md)
+- [Use-case documentation](../../docs/use-cases/uc6-lidar-ranging.md)
 - Key modules: `analysis.LiDARRangeEquation/TimeOfFlightPropagator/WaveformAnalyzer`, `analysis.generate_point_cloud`, `detector.SPADDetector`
